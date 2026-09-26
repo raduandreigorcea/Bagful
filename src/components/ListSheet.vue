@@ -3,7 +3,7 @@ import { computed, useId, type PropType } from 'vue'
 import AppModal from './AppModal.vue'
 import AppIcon from './AppIcon.vue'
 import ModalCloseButton from './ModalCloseButton.vue'
-import { DEFAULT_LIST_EMOJI } from '../lib/listEmoji'
+import ListIcon from './ListIcon.vue'
 import { LIST_MEMBERSHIP_CAP } from '../lib/limits'
 import { normalizeMemberRole } from '../lib/memberRoles'
 import { initialOf, memberDisplayName } from '../lib/userIdentity'
@@ -93,7 +93,7 @@ function pick(id: string) {
       <header class="sheet-header">
         <div class="sheet-header__title-wrap">
           <span class="sheet-header__icon-bg" aria-hidden="true">
-            {{ listEmoji || DEFAULT_LIST_EMOJI }}
+            <ListIcon :value="listEmoji" />
           </span>
           <div class="sheet-header__text">
             <h3 :id="titleId">{{ listName || t('account.listFallback') }}</h3>
@@ -158,7 +158,7 @@ function pick(id: string) {
             >
               <span class="menu-row__label">
                 <span class="menu-row__emoji" aria-hidden="true">
-                  {{ list.emoji || DEFAULT_LIST_EMOJI }}
+                  <ListIcon :value="list.emoji ?? ''" />
                 </span>
                 <span class="menu-row__text">{{ list.name || t('account.listFallback') }}</span>
               </span>
@@ -481,5 +481,11 @@ function pick(id: string) {
   text-align: center;
   font-size: 0.95rem;
   line-height: 1;
+}
+
+/* Held to the column like the marks on the other rows. */
+.menu-row__emoji :deep(.list-icon) {
+  width: 16px;
+  height: 16px;
 }
 </style>

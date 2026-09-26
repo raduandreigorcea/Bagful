@@ -58,8 +58,8 @@ describe('the shop a suggestion came from', () => {
     // Not the theme's colours: a recoloured Carrefour blue is not Carrefour, so
     // these are the one place in this app where a mark is not tinted by
     // currentColor.
-    expect(wrapper.html()).toContain('#D6180B')
-    expect(wrapper.html()).toContain('#004E9F')
+    expect(wrapper.html()).toContain('#ec1c24')
+    expect(wrapper.html()).toContain('#004e9f')
   })
 
   it("keeps the colours in Lidl's mark, which are what make it readable", async () => {

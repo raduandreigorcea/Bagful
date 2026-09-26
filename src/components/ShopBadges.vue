@@ -61,26 +61,38 @@ const label = shopLabel
 // tall at 20 pixels and reads as a smudge, the same trap Lidl's icon-set version
 // fell into. The glyph is nudged down to sit centred without it.
 //
-// Auchan's bird and Carrefour's C are single-colour glyphs with no background of
-// their own and keep the inset, or they would touch the rim.
-const FULL_BLEED = new Set(['lidl', 'mega-image'])
+// Aldi's is the Aldi Sued stripes on navy, recoloured from the one-colour
+// icon-set version for the same reason as Lidl; every Aldi the catalog scrapes
+// is Aldi Sued. Delhaize's is their app tile, the white lion on red.
+//
+// Auchan's bird (their own favicon), Carrefour's two arrows and MPreis's M have
+// no background of their own and keep the inset, or they would touch the rim.
+const FULL_BLEED = new Set(['aldi', 'delhaize', 'lidl', 'mega-image'])
 
 // A retailer is one line in a registry and drawing its logo is a separate job,
 // so a shop with no asset gets its initial rather than an empty circle that
 // looks like a bug.
-const KNOWN_LOGOS = new Set(['auchan', 'carrefour', 'lidl', 'mega-image'])
+const KNOWN_LOGOS = new Set(['aldi', 'auchan', 'carrefour', 'delhaize', 'lidl', 'mega-image', 'mpreis'])
+
+// Hofer is Aldi Sued's name in Austria and wears the same stripes.
+const SAME_MARK: Record<string, string> = { hofer: 'aldi' }
 
 // Logos belong to the CHAIN: Lidl Germany wears the Lidl roundel. See shopBrand.
+function mark(slug: string): string {
+  const brand = shopBrand(slug)
+  return SAME_MARK[brand] ?? brand
+}
+
 function logo(slug: string): string {
-  return `brands/${shopBrand(slug)}`
+  return `brands/${mark(slug)}`
 }
 
 function bleeds(slug: string): boolean {
-  return FULL_BLEED.has(shopBrand(slug))
+  return FULL_BLEED.has(mark(slug))
 }
 
 function monogram(slug: string): { letter: string; colour: string } | null {
-  if (KNOWN_LOGOS.has(shopBrand(slug))) return null
+  if (KNOWN_LOGOS.has(mark(slug))) return null
   return { letter: (slug[0] ?? '?').toUpperCase(), colour: 'var(--text-secondary)' }
 }
 </script>
@@ -139,7 +151,9 @@ function monogram(slug: string): { letter: string; colour: string } | null {
   height: 1.25rem;
   border-radius: 50%;
   border: var(--border-width-thin) solid var(--border-light);
-  background: var(--bg-surface);
+  /* White in both themes: an inset logo sits on a plate, and Carrefour navy on
+     the dark surface was a mark nobody could read. */
+  background: #fff;
   /* Lidl's mark is a filled square reaching the edge of its own viewBox, so
      without this it pokes out of the circle it is sitting in. */
   overflow: hidden;
@@ -150,8 +164,8 @@ function monogram(slug: string): { letter: string; colour: string } | null {
    currentColor -- the one place in this app where a mark is not tinted by the
    theme, because a recoloured Carrefour blue is not Carrefour. */
 .shop-badge :deep(svg) {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 1rem;
+  height: 1rem;
   display: block;
 }
 
