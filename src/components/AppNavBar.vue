@@ -10,7 +10,7 @@ import MemberAvatarStack from './MemberAvatarStack.vue'
 import SkeletonBlock from './SkeletonBlock.vue'
 import { sortMembersSelfFirst } from '../lib/memberRoles'
 import type { ListMemberProfile } from '../lib/listRealtime'
-import { DEFAULT_LIST_EMOJI } from '../lib/listEmoji'
+import ListIcon from './ListIcon.vue'
 import { ITEM_LIMIT_DEFAULT } from '../lib/limits'
 import { getUserDisplayName, getUserInitial, getUserPrimaryEmail, initialOf } from '../lib/userIdentity'
 import { useSignOut } from '../lib/useSignOut'
@@ -264,7 +264,6 @@ const userInitial = computed(() => {
 // inside the panel; showing it on the bar too means the thing you tap and the
 // row you land on are the same object, and gives the left-hand block a fixed
 // anchor to start from instead of beginning with ragged text.
-const activeListEmoji = computed(() => props.listEmoji || DEFAULT_LIST_EMOJI)
 
 // Whether the bottom bar is on screen, which decides whether the list
 // name has to be a way in. Followed live, so a window resized across the
@@ -334,7 +333,7 @@ const orderedActiveMembers = computed(() =>
       @click="openListSettings"
     >
       <span class="nav-slot__mark nav-slot__mark--emoji" aria-hidden="true">
-        {{ activeListEmoji }}
+        <ListIcon :value="listEmoji" />
       </span>
       <span class="nav-slot__label">{{ t('nav.list') }}</span>
     </button>
@@ -447,7 +446,7 @@ const orderedActiveMembers = computed(() =>
           "
           @click="nameOpensSheet && openListSheet()"
         >
-          <span class="list-emoji" aria-hidden="true">{{ activeListEmoji }}</span>
+          <span class="list-emoji" aria-hidden="true"><ListIcon :value="listEmoji" /></span>
           <div class="list-info">
             <p class="list-name">
               <span class="list-name__text">{{ listName }}</span>
@@ -785,6 +784,14 @@ const orderedActiveMembers = computed(() =>
 .nav-slot__mark--emoji {
   font-size: var(--text-xl);
   line-height: 1;
+}
+
+/* The picture fills its square edge to edge, where an emoji glyph has air
+   around it, so it is pinned a step inside the 26px slot rather than sized
+   off the font. */
+.nav-slot__mark--emoji :deep(.list-icon) {
+  width: 24px;
+  height: 24px;
 }
 
 .nav-slot__mark--avatar {

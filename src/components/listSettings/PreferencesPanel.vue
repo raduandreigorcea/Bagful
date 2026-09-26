@@ -2,7 +2,8 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useSupabase } from '../../supabase'
 import { userMessage } from '../../lib/errorMessages'
-import { DEFAULT_LIST_EMOJI, LIST_EMOJIS } from '../../lib/listEmoji'
+import { LIST_EMOJIS, listIconUrl } from '../../lib/listEmoji'
+import ListIcon from '../ListIcon.vue'
 import {
   clampItemLimit,
   LIST_NAME_MAX_LENGTH,
@@ -224,7 +225,7 @@ async function saveItemLimit() {
             <span
               class="pref-card__value pref-card__value--emoji"
               :class="{ 'pref-card__value--emoji-default': !emojiValue }"
-            >{{ emojiValue || DEFAULT_LIST_EMOJI }}</span>
+            ><ListIcon :value="emojiValue" /></span>
           </div>
 
           <div class="emoji-picker">
@@ -235,9 +236,9 @@ async function saveItemLimit() {
               class="emoji-option"
               :class="{ 'emoji-option--active': emojiValue === e }"
               :aria-pressed="emojiValue === e"
-              :aria-label="t('preferences.useEmoji', { emoji: e })"
+              :aria-label="t('preferences.useEmoji', { emoji: t(`listIcon.${e}`) })"
               @click="pickEmoji(e)"
-            >{{ e }}</button>
+            ><img :src="listIconUrl(e) ?? ''" alt="" draggable="false" /></button>
           </div>
 
           <div class="card-item__form">
@@ -320,13 +321,21 @@ async function saveItemLimit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  line-height: 1;
+  /* A share of the button rather than a fixed inset: the grid stretches the
+     buttons with the sheet, and a 3D picture filling a wide button reads as
+     shouting next to the text around it. */
+  padding: 20%;
   border: var(--border-width-thin) solid var(--border-main);
   border-radius: var(--radius-md);
   background: var(--bg-surface);
   cursor: pointer;
   transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+}
+
+.emoji-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .emoji-option:hover:not(:disabled) {

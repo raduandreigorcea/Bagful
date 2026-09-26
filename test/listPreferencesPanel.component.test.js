@@ -18,6 +18,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import PreferencesPanel from '../src/components/listSettings/PreferencesPanel.vue'
+import { LIST_EMOJIS } from '../src/lib/listEmoji'
 import { createFakeDb } from './support/fakeSupabase.js'
 import { LIST_NAME_MAX_LENGTH } from '../src/lib/limits'
 
@@ -119,14 +120,14 @@ describe('renaming the list', () => {
 })
 
 describe('the list emoji', () => {
-  it('saves the picked emoji', async () => {
+  // The column keeps its name, but what goes in it is the icon's name now.
+  it('saves the picked icon by name', async () => {
     const wrapper = mountPanel({ listEmoji: '' })
     await wrapper.findAll('.emoji-option')[2].trigger('click')
-    const picked = wrapper.findAll('.emoji-option')[2].text()
     await saveButtons(wrapper)[1].trigger('click')
     await flushPromises()
 
-    expect(updates()[0].payload).toEqual({ emoji: picked })
+    expect(updates()[0].payload).toEqual({ emoji: LIST_EMOJIS[2] })
   })
 
   // Tapping the current selection clears it, and "no emoji" has to reach the
