@@ -1,12 +1,9 @@
 // @vitest-environment happy-dom
 //
-// Which shop a suggestion came from, shown on nightly only.
+// Which shop a suggestion came from.
 //
-// It is a development aid rather than a feature: while the catalog is being
-// filled, "did this come from a real shop or from something this list typed
-// in?" is the one question you cannot answer by looking at the row. A production
-// build must not render it at all, which is the half of this that needs a test --
-// a debugging affordance that quietly ships is worse than one that never existed.
+// "Did this come from a real shop or from something this list typed in?" is
+// the one question you cannot answer by looking at the row.
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddItemForm from '../src/components/AddItemForm.vue'
@@ -47,7 +44,7 @@ const shops = (wrapper) => wrapper.findAll('.shop-badge__name').map((s) => s.tex
 const discs = (wrapper) => wrapper.findAll('.shop-badge')
 
 describe('the shop a suggestion came from', () => {
-  it('names every shop carrying it, on nightly', async () => {
+  it('names every shop carrying it', async () => {
     const wrapper = await mountForm(true)
     expect(shops(wrapper)).toEqual(['Auchan', 'Carrefour', 'Lidl'])
   })
@@ -97,14 +94,6 @@ describe('the shop a suggestion came from', () => {
   it('still says which shop it is for anything that cannot see the logo', async () => {
     const wrapper = await mountForm(true)
     expect(discs(wrapper)[0].attributes('title')).toBe('Auchan')
-  })
-
-  it('shows nothing at all on production', async () => {
-    // The point of the whole gate. A shopper is not being told which of three
-    // supermarkets our scraper happened to read.
-    const wrapper = await mountForm(false)
-    expect(shops(wrapper)).toEqual([])
-    expect(discs(wrapper)).toHaveLength(0)
   })
 
   it('leaves a row with no shops alone rather than drawing an empty chip', async () => {
@@ -195,20 +184,6 @@ describe('the shop filter chips', () => {
     const wrapper = await mountWithChips({ searchShop: 'lidl' })
     await chips(wrapper)[2].trigger('click')
     expect(wrapper.emitted('select-shop').at(-1)).toEqual([null])
-  })
-
-  it('renders nothing on production', async () => {
-    channel.nightly = false
-    const wrapper = mount(AddItemForm, {
-      props: {
-        name: 'apa',
-        suggestions: SUGGESTIONS,
-        canAddCustom: false,
-        shopOptions: ['auchan', 'lidl'],
-      },
-    })
-    await wrapper.find('input').trigger('focus')
-    expect(chips(wrapper)).toHaveLength(0)
   })
 
   it('renders nothing when there are no shops to offer', async () => {

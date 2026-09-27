@@ -39,10 +39,9 @@ export interface ProductSuggestions {
   /** True while the phone's full-screen search is up, which earns more rows. */
   searchExpanded: Ref<boolean>
   /**
-   * Narrow the search to one shop, or null for all of them. NIGHTLY ONLY, the
-   * same as the shop badges and for the same reason: the catalog is a fraction
-   * of what the shops actually stock, so "nothing at Lidl" would usually mean
-   * "not scraped yet" and read as the shop being empty.
+   * Narrow the search to one shop, or null for all of them. The catalog is a
+   * fraction of what the shops actually stock, so "nothing at Lidl" usually
+   * means "not scraped yet", not that the shop is out of it.
    *
    * Read here, written through setSearchShop -- never assigned directly. A
    * watcher would have to tell a tap apart from the reset that clears this on a

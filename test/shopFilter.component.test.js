@@ -206,15 +206,3 @@ describe('the menu itself', () => {
     expect(wrapper.find('.filter-btn__dot').exists()).toBe(true)
   })
 })
-
-describe('production', () => {
-  it('offers no shops at all, because it renders no shop map', () => {
-    // The list gets its shops from shopMap, which HomeView only ever fills on
-    // nightly. Nothing here is gated on the channel directly; this pins the
-    // consequence rather than the mechanism.
-    channel.nightly = false
-    const wrapper = mountList({ shopMap: new Map() })
-    expect(wrapper.findComponent(ListSortMenu).props('shops')).toEqual([])
-    expect(document.querySelector('.filter-group')).toBeNull()
-  })
-})

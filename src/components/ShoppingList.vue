@@ -22,7 +22,7 @@ import AppIcon from './AppIcon.vue'
 // you still have to find is always the top of the screen and it only ever gets
 // shorter. See lib/listSections for how the entries are laid out.
 
-// Which shops sell a row's product, on nightly.
+// Which shops sell a row's product.
 //
 // Two lookups, and the second is what makes it work. The catalog answers with
 // ITS canonical name and brand; the row on the list carries whatever the person
@@ -38,7 +38,7 @@ function shopsFor(item: ShoppingItemRow): string[] {
 }
 const props = defineProps({
   items: { type: Array as PropType<ShoppingItemRow[]>, default: () => [] },
-  // Which shops carry each product, keyed by productKey. NIGHTLY ONLY, and
+  // Which shops carry each product, keyed by productKey,
   // resolved by the parent in one call for the whole list -- a row knows a name
   // and a maker and nothing about the catalog, so it cannot look itself up.
   shopMap: {
@@ -72,8 +72,8 @@ const props = defineProps({
 // control lives in this component's header but the choice belongs to the view,
 // which remembers it.
 const sort = defineModel<ListSort>('sort', { default: 'added' })
-// The shop filter, independent of the one above it. NIGHTLY ONLY: shopMap is
-// empty on production, so availableShops is empty, so the section that sets
+// The shop filter, independent of the one above it. An empty shopMap (no
+// catalog configured) means availableShops is empty, so the section that sets
 // this never renders.
 const shopFilter = defineModel<string | null>('shopFilter', { default: null })
 

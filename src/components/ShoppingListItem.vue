@@ -13,7 +13,7 @@ const props = defineProps({
     type: Object as PropType<ShoppingItemRow>,
     required: true
   },
-  // Which shops carry this product, on nightly. Passed down rather than looked
+  // Which shops carry this product. Passed down rather than looked
   // up here: the parent asks once for the whole list, because twenty rows must
   // not mean twenty round trips. Empty everywhere else, and empty for a product
   // no configured shop lists -- which is itself information, since it means
@@ -425,7 +425,7 @@ function settle() {
           <span class="item-name">{{ item.name }}</span>
           <span v-if="item.maker || shops.length" class="item-sub">
           <span v-if="item.maker" class="item-maker">{{ item.maker }}</span>
-          <!-- Which shop sells it, on nightly. Unlike a suggestion, a list row
+          <!-- Which shop sells it. Unlike a suggestion, a list row
                carries no retailers of its own -- it is a row in the app's
                database and knows nothing about the catalog -- so the parent
                looks them up for the whole list at once and passes them down. -->
@@ -889,7 +889,7 @@ function settle() {
   word-break: break-word;
 }
 
-/* The second line: the maker, and on nightly the shops carrying it. */
+/* The second line: the maker, and the shops carrying it. */
 .item-sub {
   display: flex;
   align-items: center;
