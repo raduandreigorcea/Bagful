@@ -11,7 +11,6 @@ import { productKey, type ProductSuggestion } from '../lib/productSearch'
 import { ITEM_NAME_MAX_LENGTH } from '../lib/limits'
 import { t } from '../lib/i18n'
 import AppIcon from './AppIcon.vue'
-import { IS_NIGHTLY } from '../lib/appChannel'
 import ShopBadges from './ShopBadges.vue'
 
 // Presentational: the typed name lives in the parent (via v-model) so the add
@@ -369,20 +368,14 @@ watch([rows, () => props.canAddCustom], () => {
   activeIndex.value = -1
 })
 
-// Which shops carry a suggestion, on nightly only.
+// Which shops carry a suggestion.
 //
 // search_catalog returns `retailers` on every row it answers with; a row from
 // the app database's own search_catalog has none, and neither does one recovered
 // from purchase history. So an empty answer here is meaningful rather than
 // missing: it says this product came from what the list typed in, not from
 // a shop we read.
-//
-// Gated on the channel rather than on import.meta.env.DEV so it survives into a
-// nightly APK, which is where the catalog is actually worth eyeballing -- a
-// dropdown on a phone is the thing being built. A production build never renders
-// it at all.
 function shopsOf(product: ProductSuggestion): string[] {
-  if (!IS_NIGHTLY) return []
   return Array.isArray(product.retailers) ? product.retailers : []
 }
 
@@ -392,7 +385,7 @@ function shopsOf(product: ProductSuggestion): string[] {
 // carry it -- so the chips would sit above rows they cannot narrow, and the one
 // that did nothing would look broken rather than empty.
 const showingShopFilter = computed(
-  () => IS_NIGHTLY && props.shopOptions.length > 0 && !showingRecents.value,
+  () => props.shopOptions.length > 0 && !showingRecents.value,
 )
 
 // ─── Confirming the add ──────────────────────────────────────────────────────
@@ -817,7 +810,7 @@ onBeforeUnmount(() => {
                     <span class="suggestion-name">{{ product.name }}</span>
                     <span v-if="product.maker || shopsOf(product).length" class="suggestion-sub">
                       <span v-if="product.maker" class="suggestion-maker">{{ product.maker }}</span>
-                      <!-- Where this row came from, on nightly. A suggestion
+                      <!-- Where this row came from. A suggestion
                            carries `retailers` because it came out of the catalog
                            a moment ago; see ShopBadges for why it is a logo and
                            not the name. -->
@@ -1112,7 +1105,7 @@ onBeforeUnmount(() => {
   margin-top: 0.35rem;
   z-index: 20;
   /* The dropdown's surface is the WHOLE panel, not just the list. It used to be
-     on .suggestions, which left everything above the list -- the nightly shop
+     on .suggestions, which left everything above the list -- the shop
      chips and their divider -- floating on the page with no card under it. On
      the light page nobody noticed; over the page blur the chips' near-white
      border-bottom read as a stray white line above the results. On the panel,
@@ -1223,7 +1216,7 @@ onBeforeUnmount(() => {
   color: var(--text-disabled);
 }
 
-/* The shop filter, above the results. NIGHTLY ONLY.
+/* The shop filter, above the results.
 
    Scrolls sideways rather than wrapping: three shops fit on a phone today and a
    fourth would not, and a row that grows a second line pushes the results down
@@ -1478,7 +1471,7 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-/* The second line: the maker, and on nightly the shops carrying it. Wraps
+/* The second line: the maker, and the shops carrying it. Wraps
    rather than truncating, because a row with three shops is exactly the row
    worth looking at. */
 .suggestion-sub {

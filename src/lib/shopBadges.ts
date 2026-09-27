@@ -1,10 +1,9 @@
 import { ref, watch, type Ref } from 'vue'
 import { getCatalogSupabase } from '../supabase'
-import { IS_NIGHTLY } from './appChannel'
 import { productKey } from './productSearch'
 import type { Market } from './region'
 
-// Which shop each product on the list came from, on nightly only.
+// Which shop each product on the list came from.
 //
 // A shopping list row is a row in the APP's database. It knows a name and a
 // maker and nothing else, and it has no idea the catalog exists -- which is
@@ -15,8 +14,7 @@ import type { Market } from './region'
 // So this is a lookup, and one for the whole list at once. Twenty rows must not
 // mean twenty round trips.
 //
-// EVERY FAILURE PATH RETURNS AN EMPTY MAP. This draws a decoration on a nightly
-// build; a shopping list must not degrade because a second database is slow, and
+// EVERY FAILURE PATH RETURNS AN EMPTY MAP. This draws a decoration; a shopping list must not degrade because a second database is slow, and
 // the caller renders nothing for a product it has no answer for anyway.
 
 /** name + maker, folded, to the shops carrying it. */
@@ -92,7 +90,6 @@ function forMarket(rows: ShopEntry[], market: Market | null): string[] {
  * one that returns nothing and looks broken.
  */
 export async function fetchShopList(market: Market | null = null): Promise<string[]> {
-  if (!IS_NIGHTLY) return []
   if (shopRows) return forMarket(shopRows, market)
 
   const cached = readShopCache()
@@ -134,7 +131,6 @@ function cleanEntries(raw: unknown[]): ShopEntry[] {
 }
 
 function readShopCache(): ShopEntry[] {
-  if (!IS_NIGHTLY) return []
   try {
     const raw = localStorage.getItem(SHOPS_KEY)
     if (!raw) return []
@@ -163,7 +159,7 @@ interface ShopRow {
 }
 
 export function shopsEnabled(): boolean {
-  return IS_NIGHTLY && getCatalogSupabase() !== null
+  return getCatalogSupabase() !== null
 }
 
 // ─── remembering the answer ──────────────────────────────────────────────────
@@ -192,7 +188,6 @@ const CACHE_MAX = 500
 
 export function loadCachedShops(storage: Storage = localStorage): ShopMap {
   const map: ShopMap = new Map()
-  if (!IS_NIGHTLY) return map
   try {
     const raw = storage.getItem(CACHE_KEY)
     if (!raw) return map
@@ -214,7 +209,6 @@ export function loadCachedShops(storage: Storage = localStorage): ShopMap {
 }
 
 export function saveCachedShops(map: ShopMap, storage: Storage = localStorage): void {
-  if (!IS_NIGHTLY) return
   try {
     storage.setItem(CACHE_KEY, JSON.stringify([...map.entries()].slice(0, CACHE_MAX)))
   } catch {
@@ -299,9 +293,8 @@ export async function fetchShopsFor(names: string[], market: Market | null = nul
 /**
  * Which shop each product on the list came from, for the list's badges.
  *
- * NIGHTLY ONLY, and a development aid rather than a feature: while the catalog
- * is being filled, a scraped product and one somebody typed in render
- * identically on the list.
+ * Without it, a scraped product and one somebody typed in render identically
+ * on the list.
  *
  * Resolved for the WHOLE list in one call, because a row is a row in this
  * database and knows nothing about the catalog -- it cannot look itself up, and

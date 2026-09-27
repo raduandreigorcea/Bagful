@@ -69,7 +69,7 @@ const items = ref<ShoppingItemRow[]>([])
 // each use, so a phone that has crossed a border answers differently next time.
 const region = () => resolveRegion(deviceTimeZone())
 
-// Which shop each listed product came from. Nightly only; see useShopMap.
+// Which shop each listed product came from; see useShopMap.
 const shopMap = useShopMap(items, region)
 // How the rows to buy are ordered: as added, or grouped by aisle. Remembered on
 // this device, because it is a habit ("I always shop by aisle") rather than a
@@ -91,9 +91,9 @@ watch(listSort, (value) => {
     // Storage off: the order holds for this session.
   }
 })
-// Which shop the list is narrowed to, independent of the filter above. Nightly
-// only in practice: shopMap is empty on production, so ShoppingList offers no
-// shops and nothing can set this.
+// Which shop the list is narrowed to, independent of the filter above. With no
+// catalog, shopMap is empty, so ShoppingList offers no shops and nothing can
+// set this.
 const listShop = ref<string | null>(null)
 const {
   lists,

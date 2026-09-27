@@ -3,13 +3,11 @@ import type { PropType } from 'vue'
 import AppIcon from './AppIcon.vue'
 import { shopLabel, shopBrand } from '../lib/shopBadges'
 
-// Which shops carry a product, as their logos. NIGHTLY ONLY -- the caller decides
-// that; this renders whatever it is given.
+// Which shops carry a product, as their logos. Renders whatever it is given.
 //
-// A DEVELOPMENT AID RATHER THAN A FEATURE. While the catalog is being filled,
-// where a row came from is the one thing you cannot tell by looking at it: a
+// Where a row came from is the one thing you cannot tell by looking at it: a
 // product scraped from Auchan and one somebody in the list typed in render
-// identically. A shopper never sees this.
+// identically. No logo means nobody scraped it, not that no shop sells it.
 //
 // A LOGO RATHER THAN THE NAME, because the shop and the maker are frequently the
 // same word -- Auchan sells products branded Auchan -- and "Auchan Auchan" reads

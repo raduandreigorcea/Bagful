@@ -125,13 +125,6 @@ describe('the shops the filter can offer', () => {
     expect(api.shopOptions.value).toEqual(['auchan', 'lidl'])
   })
 
-  it('offers none on production, which hides the control', async () => {
-    channel.nightly = false
-    const { api } = mountSuggestions()
-    await flushPromises()
-    expect(api.shopOptions.value).toEqual([])
-  })
-
   it('offers none when there is no catalog at all', async () => {
     catalog.db = null
     const { api } = mountSuggestions()
