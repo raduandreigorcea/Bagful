@@ -53,8 +53,9 @@ const label = shopLabel
 //
 // Mega Image's is their app tile, the gull glyph on white, minus the red
 // rounded-square border the real tile has: in a disc it read as a red ring.
-// It bleeds so the glyph keeps its size. The disc's overflow clips the tile's
-// corners, which is what an app icon expects anyway.
+// It bleeds so the glyph keeps its size, but a white tile has no edge of its
+// own, so it keeps the grey rim every inset logo has (WHITE_TILE). The disc's
+// overflow clips the tile's corners, which is what an app icon expects anyway.
 // The wordmark under the glyph was dropped from the asset: it is four letters
 // tall at 20 pixels and reads as a smudge, the same trap Lidl's icon-set version
 // fell into. The glyph is nudged down to sit centred without it.
@@ -66,6 +67,7 @@ const label = shopLabel
 // Auchan's bird (their own favicon), Carrefour's two arrows and MPreis's M have
 // no background of their own and keep the inset, or they would touch the rim.
 const FULL_BLEED = new Set(['aldi', 'delhaize', 'lidl', 'mega-image'])
+const WHITE_TILE = new Set(['mega-image'])
 
 // A retailer is one line in a registry and drawing its logo is a separate job,
 // so a shop with no asset gets its initial rather than an empty circle that
@@ -106,7 +108,7 @@ function monogram(slug: string): { letter: string; colour: string } | null {
   >
     <span
       class="shop-badge"
-      :class="{ 'shop-badge--mono': monogram(shop), 'shop-badge--bleed': bleeds(shop) }"
+      :class="{ 'shop-badge--mono': monogram(shop), 'shop-badge--bleed': bleeds(shop), 'shop-badge--rimmed': WHITE_TILE.has(mark(shop)) }"
       :style="monogram(shop) ? { background: monogram(shop)!.colour } : undefined"
       aria-hidden="true"
     >
@@ -118,7 +120,7 @@ function monogram(slug: string): { letter: string; colour: string } | null {
   <span
     v-else
     class="shop-badge"
-    :class="{ 'shop-badge--mono': monogram(shop), 'shop-badge--bleed': bleeds(shop) }"
+    :class="{ 'shop-badge--mono': monogram(shop), 'shop-badge--bleed': bleeds(shop), 'shop-badge--rimmed': WHITE_TILE.has(mark(shop)) }"
     :style="monogram(shop) ? { background: monogram(shop)!.colour } : undefined"
     :title="label(shop)"
   >
@@ -171,6 +173,10 @@ function monogram(slug: string): { letter: string; colour: string } | null {
    outline. */
 .shop-badge--bleed {
   border-color: transparent;
+}
+
+.shop-badge--bleed.shop-badge--rimmed {
+  border-color: var(--border-light);
 }
 
 .shop-badge--bleed :deep(svg) {
