@@ -51,10 +51,10 @@ const label = shopLabel
 // tab, so it is drawn to survive being tiny -- the colour does the work and the
 // lettering is a detail rather than the whole thing.
 //
-// Mega Image's is their app tile: a red rounded square with the gull glyph on
-// white. It bleeds for the same reason -- the red IS the mark at this size, and
-// insetting it would leave a small red square adrift in a circle. The disc's
-// overflow clips the tile's corners, which is what an app icon expects anyway.
+// Mega Image's is their app tile, the gull glyph on white, minus the red
+// rounded-square border the real tile has: in a disc it read as a red ring.
+// It bleeds so the glyph keeps its size. The disc's overflow clips the tile's
+// corners, which is what an app icon expects anyway.
 // The wordmark under the glyph was dropped from the asset: it is four letters
 // tall at 20 pixels and reads as a smudge, the same trap Lidl's icon-set version
 // fell into. The glyph is nudged down to sit centred without it.
