@@ -1,7 +1,7 @@
 {
   "name": "famcart",
   "private": true,
-  "version": "0.6.52",
+  "version": "0.6.53",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "vue-tsc --noEmit",
+    "types": "supabase gen types typescript --local --schema public > src/types/database.ts && supabase --workdir catalog gen types typescript --local --schema public > src/types/catalog.ts",
     "catalog:scrape": "npm --prefix catalog run scrape --",
     "catalog:scrape:auchan": "npm --prefix catalog run scrape:auchan",
     "catalog:scrape:carrefour": "npm --prefix catalog run scrape:carrefour",

@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { useAuth } from '@clerk/vue'
+import type { Database } from './types/database'
+import type { Database as CatalogDatabase } from './types/catalog'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -44,8 +46,17 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const catalogUrl = import.meta.env.VITE_CATALOG_SUPABASE_URL
 const catalogAnonKey = import.meta.env.VITE_CATALOG_SUPABASE_ANON_KEY
 
-let authClient: SupabaseClient | null = null
-let catalogClient: SupabaseClient | null = null
+// Both schemas are generated, not written. `npm run types` rewrites
+// src/types/*.ts from the two LOCAL stacks, so `db reset` both first (the
+// migrations are the source of truth, not whatever famcart-dev happens to
+// hold). CI regenerates them the same way and fails on any difference, so a
+// migration that lands without them turns the build red, and a renamed column
+// or RPC argument then fails the typecheck instead of returning [] at runtime.
+export type AppClient = SupabaseClient<Database>
+export type CatalogClient = SupabaseClient<CatalogDatabase>
+
+let authClient: AppClient | null = null
+let catalogClient: CatalogClient | null = null
 type TokenResolver = (options?: { skipCache?: boolean }) => Promise<string | null>
 let getTokenFn: TokenResolver | null = null
 
@@ -116,9 +127,9 @@ export async function fetchWithFreshToken(
 // The one client, built once and shared. The token comes from whatever resolver
 // was last installed, so the client itself never needs rebuilding when the
 // session changes.
-export function getSupabase(): SupabaseClient {
+export function getSupabase(): AppClient {
   if (!authClient) {
-    authClient = createClient(supabaseUrl, supabaseAnonKey, {
+    authClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -142,10 +153,10 @@ export function getSupabase(): SupabaseClient {
 // same way it treats a failed catalog request: the list's own products
 // still appear and the add-item box still works. Suggestions are a convenience,
 // and a third project being unreachable must not be able to empty the dropdown.
-export function getCatalogSupabase(): SupabaseClient | null {
+export function getCatalogSupabase(): CatalogClient | null {
   if (!catalogUrl || !catalogAnonKey) return null
   if (!catalogClient) {
-    catalogClient = createClient(catalogUrl, catalogAnonKey, {
+    catalogClient = createClient<CatalogDatabase>(catalogUrl, catalogAnonKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -174,7 +185,7 @@ export function setSupabaseTokenResolver(resolve: TokenResolver): void {
 
 // Returns a Supabase client authenticated with the current Clerk session token.
 // Use this inside Vue components/composables where useAuth() is available.
-export function useSupabase(): SupabaseClient {
+export function useSupabase(): AppClient {
   const { getToken } = useAuth()
   // The plain session token, NOT getToken({ template: 'supabase' }).
   //
