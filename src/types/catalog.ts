@@ -233,44 +233,6 @@ export type Database = {
         }
         Relationships: []
       }
-      catalog_run_logs: {
-        Row: {
-          fields: Json | null
-          id: number
-          level: string
-          message: string
-          run_id: string
-          scope: string
-          t: string
-        }
-        Insert: {
-          fields?: Json | null
-          id?: never
-          level: string
-          message: string
-          run_id: string
-          scope: string
-          t: string
-        }
-        Update: {
-          fields?: Json | null
-          id?: never
-          level?: string
-          message?: string
-          run_id?: string
-          scope?: string
-          t?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "catalog_run_logs_run_id_fkey"
-            columns: ["run_id"]
-            isOneToOne: false
-            referencedRelation: "catalog_scrape_runs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       catalog_scrape_runs: {
         Row: {
           conflicts: number
@@ -440,24 +402,6 @@ export type Database = {
           total_count: number
         }[]
       }
-      catalog_admin_run_listings: {
-        Args: {
-          p_kind: string
-          p_limit?: number
-          p_offset?: number
-          p_run_id: string
-        }
-        Returns: {
-          available: boolean
-          currency: string
-          external_id: string
-          name: string
-          previous_price: number
-          price: number
-          product_url: string
-          total: number
-        }[]
-      }
       catalog_admin_update_product: {
         Args: {
           p_barcode?: string
@@ -521,10 +465,6 @@ export type Database = {
       catalog_run_fail: {
         Args: { p_error: string; p_run_id: string }
         Returns: undefined
-      }
-      catalog_run_log: {
-        Args: { p_lines: Json; p_run_id: string }
-        Returns: number
       }
       catalog_run_open: { Args: { p_retailer: string }; Returns: string }
       catalog_run_partial: {
