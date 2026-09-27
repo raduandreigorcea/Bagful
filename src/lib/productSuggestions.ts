@@ -728,7 +728,7 @@ export function useProductSuggestions(options: {
       ignore(
         catalogDb.rpc('bump_product_popularity', {
           p_name: product.name,
-          p_maker: product.maker ?? null,
+          p_maker: product.maker ?? undefined,
         }),
       )
     }

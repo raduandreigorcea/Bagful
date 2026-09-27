@@ -184,7 +184,7 @@ async function createList() {
         p_name: nextListName,
         p_invite_code: code,
         p_display_name: display_name,
-        p_image_url: image_url,
+        p_image_url: image_url ?? undefined,
       })
       .maybeSingle<{ id: string; name: string }>()
 
@@ -249,7 +249,7 @@ async function joinList() {
       .rpc('join_list_with_code', {
         p_code: code,
         p_display_name: display_name,
-        p_image_url: image_url,
+        p_image_url: image_url ?? undefined,
       })
       .maybeSingle<{ id: string; name: string }>()
 

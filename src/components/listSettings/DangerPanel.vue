@@ -87,7 +87,7 @@ async function leaveList() {
     message: t('danger.confirmLeaveMessage'),
     danger: true,
   })
-  if (!confirmed) return
+  if (!confirmed || !userId.value) return
   leavingList.value = true
   try {
     const { error } = await db

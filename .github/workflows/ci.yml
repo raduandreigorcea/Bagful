@@ -80,6 +80,13 @@ jobs:
       - run: supabase db reset
       # The pgTAP suites in supabase/tests, against that schema.
       - run: supabase test db
+      # src/types/database.ts is generated from this same schema. A migration
+      # committed without `npm run types` would leave the app typechecking
+      # against columns and RPC arguments that no longer exist.
+      - name: Generated types match the migrations
+        run: |
+          supabase gen types typescript --local --schema public > /tmp/database.ts
+          diff -u src/types/database.ts /tmp/database.ts || { echo "::error::src/types/database.ts is stale: run npm run types"; exit 1; }
 
   catalog-tests:
     name: Catalog schema tests (pgTAP)
@@ -123,3 +130,9 @@ jobs:
       # machine that has run it before. `db reset` rebuilds unconditionally.
       - run: supabase --workdir catalog db reset
       - run: supabase --workdir catalog test db
+      # Same check for src/types/catalog.ts. This is what catches a catalog
+      # RPC change landing through a submodule bump with stale app types.
+      - name: Generated types match the catalog migrations
+        run: |
+          supabase --workdir catalog gen types typescript --local --schema public > /tmp/catalog.ts
+          diff -u src/types/catalog.ts /tmp/catalog.ts || { echo "::error::src/types/catalog.ts is stale: run npm run types"; exit 1; }
