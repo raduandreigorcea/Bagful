@@ -49,7 +49,9 @@ const label = shopLabel
 // recognisable, and what was left was a faint ring with four unreadable letters
 // in it. Their favicon is the mark they themselves ship for a 16-pixel browser
 // tab, so it is drawn to survive being tiny -- the colour does the work and the
-// lettering is a detail rather than the whole thing.
+// lettering is a detail rather than the whole thing. Its blue square and red
+// ring are cut, and the viewBox cropped to the yellow disc, so the disc IS the
+// badge.
 //
 // Mega Image's is their app tile, the gull glyph on white, minus the red
 // rounded-square border the real tile has: in a disc it read as a red ring.
@@ -154,8 +156,8 @@ function monogram(slug: string): { letter: string; colour: string } | null {
   /* White in both themes: an inset logo sits on a plate, and Carrefour navy on
      the dark surface was a mark nobody could read. */
   background: #fff;
-  /* Lidl's mark is a filled square reaching the edge of its own viewBox, so
-     without this it pokes out of the circle it is sitting in. */
+  /* A full-bleed mark that is square (Mega Image's tile) would otherwise poke
+     out of the circle it is sitting in. */
   overflow: hidden;
 }
 
