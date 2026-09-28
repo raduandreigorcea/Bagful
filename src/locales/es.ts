@@ -302,23 +302,24 @@ const es: Catalog = {
   'tour.start': 'Empezar a comprar',
   'tour.inviteCodeLabel': 'Código de invitación',
   'tour.copyInviteCode': 'Copiar el código de invitación {code}',
-  'tour.art.query': 'Aguacates',
-  'tour.art.avocado': 'Aguacate',
-  'tour.art.milk': 'Leche',
-  'tour.art.bread': 'Pan',
-  'tour.art.slide': 'Desliza para finalizar',
-  'tour.add.title': 'Añade lo que necesitas',
+  'tour.add.title': 'Busca lo que sea',
   'tour.add.body':
-    'Empieza a escribir y aparecerán los productos que coinciden. Toca uno y va directo a la lista.',
+    'Empieza a escribir y elige entre los productos que aparecen. Un toque y está en la lista.',
+  'tour.scan.title': 'O escanéalo',
+  'tour.scan.body':
+    'Con la búsqueda vacía, su botón abre la cámara. Apunta a un código de barras y el producto llega a tu lista.',
+  'tour.qty.title': '¿Necesitas más de uno?',
+  'tour.qty.body':
+    'Toca el número de una fila para que aparezcan − y +. Se cierra solo cuando paras.',
   'tour.swipe.title': 'Desliza para marcar o quitar',
   'tour.swipe.body':
     'Desliza una fila a la derecha cuando ya esté en el carrito, o a la izquierda para quitarla de la lista. Sin botoncitos que acertar.',
   'tour.checkout.title': 'Desliza para finalizar',
   'tour.checkout.body':
-    'Las filas marcadas esperan en el carrito hasta que deslizas la barra de abajo. Eso es lo que las vacía y guarda la compra en tu historial.',
+    'Las filas marcadas esperan en el carrito hasta que deslizas la barra de abajo. Eso las vacía y guarda la compra en tu historial, así la próxima vez lo de siempre está a un toque.',
   'tour.invite.title': 'Trae a los demás',
   'tour.invite.body':
-    'Comparte tu código de invitación para que todos compren de la misma lista. Cada cambio aparece para todos en el momento en que ocurre.',
+    'Comparte tu código de invitación para que todos compren de la misma lista, y cada cambio le llega a todos al instante. Puedes tener más de una lista y cambiar entre ellas cuando quieras.',
 
   'common.done': 'Hecho',
   'common.close': 'Cerrar',

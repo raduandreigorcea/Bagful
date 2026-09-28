@@ -307,23 +307,24 @@ const ro: Catalog = {
   'tour.start': 'Începe cumpărăturile',
   'tour.inviteCodeLabel': 'Cod de invitație',
   'tour.copyInviteCode': 'Copiază codul de invitație {code}',
-  'tour.art.query': 'Avocado',
-  'tour.art.avocado': 'Avocado',
-  'tour.art.milk': 'Lapte',
-  'tour.art.bread': 'Pâine',
-  'tour.art.slide': 'Glisează când ai luat tot',
-  'tour.add.title': 'Adaugă ce ai nevoie',
+  'tour.add.title': 'Caută orice',
   'tour.add.body':
-    'Începe să scrii și apar produsele potrivite. Atinge unul și ajunge direct pe listă.',
+    'Începe să scrii și alege dintre produsele găsite. O atingere și e pe listă.',
+  'tour.scan.title': 'Sau scanează-l',
+  'tour.scan.body':
+    'Cu câmpul de căutare gol, butonul lui deschide camera. Îndreapt-o spre un cod de bare și produsul ajunge pe listă.',
+  'tour.qty.title': 'Ai nevoie de mai multe?',
+  'tour.qty.body':
+    'Atinge numărul de pe un rând ca să apară − și +. Se închide singur când te oprești.',
   'tour.swipe.title': 'Glisează pentru a bifa sau șterge',
   'tour.swipe.body':
     'Glisează un rând spre dreapta odată ce e în coș, sau spre stânga ca să îl scoți de pe listă. Fără butoane mici de nimerit.',
   'tour.checkout.title': 'Glisează când ai luat tot',
   'tour.checkout.body':
-    'Rândurile bifate așteaptă în coș până glisezi bara de jos. Asta le șterge și salvează drumul în istoricul tău.',
+    'Rândurile bifate așteaptă în coș până glisezi bara de jos. Asta le șterge și salvează drumul în istoricul tău, așa că data viitoare produsele obișnuite sunt la o atingere distanță.',
   'tour.invite.title': 'Adu-i și pe ceilalți',
   'tour.invite.body':
-    'Trimite codul de invitație ca toți să cumpere de pe aceeași listă. Fiecare schimbare apare la toți în clipa în care se întâmplă.',
+    'Trimite codul de invitație ca toți să cumpere de pe aceeași listă. Fiecare schimbare apare la toți imediat. Poți avea mai multe liste și treci de la una la alta oricând.',
 
   'common.done': 'Gata',
   'common.close': 'Închide',

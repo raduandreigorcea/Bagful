@@ -301,23 +301,24 @@ const it: Catalog = {
   'tour.start': 'Inizia a fare la spesa',
   'tour.inviteCodeLabel': 'Codice di invito',
   'tour.copyInviteCode': 'Copia il codice di invito {code}',
-  'tour.art.query': 'Avocado',
-  'tour.art.avocado': 'Avocado',
-  'tour.art.milk': 'Latte',
-  'tour.art.bread': 'Pane',
-  'tour.art.slide': 'Scorri per completare',
-  'tour.add.title': 'Aggiungi quello che ti serve',
+  'tour.add.title': 'Cerca qualsiasi cosa',
   'tour.add.body':
-    'Inizia a digitare e compaiono i prodotti corrispondenti. Toccane uno e finisce dritto nella lista.',
+    'Inizia a digitare e scegli tra i prodotti trovati. Un tocco ed è nella lista.',
+  'tour.scan.title': 'Oppure scansionalo',
+  'tour.scan.body':
+    'Con la ricerca vuota, il suo pulsante apre la fotocamera. Inquadra un codice a barre e il prodotto arriva nella tua lista.',
+  'tour.qty.title': 'Ne serve più di uno?',
+  'tour.qty.body':
+    'Tocca il numero su una riga per far comparire − e +. Si chiude da solo quando smetti.',
   'tour.swipe.title': 'Scorri per spuntare o rimuovere',
   'tour.swipe.body':
     'Scorri una riga verso destra quando è nel carrello, o verso sinistra per toglierla dalla lista. Nessun pulsantino da centrare.',
   'tour.checkout.title': 'Scorri per completare',
   'tour.checkout.body':
-    'Le righe spuntate aspettano nel carrello finché non scorri la barra in basso. È questo che le svuota e salva il giro nella tua cronologia.',
+    'Le righe spuntate aspettano nel carrello finché non scorri la barra in basso. Questo le svuota e salva il giro nella tua cronologia, così la prossima volta le cose di sempre sono a un tocco.',
   'tour.invite.title': 'Coinvolgi gli altri',
   'tour.invite.body':
-    'Condividi il tuo codice di invito così tutti fanno la spesa dalla stessa lista. Ogni modifica compare per tutti nel momento stesso in cui accade.',
+    'Condividi il codice di invito così tutti fanno la spesa dalla stessa lista, e ogni modifica arriva a tutti all’istante. Puoi avere più di una lista e passare dall’una all’altra quando vuoi.',
 
   'common.done': 'Fatto',
   'common.close': 'Chiudi',

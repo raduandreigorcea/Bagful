@@ -358,7 +358,7 @@ async function joinList() {
           <div class="choice-row">
             <ChoiceButton
               v-if="showCreate"
-              icon="🏠"
+              icon="📝"
               :label="t('setup.picker.createLabel')"
               :description="t('setup.picker.createDescription')"
               @click="mode = 'create'"

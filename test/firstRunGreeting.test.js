@@ -90,7 +90,7 @@ describe('the sequence', () => {
   })
 
   it('goes straight to the ask for someone who has seen the tour', () => {
-    const g = greeting({ storage: makeStorage({ 'famcart_tour_seen_v1': '1' }) })
+    const g = greeting({ storage: makeStorage({ 'famcart_tour_seen_v4': '1' }) })
     g.start()
 
     expect(g.onboardingTourOpen.value).toBe(false)
@@ -109,7 +109,7 @@ describe('the sequence', () => {
 // Every skip below leaves the preference unset on purpose, so the same account
 // is asked again somewhere the answer can actually stick.
 describe('when the ask would be pointless', () => {
-  const seen = () => makeStorage({ 'famcart_tour_seen_v1': '1' })
+  const seen = () => makeStorage({ 'famcart_tour_seen_v4': '1' })
 
   it('skips it where push is unsupported', () => {
     push.supported = false
@@ -140,7 +140,7 @@ describe('when the ask would be pointless', () => {
 
   it('never re-asks once a decision is stored', () => {
     const g = greeting({
-      storage: makeStorage({ 'famcart_tour_seen_v1': '1', 'famcart-notifications:user-1': 'off' }),
+      storage: makeStorage({ 'famcart_tour_seen_v4': '1', 'famcart-notifications:user-1': 'off' }),
     })
     g.start()
     expect(g.notificationPromptOpen.value).toBe(false)
@@ -238,7 +238,7 @@ describe('answering the ask', () => {
     it('settles immediately for a returning user with nothing to show', () => {
       const onSettled = vi.fn()
       const storage = makeStorage({
-        'famcart_tour_seen_v1': '1',
+        'famcart_tour_seen_v4': '1',
         'famcart-notifications:user-1': 'off',
       })
       greeting({ storage, onSettled }).start()

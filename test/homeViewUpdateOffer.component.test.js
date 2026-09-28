@@ -98,7 +98,7 @@ beforeEach(() => {
   __setOnlineForTest(true)
   // A returning user: the tour is behind them and the notifications question is
   // answered, so the first-run sequence has nothing to show and settles at once.
-  localStorage.setItem('famcart_tour_seen_v1', '1')
+  localStorage.setItem('famcart_tour_seen_v4', '1')
   localStorage.setItem('famcart-notifications:user-1', 'off')
   globalThis.fetch = vi.fn(async () => ({ ok: true, json: async () => RELEASE }))
 })

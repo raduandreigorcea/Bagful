@@ -335,23 +335,24 @@ export default {
   'tour.start': 'Start shopping',
   'tour.inviteCodeLabel': 'Invite code',
   'tour.copyInviteCode': 'Copy invite code {code}',
-  'tour.art.query': 'Avocados',
-  'tour.art.avocado': 'Avocado',
-  'tour.art.milk': 'Milk',
-  'tour.art.bread': 'Bread',
-  'tour.art.slide': 'Slide to check out',
-  'tour.add.title': 'Add what you need',
+  'tour.add.title': 'Search for anything',
   'tour.add.body':
-    'Start typing and the matching products come up. Tap one and it goes straight onto the list.',
+    'Start typing and pick from the matching products. One tap and it is on the list.',
+  'tour.scan.title': 'Or just scan it',
+  'tour.scan.body':
+    'With the search box empty, its button opens the camera. Point it at a barcode and the product lands on your list.',
+  'tour.qty.title': 'Need more than one?',
+  'tour.qty.body':
+    'Tap the number on a row to bring up − and +. It closes by itself once you stop.',
   'tour.swipe.title': 'Swipe to check or remove',
   'tour.swipe.body':
     'Swipe a row right once it is in your cart, or left to take it off the list. No small buttons to aim at.',
   'tour.checkout.title': 'Slide to check out',
   'tour.checkout.body':
-    'Checked rows wait in the cart until you slide the bar at the bottom. That is what clears them and saves the trip to your history.',
+    'Checked rows wait in the cart until you slide the bar at the bottom. That clears them and saves the trip to your history, so next time your usual items are one tap away.',
   'tour.invite.title': 'Bring your people in',
   'tour.invite.body':
-    'Share your invite code so everyone shops from the same list. Every change shows up for all of you the moment it happens.',
+    'Share your invite code so everyone shops from the same list, and every change shows up for all of you instantly. You can keep more than one list and switch between them any time.',
 
   'common.done': 'Done',
   'common.close': 'Close',
