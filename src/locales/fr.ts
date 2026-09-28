@@ -194,6 +194,8 @@ const fr: Catalog = {
   'account.reportHint': 'Bugs et retours',
   'account.signOut': 'Se déconnecter',
   'account.signingOut': 'Déconnexion',
+  'account.confirmSignOutTitle': 'Se déconnecter ?',
+  'account.confirmSignOutMessage': 'Vous devrez vous reconnecter pour voir vos listes sur cet appareil.',
 
   'list.title': 'Réglages de la liste',
   'list.close': 'Fermer les réglages',

@@ -8,6 +8,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import AppNavBar from '../src/components/AppNavBar.vue'
 import AccountActionModal from '../src/components/AccountActionModal.vue'
+import ConfirmModal from '../src/components/ConfirmModal.vue'
 
 const clerkUser = vi.hoisted(() => ({ value: null }))
 
@@ -255,7 +256,27 @@ describe('AppNavBar sign out', () => {
 
     wrapper.findComponent(AccountActionModal).vm.$emit('sign-out')
     await flushPromises()
+    wrapper.findComponent(ConfirmModal).vm.$emit('confirm')
+    await flushPromises()
 
     expect(identifyUser).toHaveBeenCalledWith(null)
+  })
+
+  // Found by the bot swarm: Sign out was one tap with nothing in between, and
+  // a stray tap on it (the row sits where the account menu opens) signed a
+  // bot out mid-shop. It asks first now, like every other hard-to-undo action.
+  it('asks first, and a Cancel keeps you signed in', async () => {
+    const wrapper = mountBar({ listName: 'Home', memberProfiles: profiles, currentUserId: 'u_self' })
+
+    wrapper.findComponent(AccountActionModal).vm.$emit('sign-out')
+    await flushPromises()
+    const dialog = wrapper.findComponent(ConfirmModal)
+    expect(dialog.props('open')).toBe(true)
+    expect(identifyUser).not.toHaveBeenCalledWith(null)
+
+    dialog.vm.$emit('cancel')
+    await flushPromises()
+    expect(dialog.props('open')).toBe(false)
+    expect(identifyUser).not.toHaveBeenCalledWith(null)
   })
 })

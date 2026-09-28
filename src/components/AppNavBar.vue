@@ -3,6 +3,7 @@ import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch,
 import { setStatusBarOnBrand } from '../lib/theme'
 import { useClerk, useUser } from '@clerk/vue'
 import AccountActionModal from './AccountActionModal.vue'
+import ConfirmModal from './ConfirmModal.vue'
 import AppIcon from './AppIcon.vue'
 import BackButton from './BackButton.vue'
 import ListSheet from './ListSheet.vue'
@@ -14,6 +15,7 @@ import ListIcon from './ListIcon.vue'
 import { ITEM_LIMIT_DEFAULT } from '../lib/limits'
 import { getUserDisplayName, getUserInitial, getUserPrimaryEmail, initialOf } from '../lib/userIdentity'
 import { useSignOut } from '../lib/useSignOut'
+import { useConfirm } from '../lib/useConfirm'
 import { shareInvite } from '../lib/inviteShare'
 import type { ProductSuggestion } from '../lib/productSearch'
 
@@ -239,6 +241,20 @@ const { signingOut, signOut: handleSignOut } = useSignOut({
     accountMenuOpen.value = false
   },
 })
+
+// Asked first, like every other action that is hard to take back: the row sits
+// where the account menu opens, and one stray tap on it signed a bot out
+// mid-shop (found by the bot swarm). Signing back in takes an emailed code.
+const { state: signOutConfirm, confirm, resolveWith } = useConfirm()
+async function confirmSignOut() {
+  const sure = await confirm({
+    title: t('account.confirmSignOutTitle'),
+    message: t('account.confirmSignOutMessage'),
+    confirmText: t('account.signOut'),
+    danger: true,
+  })
+  if (sure) await handleSignOut()
+}
 
 // Offline (cold-booted from cache) Clerk can't load, so `user` is null. The
 // cached list roster still holds this user's profile, so fall back to it for
@@ -620,7 +636,19 @@ const orderedActiveMembers = computed(() =>
     @edit-account="openAccountSettings"
     @app-settings="openAppSettings"
     @report-issue="openReportIssue"
-    @sign-out="handleSignOut"
+    @sign-out="confirmSignOut"
+  />
+
+  <ConfirmModal
+    :open="signOutConfirm.open"
+    :title="signOutConfirm.title"
+    :message="signOutConfirm.message"
+    :danger="signOutConfirm.danger"
+    :confirm-text="signOutConfirm.confirmText"
+    :cancel-text="signOutConfirm.cancelText"
+    :show-cancel="signOutConfirm.showCancel"
+    @confirm="resolveWith(true)"
+    @cancel="resolveWith(false)"
   />
 
   <ReportIssueModal
