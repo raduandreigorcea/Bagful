@@ -305,23 +305,24 @@ const de: Catalog = {
   'tour.start': 'Einkaufen starten',
   'tour.inviteCodeLabel': 'Einladungscode',
   'tour.copyInviteCode': 'Einladungscode {code} kopieren',
-  'tour.art.query': 'Avocados',
-  'tour.art.avocado': 'Avocado',
-  'tour.art.milk': 'Milch',
-  'tour.art.bread': 'Brot',
-  'tour.art.slide': 'Wischen zum Abschließen',
-  'tour.add.title': 'Trag ein, was du brauchst',
+  'tour.add.title': 'Such einfach los',
   'tour.add.body':
-    'Fang an zu tippen, und die passenden Produkte erscheinen. Tipp eines an, und es landet direkt auf der Liste.',
+    'Fang an zu tippen und wähl aus den passenden Produkten. Ein Tipp, und es steht auf der Liste.',
+  'tour.scan.title': 'Oder scann es',
+  'tour.scan.body':
+    'Ist das Suchfeld leer, öffnet sein Knopf die Kamera. Halt sie auf einen Barcode, und das Produkt landet auf deiner Liste.',
+  'tour.qty.title': 'Mehr als eins?',
+  'tour.qty.body':
+    'Tipp auf die Zahl in einer Zeile, dann erscheinen − und +. Sie verschwinden von selbst, sobald du aufhörst.',
   'tour.swipe.title': 'Wischen zum Abhaken oder Entfernen',
   'tour.swipe.body':
     'Wisch eine Zeile nach rechts, sobald sie im Wagen liegt, oder nach links, um sie von der Liste zu nehmen. Keine kleinen Knöpfe zum Treffen.',
   'tour.checkout.title': 'Wischen zum Abschließen',
   'tour.checkout.body':
-    'Abgehakte Zeilen warten im Wagen, bis du die Leiste unten wischst. Das räumt sie ab und speichert den Einkauf in deinem Verlauf.',
+    'Abgehakte Zeilen warten im Wagen, bis du die Leiste unten wischst. Das räumt sie ab und speichert den Einkauf in deinem Verlauf, so sind deine üblichen Sachen beim nächsten Mal nur einen Tipp entfernt.',
   'tour.invite.title': 'Hol die anderen dazu',
   'tour.invite.body':
-    'Teile deinen Einladungscode, damit alle von derselben Liste einkaufen. Jede Änderung erscheint bei allen im selben Moment.',
+    'Teile deinen Einladungscode, damit alle von derselben Liste einkaufen. Jede Änderung sehen alle sofort. Du kannst mehrere Listen haben und jederzeit zwischen ihnen wechseln.',
 
   'common.done': 'Fertig',
   'common.close': 'Schließen',

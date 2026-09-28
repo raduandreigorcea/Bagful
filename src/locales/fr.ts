@@ -300,23 +300,24 @@ const fr: Catalog = {
   'tour.start': 'Commencer les courses',
   'tour.inviteCodeLabel': 'Code d’invitation',
   'tour.copyInviteCode': 'Copier le code d’invitation {code}',
-  'tour.art.query': 'Avocats',
-  'tour.art.avocado': 'Avocat',
-  'tour.art.milk': 'Lait',
-  'tour.art.bread': 'Pain',
-  'tour.art.slide': 'Glissez pour valider',
-  'tour.add.title': 'Ajoutez ce dont vous avez besoin',
+  'tour.add.title': 'Cherchez ce que vous voulez',
   'tour.add.body':
-    'Commencez à taper et les produits correspondants apparaissent. Touchez-en un et il va droit sur la liste.',
+    'Commencez à taper et choisissez parmi les produits proposés. Une touche et c’est sur la liste.',
+  'tour.scan.title': 'Ou scannez-le',
+  'tour.scan.body':
+    'Quand la recherche est vide, son bouton ouvre l’appareil photo. Visez un code-barres et le produit arrive sur votre liste.',
+  'tour.qty.title': 'Besoin de plusieurs ?',
+  'tour.qty.body':
+    'Touchez le nombre sur une ligne pour faire apparaître − et +. Ils disparaissent tout seuls dès que vous arrêtez.',
   'tour.swipe.title': 'Balayez pour cocher ou retirer',
   'tour.swipe.body':
     'Balayez une ligne vers la droite une fois l’article dans le panier, ou vers la gauche pour le retirer de la liste. Aucun petit bouton à viser.',
   'tour.checkout.title': 'Glissez pour valider',
   'tour.checkout.body':
-    'Les lignes cochées attendent dans le panier jusqu’à ce que vous glissiez la barre du bas. C’est ce qui les efface et enregistre la sortie dans votre historique.',
+    'Les lignes cochées attendent dans le panier jusqu’à ce que vous glissiez la barre du bas. Cela les efface et enregistre la sortie dans votre historique, pour que vos articles habituels soient à portée de doigt la prochaine fois.',
   'tour.invite.title': 'Faites venir les autres',
   'tour.invite.body':
-    'Partagez votre code d’invitation pour que tout le monde fasse ses courses sur la même liste. Chaque changement apparaît pour tous à l’instant même.',
+    'Partagez votre code d’invitation pour que tout le monde fasse les courses sur la même liste, et chaque changement apparaît chez tous aussitôt. Vous pouvez avoir plusieurs listes et passer de l’une à l’autre à tout moment.',
 
   'common.done': 'Terminé',
   'common.close': 'Fermer',

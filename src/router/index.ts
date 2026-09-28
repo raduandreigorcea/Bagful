@@ -26,12 +26,6 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
-    // A URL people may have open: kept as a redirect rather than folded into
-    // the catch-all below, unlike /family-setup before it.
-    path: '/household-setup',
-    redirect: '/list-setup',
-  },
-  {
     path: '/sso-callback',
     name: 'sso-callback',
     component: () => import('../views/SSOCallbackView.vue'),
@@ -50,7 +44,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     // Any address the app does not know, which used to render a blank page: an
-    // old bookmark (/family-setup, from before the households rename), a typo,
+    // old bookmark (/family-setup or /household-setup, from before the rename to
+    // lists), a typo,
     // a link from a build that had a route this one does not. Home is right for
     // all of them, because the guard sends it on to login or setup as needed.
     path: '/:pathMatch(.*)*',

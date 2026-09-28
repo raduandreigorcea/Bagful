@@ -58,6 +58,15 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // Only OnboardingTour sets this: it plays a swipe on a real row by moving the
+  // face as a finger would, so the panels, colours and arming are the list's own
+  // rather than a drawing of them. While set, the face follows it 1:1 and arms at
+  // the real thresholds; back to null, it settles exactly as a released finger
+  // does. It never emits: the tour decides what the swipe did.
+  demoOffset: {
+    type: Number as PropType<number | null>,
+    default: null,
+  },
 })
 
 const emit = defineEmits<{
@@ -345,6 +354,16 @@ function onPointerUp(event: PointerEvent) {
   // click after a pan, so nothing here has to tell the two apart any more.
   settle()
 }
+
+watch(
+  () => props.demoOffset,
+  (dx) => {
+    if (dx === null) return settle()
+    dragging.value = true
+    offset.value = resist(dx)
+    armed.value = dx !== 0 && Math.abs(dx) >= triggerFor(dx)
+  },
+)
 
 function settle() {
   dragging.value = false
