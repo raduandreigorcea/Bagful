@@ -6,7 +6,8 @@
 //
 // Stops at the first failure and writes bots/runs/<time>/: a screenshot and a
 // Playwright trace per bot (open with `npx playwright show-trace`), actions.log
-// and the seed. The seed replays the same actions, not the same network timing.
+// and the seed. The seed replays the same picks of bot and action; when two
+// bots act at once, and wherever network timing matters, a replay can drift.
 // The bot accounts are famcart-bot1..6+clerk_test@example.com on the Clerk
 // development instance; test emails always accept the code 424242.
 import fs from 'node:fs'
