@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({}) }))
 vi.mock('@clerk/vue', () => ({ useAuth: () => ({}) }))
 
-import { fetchWithRetry, fetchWithFreshToken, setSupabaseTokenResolver } from '../src/supabase'
+import { fetchWithRetry, fetchWithFreshToken, resolveAccessToken, setSupabaseTokenResolver } from '../src/supabase'
 
 const networkError = () => Object.assign(new TypeError('Failed to fetch'), {})
 
@@ -85,5 +85,36 @@ describe('fetchWithFreshToken', () => {
 
     await expect(fetchWithFreshToken('https://x/rest')).resolves.toBe(denied)
     expect(fetch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('resolveAccessToken', () => {
+  // A JWT whose only claim that matters here is exp, seconds from now.
+  const tokenExpiringIn = (seconds) =>
+    `h.${Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + seconds })).toString('base64url')}.s`
+
+  it('keeps a cached token that outlives the next realtime heartbeat', async () => {
+    const cached = tokenExpiringIn(55)
+    const resolve = vi.fn().mockResolvedValue(cached)
+    setSupabaseTokenResolver(resolve)
+
+    await expect(resolveAccessToken()).resolves.toBe(cached)
+    expect(resolve).toHaveBeenCalledTimes(1)
+  })
+
+  it('mints a fresh token when the cached one would expire before the next heartbeat', async () => {
+    const fresh = tokenExpiringIn(60)
+    const resolve = vi.fn().mockResolvedValueOnce(tokenExpiringIn(20)).mockResolvedValueOnce(fresh)
+    setSupabaseTokenResolver(resolve)
+
+    await expect(resolveAccessToken()).resolves.toBe(fresh)
+    expect(resolve).toHaveBeenLastCalledWith({ skipCache: true })
+  })
+
+  it('passes through a token it cannot read, and a missing one', async () => {
+    setSupabaseTokenResolver(vi.fn().mockResolvedValue('not-a-jwt'))
+    await expect(resolveAccessToken()).resolves.toBe('not-a-jwt')
+    setSupabaseTokenResolver(vi.fn().mockResolvedValue(null))
+    await expect(resolveAccessToken()).resolves.toBeNull()
   })
 })

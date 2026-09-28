@@ -119,6 +119,36 @@ export async function fetchWithFreshToken(
   return fetchWithRetry(url, { ...options, headers })
 }
 
+// The token both clients authenticate with, REST and realtime alike.
+//
+// Realtime reads it only on connect and on each heartbeat (every 25s, realtime-js
+// HEARTBEAT_INTERVAL), and a Clerk session token lives 60s. Clerk hands back its
+// cached token until that is nearly expired, so a heartbeat could push one with
+// 20s left: the server then closed all three channels ("Token has expired 0
+// seconds ago") before the next heartbeat brought a fresh one, and the rejoin
+// took up to 8s, during which changes from the rest of the list were missed.
+// The bot swarm (bots/swarm.mjs) caught it. So a token that would not outlive
+// the next heartbeat is swapped for a freshly minted one. On REST the same rule
+// costs at most one extra mint per 25s, and only while requests are being made.
+const MIN_TOKEN_LIFE_MS = 35_000
+
+function msUntilExpiry(token: string): number {
+  try {
+    const payload = token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/')
+    const { exp } = JSON.parse(atob(payload)) as { exp?: number }
+    return typeof exp === 'number' ? exp * 1000 - Date.now() : Infinity
+  } catch {
+    return Infinity
+  }
+}
+
+export async function resolveAccessToken(): Promise<string | null> {
+  if (!getTokenFn) return null
+  const token = await getTokenFn()
+  if (token && msUntilExpiry(token) < MIN_TOKEN_LIFE_MS) return getTokenFn({ skipCache: true })
+  return token
+}
+
 // There was an unauthenticated `supabase` client exported here for
 // "public/unauthenticated queries". Nothing ever imported it — every table is
 // behind RLS and every read needs a Clerk token — but being at module scope it
@@ -137,7 +167,7 @@ export function getSupabase(): AppClient {
       // Single source of auth: supabase-js resolves this callback once per
       // request (REST and realtime setAuth) and attaches the Authorization
       // header itself — no custom header wiring, no second token fetch.
-      accessToken: async () => (getTokenFn ? await getTokenFn() : null),
+      accessToken: resolveAccessToken,
       global: {
         fetch: fetchWithFreshToken,
       },
@@ -164,7 +194,7 @@ export function getCatalogSupabase(): CatalogClient | null {
       // The same resolver the app client uses, deliberately. Two clients, one
       // session: the token Clerk issued verifies against both projects because
       // both name the same issuer in their Third-Party Auth settings.
-      accessToken: async () => (getTokenFn ? await getTokenFn() : null),
+      accessToken: resolveAccessToken,
       global: {
         fetch: fetchWithFreshToken,
       },
