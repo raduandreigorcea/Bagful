@@ -172,6 +172,13 @@ export default ts.config(
   },
 
   {
+    // The bot swarm: Node, but its page.evaluate callbacks run in the browser.
+    files: ['bots/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+    rules: { 'no-console': 'off' },
+  },
+
+  {
     files: ['test/**/*.{js,ts}'],
     languageOptions: { globals: { ...globals.node } },
   },
