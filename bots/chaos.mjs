@@ -228,7 +228,10 @@ export async function kickMember({ page }, rng, bots) {
   await page.getByRole('alertdialog').getByRole('button').last().click()
   victim.kicked = true
   victim.kickedAt = Date.now()
-  await closeSomehow(page, rng, 'Close settings')
+  // Not Back: in a browser, Back with a dialog open leaves the page, which
+  // cancels the removal still on the wire (the APK's Back closes the dialog
+  // instead, see lib/nativeBack). Leaving mid-request is tested elsewhere.
+  await page.getByRole('button', { name: 'Close settings' }).click()
   return { line: `KICK bot${victim.n} out of the list`, victim }
 }
 
