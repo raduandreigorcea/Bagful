@@ -16,6 +16,7 @@
 // only about what reaches the screen.
 
 import { captureException } from './errorReporting'
+import { isOfflineError } from './offlineQueue'
 
 export class UserFacingError extends Error {
   constructor(message: string) {
@@ -36,10 +37,14 @@ function report(error: unknown): void {
 }
 
 // The message to show the user for `error`, and the only way an error should
-// reach the UI. Deliberate messages pass through; anything else is reported and
-// replaced with `fallback`.
+// reach the UI. Deliberate messages pass through; anything else is replaced
+// with `fallback` and reported, unless the request died on the network: a
+// dropped connection, or the page being left mid-save (a reload, the browser's
+// Back). That is not a fault in the app, the same rule loadListHeader and the
+// list actions follow, and the bot swarm showed every interrupted settings save
+// arriving in Sentry as an error.
 export function userMessage(error: unknown, fallback: string): string {
   if (error instanceof UserFacingError) return error.message
-  report(error)
+  if (!isOfflineError(error)) report(error)
   return fallback
 }
