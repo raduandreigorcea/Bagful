@@ -1399,6 +1399,23 @@ describe('undoing a delete', () => {
     expect(mocks.db.calls.some((q) => q.op === 'delete')).toBe(false)
   })
 
+  // Found by the bot swarm: two members deleted the same row, the second one
+  // pressed Undo after the first one's delete had gone through, and the row
+  // came back on the second one's screen only, gone from the server and from
+  // everyone else's list. Nothing ever took it away again.
+  it('does not bring back a row another member deleted during the window', async () => {
+    const server = [makeItem({ id: 'item-1', name: 'Milk' })]
+    const wrapper = await mountHome({ items: server })
+
+    wrapper.findComponent(ShoppingList).vm.$emit('delete', listedItems(wrapper)[0])
+    await flushPromises()
+    server.splice(0) // someone else's delete lands on the server meanwhile
+
+    triggerToastAction()
+    await flushPromises()
+    expect(listedItems(wrapper)).toHaveLength(0)
+  })
+
   it('keeps a held-back row off the list when a refetch lands during the window', async () => {
     const server = [makeItem({ id: 'item-1', name: 'Milk' })]
     const wrapper = await mountHome({ items: server })

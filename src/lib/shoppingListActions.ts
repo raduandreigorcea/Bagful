@@ -1088,6 +1088,11 @@ export function useShoppingListActions(options: {
       settled = true
       pendingRemovals.delete(item.id)
       restore()
+      // Someone else may have deleted the row while it was held back: their
+      // realtime DELETE found nothing on screen to remove, so the restore just
+      // brought back a row the server no longer has, on this screen only, for
+      // good. One re-read settles it either way. (Found by bots/swarm.mjs.)
+      void loadItems()
     }
 
     return { commit, undo }
