@@ -26,6 +26,9 @@ export async function openBot(shared, n, { headed }) {
   })
   await context.tracing.start({ screenshots: true, snapshots: true })
   const page = await context.newPage()
+  // A tap waits 10s, not 30s: longer than any honest render, short enough
+  // that a row deleted under a bot costs little (see the give-up in swarm.mjs).
+  page.setDefaultTimeout(10_000)
   // The tour, the notification prompt and the welcome screen open on their own
   // schedule; whenever one covers what a bot is about to tap, Playwright clicks
   // through it first.
@@ -33,7 +36,7 @@ export async function openBot(shared, n, { headed }) {
     // The overlay may leave by itself mid-click; that is fine too.
     await page.addLocatorHandler(button(page, name), b => b.click({ timeout: 5_000 }).catch(() => {}), { noWaitAfter: true })
   }
-  return { n, browser, context, page, headed, ownsBrowser: !shared, offlineUntil: 0 }
+  return { n, browser, context, page, headed, ownsBrowser: !shared, offlineUntil: 0, giveUps: 0 }
 }
 
 const setupPicker = page => page.getByText('Create a list', { exact: true })
@@ -80,6 +83,10 @@ const listSettingsButton = page => page.getByRole('navigation', { name: 'Main ac
 export async function leaveAllLists(bot) {
   const { page } = bot
   for (let i = 0; i < 3; i++) {
+    // The app paints its cached list first and only then learns from the
+    // server that the bot left it last run; decide after the network settles.
+    await page.waitForLoadState('networkidle')
+    await throughWelcome(page)
     if (!(await addButton(page).isVisible())) return
     await listSettingsButton(page).click()
     await page.getByRole('tab', { name: 'Danger Zone' }).click()

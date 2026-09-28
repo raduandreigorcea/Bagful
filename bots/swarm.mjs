@@ -41,6 +41,29 @@ for (let n = 1; n <= opts.bots; n++) {
   const { page, context } = bot
   page.on('console', m => { if (m.type() === 'error' && !isIgnoredConsole(m.text())) problems.push(`bot${n} console: ${m.text()}`) })
   page.on('pageerror', e => problems.push(`bot${n} uncaught: ${e.message}`))
+  // What the realtime socket said, trimmed to event and topic, so a sync
+  // failure shows whether changes arrived at all. Last 400 frames per bot.
+  bot.ws = []
+  const wsNote = line => { bot.ws.push(`${new Date().toISOString().slice(11, 23)} ${line}`); if (bot.ws.length > 400) bot.ws.shift() }
+  page.on('websocket', ws => {
+    if (!ws.url().includes('/realtime/')) return
+    wsNote('open')
+    ws.on('close', () => wsNote('close'))
+    ws.on('socketerror', e => wsNote(`error ${e}`))
+    const frame = dir => f => {
+      try {
+        const m = JSON.parse(f.payload)
+        const [, , topic, event, payload] = Array.isArray(m) ? m : [null, null, m.topic, m.event, m.payload]
+        if (event === 'heartbeat' || topic === 'phoenix') return
+        // Errors in full: the server's reason is the whole point of the log.
+        const failed = payload?.status === 'error' || event === 'phx_error'
+        const detail = failed ? JSON.stringify(payload).slice(0, 400) : payload?.data?.type ?? payload?.status ?? ''
+        wsNote(`${dir} ${event} ${topic} ${detail}`)
+      } catch { /* binary frame */ }
+    }
+    ws.on('framereceived', frame('<'))
+    ws.on('framesent', frame('>'))
+  })
   page.on('response', r => {
     if (r.url().includes('.supabase.co') && r.status() >= 400) problems.push(`bot${n} ${r.status()} ${r.request().method()} ${r.url()}`)
   })
@@ -61,6 +84,7 @@ async function dump(reason) {
   for (const b of bots) {
     await b.page.screenshot({ path: `${dir}/bot${b.n}.png` }).catch(() => {})
     await b.context.tracing.stop({ path: `${dir}/bot${b.n}-trace.zip` }).catch(() => {})
+    fs.writeFileSync(`${dir}/bot${b.n}-realtime.log`, b.ws.join('\n'))
   }
   fs.writeFileSync(`${dir}/actions.log`, [...log, '', 'FAILED:', reason].join('\n'))
   fs.writeFileSync(`${dir}/seed.txt`, `npm run bots -- --seed ${opts.seed} --bots ${opts.bots}\n`)
@@ -75,6 +99,9 @@ async function close() {
 // Online bots must show the same list once realtime has had 5s to catch up.
 async function checkAgreement() {
   const online = bots.filter(b => !b.offlineUntil)
+  // A delete reaches the server only once its Undo toast has gone (5s), so
+  // let open toasts finish before the 5s allowed for sync starts counting.
+  await Promise.all(online.map(b => b.page.locator('.toast').first().waitFor({ state: 'detached', timeout: 15_000 }).catch(() => {})))
   const deadline = Date.now() + 5_000
   let diff
   do {
@@ -82,7 +109,15 @@ async function checkAgreement() {
     if (!diff) return null
     await new Promise(r => setTimeout(r, 500))
   } while (Date.now() < deadline)
-  return `bot${diff.a} and bot${diff.b} disagree after 5s. Only bot${diff.a}: ${JSON.stringify(diff.onlyA)}. Only bot${diff.b}: ${JSON.stringify(diff.onlyB)}`
+  const report = `bot${diff.a} and bot${diff.b} disagree after 5s. Only bot${diff.a}: ${JSON.stringify(diff.onlyA)}. Only bot${diff.b}: ${JSON.stringify(diff.onlyB)}`
+  // Still a failure either way, but slow and lost are different bugs.
+  for (let waited = 5; waited <= 35; waited++) {
+    await new Promise(r => setTimeout(r, 1000))
+    if (!findDisagreement(await Promise.all(online.map(async b => ({ bot: b.n, items: await readList(b.page) }))))) {
+      return `${report}\nThey agreed after ${waited}s in all: slow sync, not lost changes.`
+    }
+  }
+  return `${report}\nStill disagreeing after 35s: changes were lost, not just slow.`
 }
 
 async function backOnline(b) {
@@ -122,7 +157,18 @@ try {
     const actors = [...new Set(rng() < 0.2 ? [randomBot(), randomBot()] : [randomBot()])]
     const plans = actors.map(b => ({ b, action: pickWeighted(rng, ACTIONS), own: makeRng(Math.floor(rng() * 2 ** 32)) }))
     await Promise.all(plans.map(async ({ b, action, own }) => {
-      const what = await action.run(b, own)
+      let what
+      try {
+        what = await action.run(b, own)
+        b.giveUps = 0
+      } catch (e) {
+        // Another bot removed the row, or reordered the list, mid-action: a
+        // person would shrug and move on. Three in a row is a stuck app.
+        if (e.name !== 'TimeoutError' || ++b.giveUps >= 3) throw e
+        note(`bot${b.n} gave up on ${action.id}: ${e.message.split('\n')[0]}`)
+        await b.page.keyboard.press('Escape')
+        return
+      }
       if (what) note(`bot${b.n} ${what}`)
       if (action.id === 'offline' && what) {
         await b.page.getByRole('status').filter({ hasText: 'Offline' }).first().waitFor({ timeout: 10_000 })

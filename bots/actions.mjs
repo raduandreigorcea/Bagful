@@ -12,7 +12,11 @@ async function randomRow(page, rng, checked) {
     ? rows(page)
     : rows(page).filter({ has: page.locator(`button.item-toggle[aria-pressed="${checked}"]`) })
   const n = await all.count()
-  return n ? all.nth(Math.floor(rng() * n)) : null
+  if (!n) return null
+  // Pinned by name: other bots add and remove rows meanwhile, and nth(k)
+  // would slide onto a different item halfway through the action.
+  const name = (await all.nth(Math.floor(rng() * n)).locator('.item-name').textContent()).trim()
+  return rows(page).filter({ has: page.locator('.item-name').getByText(name, { exact: true }) }).first()
 }
 
 async function addFromSearch({ page }, rng) {
@@ -54,6 +58,9 @@ async function removeRow({ page }, rng) {
   await page.mouse.down()
   await page.mouse.move(box.x + box.width * 0.1, box.y + box.height / 2, { steps: 8 })
   await page.mouse.up()
+  // Hand off the screen, as a person does: a pointer left resting where the
+  // Undo toast appears pauses it (AppToast), and the delete never goes out.
+  await page.mouse.move(1, 1)
   return `remove "${name}" (swipe)`
 }
 
@@ -79,6 +86,9 @@ async function checkout({ page }) {
   await page.mouse.down()
   await page.mouse.move(track.x + track.width - 4, box.y + box.height / 2, { steps: 12 })
   await page.mouse.up()
+  // Hand off the screen, as a person does: a pointer left resting where the
+  // Undo toast appears pauses it (AppToast), and the delete never goes out.
+  await page.mouse.move(1, 1)
   return `checkout (${label})`
 }
 
