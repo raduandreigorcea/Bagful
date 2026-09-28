@@ -76,7 +76,7 @@ export async function ensureSignedIn(bot) {
   await bot.context.storageState({ path: authFile(n) })
 }
 
-const listSettingsButton = page => page.getByRole('navigation', { name: 'Main actions' }).getByRole('button', { name: / settings$|^List$/ })
+export const listSettingsButton = page => page.getByRole('navigation', { name: 'Main actions' }).getByRole('button', { name: / settings$|^List$/ })
 
 // Crash leftovers: delete what this bot owns, leave what it joined, until the
 // app sends it to list setup. Bounded by the membership cap of 3.
