@@ -76,6 +76,24 @@ export function findDisagreement(snaps) {
   return null
 }
 
+// What a Sentry envelope reports, in one line: the exception's type, message
+// and top frame, or the message of a captureMessage. The envelope is newline-
+// separated JSON; the header lines carry nothing worth reading.
+export function describeSentryEnvelope(body) {
+  for (const line of body.split('\n')) {
+    let item
+    try { item = JSON.parse(line) } catch { continue }
+    const ex = item.exception?.values?.at(-1)
+    if (ex) {
+      const frame = ex.stacktrace?.frames?.at(-1)
+      const where = frame ? ` at ${frame.function ?? '?'} (${(frame.filename ?? '').split('/').pop()}:${frame.lineno ?? '?'})` : ''
+      return `${ex.type}: ${ex.value}${where}`
+    }
+    if (item.message) return typeof item.message === 'string' ? item.message : item.message.formatted ?? JSON.stringify(item.message)
+  }
+  return body.slice(0, 300)
+}
+
 // Console errors that are not FamCart bugs. Grow this only with a reason.
 const IGNORED_CONSOLE = [
   /^\[vite\]/,

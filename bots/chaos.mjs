@@ -51,7 +51,7 @@ async function addThenBail(bot, rng) {
   const term = pick(rng, TERMS)
   await page.getByRole('combobox', { name: 'Add an item' }).fill(term)
   await pause(rng() * 700) // sometimes before the results land, sometimes after
-  const how = pick(rng, ['escape', 'back', 'reload', 'offline', 'report'])
+  const how = pick(rng, bot.offlineUntil ? ['escape', 'back'] : ['escape', 'back', 'reload', 'offline', 'report'])
   if (how === 'escape') await page.keyboard.press('Escape')
   else if (how === 'back') await back(page)
   else if (how === 'reload') await (bot.offlineUntil ? page.keyboard.press('Escape') : page.reload())
@@ -257,14 +257,14 @@ export async function regenerateCode({ page }, rng) {
 
 export const CHAOS = [
   { id: 'add-then-bail', weight: 8, run: addThenBail },
-  { id: 'report', weight: 3, run: reportIssue },
+  { id: 'report', weight: 3, run: reportIssue, lazy: true },
   { id: 'tap-then-reload', weight: 4, run: tapThenReload },
   { id: 'spam-taps', weight: 6, run: spamTaps },
   { id: 'delete-undo', weight: 5, run: deleteThenUndo },
-  { id: 'rename', weight: 3, run: renameList },
-  { id: 'icon', weight: 2, run: changeIcon },
-  { id: 'modal-storm', weight: 4, run: modalStorm },
-  { id: 'theme', weight: 2, run: toggleTheme },
+  { id: 'rename', weight: 3, run: renameList, lazy: true },
+  { id: 'icon', weight: 2, run: changeIcon, lazy: true },
+  { id: 'modal-storm', weight: 4, run: modalStorm, lazy: true },
+  { id: 'theme', weight: 2, run: toggleTheme, lazy: true },
 ]
 
 // Everything a racer can do to one named item. Short timeouts: the other

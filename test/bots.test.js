@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   PRODUCTION_PROJECT_REF, isProductionUrl, parseEnv, parseArgs,
-  makeRng, pickWeighted, findDisagreement, isIgnoredConsole,
+  makeRng, pickWeighted, findDisagreement, isIgnoredConsole, describeSentryEnvelope,
 } from '../bots/core.mjs'
 import { PRODUCTION_PROJECT_REF as APP_REF } from '../src/lib/appChannel'
 
@@ -52,5 +52,20 @@ describe('bots core', () => {
     expect(isIgnoredConsole('Failed to load resource: the server responded with a status of 401 ()')).toBe(true)
     expect(isIgnoredConsole('Failed to load resource: the server responded with a status of 500')).toBe(false)
     expect(isIgnoredConsole('TypeError: x is undefined')).toBe(false)
+  })
+})
+
+describe('describeSentryEnvelope', () => {
+  it('names the exception and where it was thrown', () => {
+    const body = [
+      '{"event_id":"x"}',
+      '{"type":"event"}',
+      JSON.stringify({ exception: { values: [{ type: 'PostgrestError', value: 'new row violates row-level security policy', stacktrace: { frames: [{ function: 'addItem', filename: 'http://localhost:5173/src/lib/shoppingListActions.ts', lineno: 412 }] } }] } }),
+    ].join('\n')
+    expect(describeSentryEnvelope(body)).toBe('PostgrestError: new row violates row-level security policy at addItem (shoppingListActions.ts:412)')
+  })
+  it('falls back to a message, then to the raw body', () => {
+    expect(describeSentryEnvelope('{"type":"event"}\n{"message":"Realtime reconnect failed"}')).toBe('Realtime reconnect failed')
+    expect(describeSentryEnvelope('not json')).toBe('not json')
   })
 })

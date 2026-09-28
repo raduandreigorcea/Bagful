@@ -15,7 +15,7 @@
 // signs it in would pull it out of the explorer's list.
 import fs from 'node:fs'
 import { chromium } from 'playwright'
-import { parseArgs, parseEnv, isProductionUrl, makeRng, pickWeighted, findDisagreement, isIgnoredConsole } from './core.mjs'
+import { parseArgs, parseEnv, isProductionUrl, makeRng, pickWeighted, findDisagreement, isIgnoredConsole, describeSentryEnvelope } from './core.mjs'
 import { BASE_URL, openBot, ensureSignedIn, leaveAllLists, createList, joinList, deleteList, readList, errorDialogText, addButton } from './app.mjs'
 import { ACTIONS } from './actions.mjs'
 import { CHAOS, RACE_OPS, kickMember, promoteOrDemote, regenerateCode } from './chaos.mjs'
@@ -84,7 +84,7 @@ for (let n = 1; n <= opts.bots; n++) {
   // bookkeeping, and feedback is the bots' own "Report an issue".
   await context.route(/sentry\.io/, route => {
     const body = route.request().postData() ?? ''
-    if (/"type":"event"/.test(body)) problems.push(`bot${n} reported to Sentry: ${body.slice(0, 500)}`)
+    if (/"type":"event"/.test(body)) problems.push(`bot${n} reported to Sentry${bot.kicked ? ' (while being removed from the list)' : ''}: ${describeSentryEnvelope(body)}`)
     return route.fulfill({ status: 200, body: '{}' })
   })
   bots.push(bot)
@@ -261,7 +261,10 @@ try {
         const action = pickWeighted(rng, POOL)
         const own = makeRng(Math.floor(rng() * 2 ** 32))
         const b = action.owner ? bots[0] : actor
-        if (b.kicked || b.offlineUntil && action.owner || plans.some(p => p.b === b)) continue
+        // Screens that load on demand cannot load offline on the dev server
+        // (no service worker, and dev skips vite:preloadError): the app would
+        // crash where the installed one would not.
+        if (b.kicked || b.offlineUntil && (action.owner || action.lazy) || plans.some(p => p.b === b)) continue
         plans.push({ b, action, own })
       }
       await Promise.all(plans.map(({ b, action, own }) => runAction(b, action, own)))
