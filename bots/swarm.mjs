@@ -101,22 +101,24 @@ async function close() {
   if (shared) await shared.close()
 }
 
-// Online bots must show the same list once realtime has had 5s to catch up.
-async function checkAgreement() {
+// Online bots must show the same list once realtime has had 5s to catch up,
+// or 15s right after a bot reconnects: it has to rejoin (its token has often
+// expired meanwhile) and send what it queued, before the others can see it.
+async function checkAgreement(seconds = 5) {
   const online = bots.filter(b => !b.offlineUntil)
   // A delete reaches the server only once its Undo toast has gone (5s), so
   // let open toasts finish before the 5s allowed for sync starts counting.
   await Promise.all(online.map(b => b.page.locator('.toast').first().waitFor({ state: 'detached', timeout: 15_000 }).catch(() => {})))
-  const deadline = Date.now() + 5_000
+  const deadline = Date.now() + seconds * 1000
   let diff
   do {
     diff = findDisagreement(await Promise.all(online.map(async b => ({ bot: b.n, items: await readList(b.page) }))))
     if (!diff) return null
     await new Promise(r => setTimeout(r, 500))
   } while (Date.now() < deadline)
-  const report = `bot${diff.a} and bot${diff.b} disagree after 5s. Only bot${diff.a}: ${JSON.stringify(diff.onlyA)}. Only bot${diff.b}: ${JSON.stringify(diff.onlyB)}`
+  const report = `bot${diff.a} and bot${diff.b} disagree after ${seconds}s. Only bot${diff.a}: ${JSON.stringify(diff.onlyA)}. Only bot${diff.b}: ${JSON.stringify(diff.onlyB)}`
   // Still a failure either way, but slow and lost are different bugs.
-  for (let waited = 5; waited <= 35; waited++) {
+  for (let waited = seconds; waited <= 35; waited++) {
     await new Promise(r => setTimeout(r, 1000))
     if (!findDisagreement(await Promise.all(online.map(async b => ({ bot: b.n, items: await readList(b.page) }))))) {
       return `${report}\nThey agreed after ${waited}s in all: slow sync, not lost changes.`
@@ -149,11 +151,13 @@ try {
 
   const end = Date.now() + opts.minutes * 60_000
   let sinceCheck = 0
+  let reconnected = false
   while (Date.now() < end) {
     for (const b of bots) {
       if (b.offlineUntil && Date.now() > b.offlineUntil) {
         await backOnline(b)
         sinceCheck = 10
+        reconnected = true
       }
     }
     // Sometimes two bots at once, which is where races live. Everything is
@@ -186,13 +190,14 @@ try {
     if (problems.length) throw new Error(problems.join('\n'))
     if (++sinceCheck >= 10) {
       sinceCheck = 0
-      const diff = await checkAgreement()
+      const diff = await checkAgreement(reconnected ? 15 : 5)
+      reconnected = false
       if (diff) throw new Error(diff)
     }
     await new Promise(r => setTimeout(r, 200 + rng() * 1800))
   }
   for (const b of bots) if (b.offlineUntil) await backOnline(b)
-  const diff = await checkAgreement()
+  const diff = await checkAgreement(15)
   if (diff) throw new Error(diff)
   if (!opts.keep) await deleteList(bots[0])
   note('clean run')
