@@ -173,6 +173,21 @@ const POOL = [...ACTIONS, ...CHAOS, ...OWNER]
 async function runAction(b, action, own) {
   const lang = await ensureEnglish(b)
   if (lang) note(`bot${b.n} found its app in "${lang}" after a stray tap; back to English`)
+  // Left on the add screen by an interrupted action: Escape only closes it
+  // while the search box has focus, so use its Back arrow, as a person would.
+  const search = b.page.getByRole('combobox', { name: 'Add an item' })
+  if (await search.isVisible()) await b.page.getByRole('button', { name: 'Back', exact: true }).first().click({ timeout: 3_000 }).catch(() => {})
+  try {
+    await runOne(b, action, own)
+  } finally {
+    // Hands off the screen between actions. A pointer left resting where a
+    // toast appears pauses the whole stack (AppToast), so an Undo-able delete
+    // would never be sent: true of a real mouse too, but not of a thumb.
+    await b.page.mouse.move(1, 1).catch(() => {})
+  }
+}
+
+async function runOne(b, action, own) {
   let what
   try {
     what = await action.run(b, own)
@@ -209,6 +224,7 @@ async function race() {
     if (e.name !== 'TimeoutError') throw e
     note(`  bot${b.n} ${op.id} found nothing to act on`)
   })))
+  await Promise.all(racers.map(b => b.page.mouse.move(1, 1).catch(() => {})))
 }
 
 // A kicked bot's own app must notice within 10s, without a reload. Then it
