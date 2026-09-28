@@ -76,5 +76,10 @@ export function findDisagreement(snaps) {
 }
 
 // Console errors that are not FamCart bugs. Grow this only with a reason.
-const IGNORED_CONSOLE = [/^\[vite\]/, /Clerk has been loaded with development keys/]
+const IGNORED_CONSOLE = [
+  /^\[vite\]/,
+  /Clerk has been loaded with development keys/,
+  // Chrome's own line for a request made while a bot is offline on purpose.
+  /net::ERR_INTERNET_DISCONNECTED/,
+]
 export const isIgnoredConsole = text => IGNORED_CONSOLE.some(re => re.test(text))

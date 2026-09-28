@@ -41,9 +41,13 @@ for (let n = 1; n <= opts.bots; n++) {
   page.on('response', r => {
     if (r.url().includes('.supabase.co') && r.status() >= 400) problems.push(`bot${n} ${r.status()} ${r.request().method()} ${r.url()}`)
   })
+  // Answered, not aborted: an aborted request logs a console error of its own.
+  // Only error and feedback envelopes count; client_report and transactions
+  // are Sentry's bookkeeping.
   await context.route(/sentry\.io/, route => {
-    problems.push(`bot${n} tried to report to Sentry: ${route.request().postData()?.slice(0, 300)}`)
-    return route.abort()
+    const body = route.request().postData() ?? ''
+    if (/"type":"(event|feedback)"/.test(body)) problems.push(`bot${n} reported to Sentry: ${body.slice(0, 500)}`)
+    return route.fulfill({ status: 200, body: '{}' })
   })
   bots.push(bot)
 }
