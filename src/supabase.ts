@@ -68,6 +68,13 @@ let getTokenFn: TokenResolver | null = null
 // applied, so replaying it could double-apply.
 const RETRY_DELAYS_MS = [250, 750]
 
+// A read that has had no answer by now is not coming: it is given up on and
+// retried like one that failed outright. Without it a request that simply hung
+// (a dead socket that never errors) held the app on its loading screen for good,
+// which the bot swarm hit once after joining a list. Reads only, for the same
+// reason as the retry: a write abandoned mid-flight may already have landed.
+const READ_TIMEOUT_MS = 15_000
+
 export async function fetchWithRetry(
   url: RequestInfo | URL,
   options: RequestInit = {},
@@ -75,13 +82,30 @@ export async function fetchWithRetry(
   const method = (options.method || 'GET').toUpperCase()
   const retriable = method === 'GET' || method === 'HEAD'
   for (let attempt = 0; ; attempt++) {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let attemptOptions = options
+    if (retriable) {
+      const controller = new AbortController()
+      timer = setTimeout(
+        () => controller.abort(new DOMException('No answer from the server', 'TimeoutError')),
+        READ_TIMEOUT_MS,
+      )
+      options.signal?.addEventListener('abort', () => controller.abort(options.signal!.reason), {
+        once: true,
+      })
+      attemptOptions = { ...options, signal: controller.signal }
+    }
     try {
-      return await fetch(url, options)
+      return await fetch(url, attemptOptions)
     } catch (error) {
+      // The caller's own abort ends it; the timeout above is a TimeoutError,
+      // not an AbortError, and is retried like any other dead read.
       const aborted =
         options.signal?.aborted || (error as { name?: string })?.name === 'AbortError'
       if (!retriable || aborted || attempt >= RETRY_DELAYS_MS.length) throw error
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]))
+    } finally {
+      clearTimeout(timer)
     }
   }
 }
