@@ -238,7 +238,7 @@ export async function promoteOrDemote({ page }, rng, bots) {
   await openSettingsTab(page, 'Members')
   await (await memberActions(page, target.n)).click()
   const option = page.getByRole('button', { name: /^(Promote to moderator|Demote to member)/ }).first()
-  const label = (await option.textContent()).trim().split('\n')[0]
+  const label = (await option.textContent()).match(/Promote to moderator|Demote to member/)[0]
   await option.click()
   await closeSomehow(page, rng, 'Close settings')
   return `${label.toLowerCase()}: bot${target.n}`
