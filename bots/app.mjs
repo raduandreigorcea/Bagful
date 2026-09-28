@@ -7,6 +7,9 @@ export const BASE_URL = 'http://localhost:5173'
 const botEmail = n => `famcart-bot${n}+clerk_test@example.com`
 const authFile = n => `bots/.auth/bot${n}.json`
 export const button = (page, name) => page.getByRole('button', { name, exact: true })
+// Rows of the real list only. The onboarding tour mounts ShoppingListItem with
+// sample rows (Avocado, Milk...), which a bare li.item would count as items.
+export const ROW = 'ul.item-list > li.item:not(.item--draining)'
 export const addButton = page => page.getByRole('button', { name: 'Add an item', exact: true }).first()
 
 // Headed bots get a browser each so their windows can be tiled; hidden bots
@@ -115,7 +118,7 @@ export async function joinList(bot, code) {
 export const deleteList = leaveAllLists
 
 export async function readList(page) {
-  return page.locator('li.item:not(.item--draining)').evaluateAll(rows => rows.map(r => ({
+  return page.locator(ROW).evaluateAll(rows => rows.map(r => ({
     name: r.querySelector('.item-name')?.textContent.trim() ?? '',
     checked: r.classList.contains('item--checked'),
     qty: Number(r.querySelector('.item-qty__value')?.textContent.trim() || 1),

@@ -2,14 +2,16 @@
 // only real, concurrent, flaky-network use finds. Local only, by choice.
 //
 //   npm run dev                      (in another terminal)
-//   npm run bots -- --minutes 15 --bots 6 [--headed] [--seed N] [--setup-only] [--keep]
+//   npm run bots -- --minutes 15 --bots 5 [--headed] [--seed N] [--setup-only] [--keep]
 //
 // Stops at the first failure and writes bots/runs/<time>/: a screenshot and a
 // Playwright trace per bot (open with `npx playwright show-trace`), actions.log
-// and the seed. The seed replays the same picks of bot and action; when two
-// bots act at once, and wherever network timing matters, a replay can drift.
+// and the seed. The seed replays the same actions; what the network does in
+// between (and so what a search returns, or which race wins) can still differ.
 // The bot accounts are famcart-bot1..6+clerk_test@example.com on the Clerk
-// development instance; test emails always accept the code 424242.
+// development instance; test emails always accept the code 424242. Five by
+// default: bot6 belongs to the /exploring-famcart skill, and a swarm that
+// signs it in would pull it out of the explorer's list.
 import fs from 'node:fs'
 import { chromium } from 'playwright'
 import { parseArgs, parseEnv, isProductionUrl, makeRng, pickWeighted, findDisagreement, isIgnoredConsole } from './core.mjs'
@@ -114,12 +116,13 @@ try {
         sinceCheck = 10
       }
     }
-    // Sometimes two bots at once, which is where races live. Drawn from the
-    // seed before either acts, so a replay picks the same pair.
+    // Sometimes two bots at once, which is where races live. Everything is
+    // drawn from the seed before either acts, each action with a stream of its
+    // own, so two concurrent actions cannot reorder each other's draws.
     const actors = [...new Set(rng() < 0.2 ? [randomBot(), randomBot()] : [randomBot()])]
-    const plans = actors.map(b => ({ b, action: pickWeighted(rng, ACTIONS) }))
-    await Promise.all(plans.map(async ({ b, action }) => {
-      const what = await action.run(b, rng)
+    const plans = actors.map(b => ({ b, action: pickWeighted(rng, ACTIONS), own: makeRng(Math.floor(rng() * 2 ** 32)) }))
+    await Promise.all(plans.map(async ({ b, action, own }) => {
+      const what = await action.run(b, own)
       if (what) note(`bot${b.n} ${what}`)
       if (action.id === 'offline' && what) {
         await b.page.getByRole('status').filter({ hasText: 'Offline' }).first().waitFor({ timeout: 10_000 })

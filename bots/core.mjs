@@ -23,7 +23,7 @@ export function parseEnv(text) {
 }
 
 export function parseArgs(argv) {
-  const o = { minutes: 15, bots: 6, seed: Date.now() % 2 ** 31, headed: false, setupOnly: false, keep: false }
+  const o = { minutes: 15, bots: 5, seed: Date.now() % 2 ** 31, headed: false, setupOnly: false, keep: false }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--headed') o.headed = true

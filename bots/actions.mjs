@@ -1,11 +1,11 @@
 // What a person does with a shopping list, weighted by how often they do it.
 // Each action returns a short description for actions.log, or null if it
 // found nothing to act on (an empty list has nothing to tick).
-import { addButton, button } from './app.mjs'
+import { ROW, addButton, button } from './app.mjs'
 
 const TERMS = ['lapte', 'paine', 'oua', 'banane', 'cafea', 'apa', 'iaurt', 'rosii', 'branza', 'pui']
 const pick = (rng, xs) => xs[Math.floor(rng() * xs.length)]
-const rows = page => page.locator('li.item:not(.item--draining)')
+const rows = page => page.locator(ROW)
 
 async function randomRow(page, rng, checked) {
   const all = checked === undefined
