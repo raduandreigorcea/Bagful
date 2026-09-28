@@ -838,6 +838,7 @@ describe('toggleItem', () => {
     const source = listedItems(wrapper).find((i) => i.id === 'item-a')
     wrapper.findComponent(ShoppingList).vm.$emit('toggle', source)
     await flushPromises()
+    await flushPromises()
 
     const items = listedItems(wrapper)
     expect(items).toHaveLength(1)
@@ -915,10 +916,20 @@ describe('toggleItem', () => {
     expect(wrapper.vm.pendingItemWrites.has('item-b')).toBe(false)
   })
 
-  it('restores both rows when the merge is refused', async () => {
+  // A refused merge means one of the two rows changed first, on another phone.
+  // The list shows the server's rows, not the guess, and there is nothing to
+  // apologise for: nobody did anything wrong.
+  it('shows the server rows, and no error, when the merge is refused', async () => {
     const checked = makeItem({ id: 'item-a', name: 'Milk', quantity: 2, checked: true })
     const active = makeItem({ id: 'item-b', name: 'Milk', quantity: 3 })
+    // Copies: the fake hands out the objects it holds, so the optimistic sum
+    // would otherwise land in the "server" rows too.
+    const truth = [{ ...active }, { ...checked }]
     const wrapper = await mountHome({ items: [active, checked] })
+    mocks.db.handlers['shopping_list_items.select'] = (q) => ({
+      data: truth.filter((i) => i.checked === q.filters.checked).map((i) => ({ ...i })),
+      error: null,
+    })
     mocks.db.handlers['rpc.merge_items'] = () => ({
       data: null,
       error: { code: 'P0001', message: 'Nothing to merge.', details: 'merge_items_not_found' },
@@ -932,7 +943,34 @@ describe('toggleItem', () => {
     expect(items).toHaveLength(2)
     expect(items.find((i) => i.id === 'item-b').quantity).toBe(3)
     expect(items.find((i) => i.id === 'item-a')).toBeTruthy()
-    expect(wrapper.findComponent(ErrorModal).props('message')).toBe('Could not merge those items.')
+    expect(wrapper.findComponent(ErrorModal).props('message')).toBeFalsy()
+  })
+
+  // Found by the bot swarm: two members ticked the same item at once while its
+  // twin sat in the cart. Both phones asked to merge the twin in; the second
+  // was refused because the first had already done it, and that phone showed
+  // "Could not merge those items" and put the deleted twin back on its screen.
+  it('takes the other phone\'s merge as done when both tick at once', async () => {
+    const server = [
+      makeItem({ id: 'item-b', name: 'Milk', quantity: 3 }),
+      makeItem({ id: 'item-a', name: 'Milk', quantity: 2, checked: true }),
+    ]
+    const wrapper = await mountHome({ items: server })
+    mocks.db.handlers['rpc.merge_items'] = () => {
+      // The other phone's merge landed first: the twin is gone, its 2 are in.
+      server.splice(0, server.length, makeItem({ id: 'item-b', name: 'Milk', quantity: 5 }))
+      return { data: null, error: { code: 'P0001', message: 'Nothing to merge.', details: 'merge_items_not_found' } }
+    }
+    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+
+    const active = listedItems(wrapper).find((i) => i.id === 'item-b')
+    wrapper.findComponent(ShoppingList).vm.$emit('toggle', active)
+    await flushPromises()
+
+    const items = listedItems(wrapper)
+    expect(items.map((i) => i.id)).toEqual(['item-b'])
+    expect(items[0].quantity).toBe(5)
+    expect(wrapper.findComponent(ErrorModal).props('message')).toBeFalsy()
   })
 
   // Never reached the server, or its reply did not. The merge stays on screen

@@ -691,6 +691,7 @@ export function useShoppingListActions(options: {
     // local row and fall through to a refetch that puts it straight back.
     beginItemWrite(target.id)
     beginItemWrite(source.id)
+    let changedElsewhere = false
     try {
       // One call, one transaction (merge_items, 004_shopping_list.sql). It was
       // two writes, the quantity and then the delete, with an undo for when the
@@ -712,6 +713,17 @@ export function useShoppingListActions(options: {
           enqueueOfflineMutation(localStorage, userId.value, { kind: 'delete', id: source.id })
           return
         }
+        // Refused because one of the rows changed first on another phone,
+        // usually the same merge: two people ticking the same item at once,
+        // with its twin in the cart. Rolling back would put a row the server
+        // has already deleted back on this screen, and there is no error to
+        // show. Re-read the list instead, once the writes above have ended
+        // (while they are open, loadItems keeps the local guess for both rows).
+        // Found by bots/swarm.mjs.
+        if ((error as { details?: string }).details === 'merge_items_not_found') {
+          changedElsewhere = true
+          return
+        }
         rollback(userMessage(error, t('error.mergeItemsFailed')))
         return
       }
@@ -721,6 +733,7 @@ export function useShoppingListActions(options: {
     } finally {
       endItemWrite(source.id)
       endItemWrite(target.id)
+      if (changedElsewhere) await loadItems()
     }
   }
 
