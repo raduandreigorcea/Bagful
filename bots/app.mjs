@@ -140,6 +140,13 @@ export async function ensureEnglish(bot) {
 }
 
 export async function readList(page) {
+  // A folded "In cart" takes its rows out of the page, not just out of view,
+  // and a stray tap can fold it. Unfold before counting.
+  const folded = page.locator('ul.item-list button[aria-expanded="false"]')
+  if (await folded.count()) {
+    await folded.first().click({ timeout: 2_000 }).catch(() => {})
+    await page.waitForTimeout(300)
+  }
   return page.locator(ROW).evaluateAll(rows => rows.map(r => ({
     name: r.querySelector('.item-name')?.textContent.trim() ?? '',
     checked: r.classList.contains('item--checked'),
