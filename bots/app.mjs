@@ -4,6 +4,12 @@ import fs from 'node:fs'
 import { chromium } from 'playwright'
 
 export const BASE_URL = 'http://localhost:5173'
+
+// Sentry does not exist, as far as a bot's browser knows. swarm.mjs answers
+// Sentry's requests itself, but a report sent while a page is unloading
+// (keepalive) slips past request interception and reached the real project;
+// four development issues on 2026-09-28 were bots leaving pages mid-save.
+export const LAUNCH_ARGS = ['--host-resolver-rules=MAP *.sentry.io ~NOTFOUND']
 const botEmail = n => `famcart-bot${n}+clerk_test@example.com`
 const authFile = n => `bots/.auth/bot${n}.json`
 export const button = (page, name) => page.getByRole('button', { name, exact: true })
@@ -17,7 +23,7 @@ export const addButton = page => page.getByRole('button', { name: 'Add an item',
 export async function openBot(shared, n, { headed }) {
   const browser = shared ?? await chromium.launch({
     headless: false,
-    args: [`--window-position=${((n - 1) % 3) * 490},${Math.floor((n - 1) / 3) * 520}`, '--window-size=480,500'],
+    args: [...LAUNCH_ARGS, `--window-position=${((n - 1) % 3) * 490},${Math.floor((n - 1) / 3) * 520}`, '--window-size=480,500'],
   })
   const context = await browser.newContext({
     viewport: headed ? { width: 470, height: 420 } : { width: 400, height: 860 },

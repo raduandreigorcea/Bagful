@@ -16,7 +16,7 @@
 import fs from 'node:fs'
 import { chromium } from 'playwright'
 import { parseArgs, parseEnv, isProductionUrl, makeRng, pickWeighted, findDisagreement, isIgnoredConsole, describeSentryEnvelope } from './core.mjs'
-import { BASE_URL, openBot, ensureSignedIn, leaveAllLists, createList, joinList, deleteList, readList, errorDialogText, addButton, ensureEnglish } from './app.mjs'
+import { BASE_URL, LAUNCH_ARGS, openBot, ensureSignedIn, leaveAllLists, createList, joinList, deleteList, readList, errorDialogText, addButton, ensureEnglish } from './app.mjs'
 import { ACTIONS } from './actions.mjs'
 import { CHAOS, RACE_OPS, kickMember, promoteOrDemote, regenerateCode } from './chaos.mjs'
 
@@ -36,7 +36,7 @@ const log = []
 const note = line => { log.push(`${new Date().toISOString()} ${line}`); console.log(line) }
 const problems = []
 
-const shared = opts.headed ? null : await chromium.launch()
+const shared = opts.headed ? null : await chromium.launch({ args: LAUNCH_ARGS })
 const bots = []
 for (let n = 1; n <= opts.bots; n++) {
   const bot = await openBot(shared, n, opts)
