@@ -64,8 +64,13 @@ for (let n = 1; n <= opts.bots; n++) {
     ws.on('framereceived', frame('<'))
     ws.on('framesent', frame('>'))
   })
-  page.on('response', r => {
-    if (r.url().includes('.supabase.co') && r.status() >= 400) problems.push(`bot${n} ${r.status()} ${r.request().method()} ${r.url()}`)
+  page.on('response', async r => {
+    if (!r.url().includes('.supabase.co') || r.status() < 400) return
+    // PGRST303 is a token refused on time grounds (a clock a few seconds off),
+    // which fetchWithFreshToken in src/supabase.ts retries with a fresh token.
+    // If that retry fails too, the app shows it and the bots see that instead.
+    if (r.status() === 401 && (await r.json().catch(() => null))?.code === 'PGRST303') return
+    problems.push(`bot${n} ${r.status()} ${r.request().method()} ${r.url()}`)
   })
   // Answered, not aborted: an aborted request logs a console error of its own.
   // Only error and feedback envelopes count; client_report and transactions

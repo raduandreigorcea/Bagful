@@ -48,6 +48,7 @@ describe('bots core', () => {
   it('ignores known console noise only', () => {
     expect(isIgnoredConsole('[vite] connecting...')).toBe(true)
     expect(isIgnoredConsole('Failed to load resource: net::ERR_INTERNET_DISCONNECTED')).toBe(true)
+    expect(isIgnoredConsole('Failed to load resource: the server responded with a status of 401 ()')).toBe(true)
     expect(isIgnoredConsole('Failed to load resource: the server responded with a status of 500')).toBe(false)
     expect(isIgnoredConsole('TypeError: x is undefined')).toBe(false)
   })

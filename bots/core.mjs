@@ -81,5 +81,8 @@ const IGNORED_CONSOLE = [
   /Clerk has been loaded with development keys/,
   // Chrome's own line for a request made while a bot is offline on purpose.
   /net::ERR_INTERNET_DISCONNECTED/,
+  // Chrome's line for any 401. The response watcher in swarm.mjs judges those,
+  // since only the body says whether the app retries it (PGRST303) or not.
+  /Failed to load resource: the server responded with a status of 401/,
 ]
 export const isIgnoredConsole = text => IGNORED_CONSOLE.some(re => re.test(text))
