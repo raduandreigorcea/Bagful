@@ -63,3 +63,7 @@ supabase/.temp
 .agents/
 skills-lock.json
 .superpowers/
+
+# The bot swarm (bots/swarm.mjs): failure dumps and saved bot sessions.
+bots/runs/
+bots/.auth/
