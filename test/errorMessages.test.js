@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const captured = vi.hoisted(() => [])
+vi.mock('../src/lib/errorReporting', () => ({ captureException: (e) => captured.push(e) }))
+
 import { UserFacingError, userMessage } from '../src/lib/errorMessages.ts'
+
+beforeEach(() => { captured.length = 0 })
 
 describe('userMessage', () => {
   it('shows a UserFacingError message as written', () => {
@@ -31,5 +37,18 @@ describe('userMessage', () => {
 
   it('keeps UserFacingError instanceof Error, so existing catch/throw paths still work', () => {
     expect(new UserFacingError('x')).toBeInstanceOf(Error)
+  })
+
+  // Found through the bot swarm: every list-settings save cut off by the page
+  // being left (a reload, the browser's Back) arrived in Sentry as an error.
+  // A request that never got an answer is the network's doing, not a fault in
+  // the app, and loadListHeader and the list actions already treat it so.
+  it('reports a server error, but not a request that died on the network', () => {
+    userMessage({ code: '42501', message: 'permission denied for table lists' }, 'Failed.')
+    expect(captured).toHaveLength(1)
+
+    const died = { code: '', details: 'TypeError: Failed to fetch', hint: '', message: 'TypeError: Failed to fetch (arkqdpvguqfsdocmfwaf.supabase.co)' }
+    expect(userMessage(died, 'Could not save the list icon.')).toBe('Could not save the list icon.')
+    expect(captured).toHaveLength(1)
   })
 })
