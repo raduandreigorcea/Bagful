@@ -230,6 +230,8 @@ export default {
   'account.reportHint': 'Bugs and feedback',
   'account.signOut': 'Sign out',
   'account.signingOut': 'Signing out',
+  'account.confirmSignOutTitle': 'Sign out?',
+  'account.confirmSignOutMessage': 'You will need to sign in again to see your lists on this device.',
 
   'list.title': 'List Settings',
   'list.close': 'Close settings',

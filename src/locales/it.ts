@@ -194,6 +194,8 @@ const it: Catalog = {
   'account.reportHint': 'Bug e feedback',
   'account.signOut': 'Esci',
   'account.signingOut': 'Uscita in corso',
+  'account.confirmSignOutTitle': 'Vuoi uscire?',
+  'account.confirmSignOutMessage': 'Dovrai accedere di nuovo per vedere le tue liste su questo dispositivo.',
 
   'list.title': 'Impostazioni della lista',
   'list.close': 'Chiudi le impostazioni',

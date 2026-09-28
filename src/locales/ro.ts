@@ -201,6 +201,8 @@ const ro: Catalog = {
   'account.reportHint': 'Erori și sugestii',
   'account.signOut': 'Deconectează-te',
   'account.signingOut': 'Se deconectează',
+  'account.confirmSignOutTitle': 'Te deconectezi?',
+  'account.confirmSignOutMessage': 'Va trebui să te conectezi din nou ca să îți vezi listele pe acest dispozitiv.',
 
   'list.title': 'Setările listei',
   'list.close': 'Închide setările',

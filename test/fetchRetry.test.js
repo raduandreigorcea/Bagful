@@ -57,6 +57,47 @@ describe('fetchWithRetry', () => {
     await expect(fetchWithRetry('https://x/rest')).rejects.toThrow('aborted')
     expect(fetch).toHaveBeenCalledTimes(1)
   })
+
+  // Found by the bot swarm: a read that never got an answer left the app on
+  // its loading screen for good, because nothing gave up on it. A request that
+  // hangs until the server rejects it once it is abandoned, the way fetch does.
+  const hangs = (url, options) =>
+    new Promise((_, reject) => {
+      options?.signal?.addEventListener('abort', () => reject(options.signal.reason))
+    })
+
+  it('gives up on a read that never answers, and tries again', async () => {
+    vi.useFakeTimers()
+    try {
+      fetch.mockImplementationOnce(hangs).mockResolvedValueOnce('response')
+      const result = fetchWithRetry('https://x/rest')
+
+      await vi.advanceTimersByTimeAsync(15_000 + 250)
+      expect(fetch).toHaveBeenCalledTimes(2)
+      await expect(result).resolves.toBe('response')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('never abandons a write, which may already have been applied', async () => {
+    vi.useFakeTimers()
+    try {
+      let settle
+      fetch.mockImplementation((url, options) => new Promise((resolve, reject) => {
+        settle = resolve
+        options?.signal?.addEventListener('abort', () => reject(new Error('abandoned')))
+      }))
+      const result = fetchWithRetry('https://x/rest', { method: 'POST' })
+
+      await vi.advanceTimersByTimeAsync(60_000)
+      settle('late but applied')
+      await expect(result).resolves.toBe('late but applied')
+      expect(fetch).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 describe('fetchWithFreshToken', () => {

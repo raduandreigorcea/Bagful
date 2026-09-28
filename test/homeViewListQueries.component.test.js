@@ -18,7 +18,12 @@ import { createFakeDb } from './support/fakeSupabase.js'
 import { markTourSeen } from '../src/lib/onboarding'
 import { __setOnlineForTest } from '../src/lib/connectivity'
 
-const mocks = vi.hoisted(() => ({ db: null, userId: null, isLoaded: null }))
+const mocks = vi.hoisted(() => ({ db: null, userId: null, isLoaded: null, captured: [] }))
+
+vi.mock('../src/lib/errorReporting', async (importOriginal) => ({
+  ...(await importOriginal()),
+  captureException: (error) => mocks.captured.push(error),
+}))
 
 vi.mock('../src/supabase', () => ({
   useSupabase: () => mocks.db,
@@ -79,6 +84,7 @@ beforeEach(() => {
   mocks.userId.value = 'user-1'
   mocks.isLoaded.value = true
   __setOnlineForTest(true)
+  mocks.captured.length = 0
 })
 
 afterEach(() => {
@@ -130,5 +136,24 @@ describe('the list header and switcher queries', () => {
     const topbar = wrapper.findComponent(AppNavBar)
     expect(topbar.props('listEmoji')).toBe('🏠')
     expect(topbar.props('lists')[0].emoji).toBe('🏠')
+  })
+
+  // Found by the bot swarm: every member removed from a list, and everyone
+  // with a list open when it was deleted, filed a Sentry report. Their next
+  // header read finds no row, because the list is no longer theirs to see;
+  // that is the removal itself, which the members channel already acts on.
+  it('does not report the list header vanishing, but does report a real failure', async () => {
+    const wrapper = await bootHome()
+
+    mocks.db.handlers['lists.select'] = () => ({
+      data: null,
+      error: { code: 'PGRST116', message: 'Cannot coerce the result to a single JSON object', details: 'The result contains 0 rows' },
+    })
+    await wrapper.vm.loadListHeader()
+    expect(mocks.captured).toHaveLength(0)
+
+    mocks.db.handlers['lists.select'] = () => ({ data: null, error: { code: '500', message: 'boom' } })
+    await wrapper.vm.loadListHeader()
+    expect(mocks.captured).toHaveLength(1)
   })
 })

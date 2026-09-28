@@ -196,6 +196,8 @@ const es: Catalog = {
   'account.reportHint': 'Errores y sugerencias',
   'account.signOut': 'Cerrar sesión',
   'account.signingOut': 'Cerrando sesión',
+  'account.confirmSignOutTitle': '¿Cerrar sesión?',
+  'account.confirmSignOutMessage': 'Tendrás que volver a iniciar sesión para ver tus listas en este dispositivo.',
 
   'list.title': 'Ajustes de la lista',
   'list.close': 'Cerrar los ajustes',

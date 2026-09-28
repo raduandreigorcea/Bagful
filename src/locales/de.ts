@@ -196,6 +196,8 @@ const de: Catalog = {
   'account.reportHint': 'Fehler und Feedback',
   'account.signOut': 'Abmelden',
   'account.signingOut': 'Wird abgemeldet',
+  'account.confirmSignOutTitle': 'Abmelden?',
+  'account.confirmSignOutMessage': 'Du musst dich erneut anmelden, um deine Listen auf diesem Gerät zu sehen.',
 
   'list.title': 'Listeneinstellungen',
   'list.close': 'Einstellungen schließen',
