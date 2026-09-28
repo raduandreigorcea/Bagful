@@ -132,6 +132,22 @@ describe('the add form and the Back press', () => {
       expect(closeTopModal()).toBe(true)
     })
 
+    // Found by the bot swarm: Escape only listened on the search box, so after a
+    // tap on a shop chip (or anything else in the sheet) it did nothing, and
+    // the keyboard had no way out of a whole-screen search.
+    it('closes on Escape when the search box does not have focus', async () => {
+      mountForm({ expanded: true })
+      await wrapper.find('input').trigger('focus')
+      await wrapper.find('input').trigger('blur')
+      await flushPromises()
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+      await flushPromises()
+
+      expect(wrapper.emitted('update:expanded').at(-1)).toEqual([false])
+      expect(hasOpenModal()).toBe(false)
+    })
+
     it('puts the search screen away instead of the app', async () => {
       // Raised the way the bar raises it, then focused, which is the order the
       // component itself uses on the way up.

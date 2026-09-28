@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch, type PropType } from 'vue'
-import { closeModal, openModal } from '../lib/modalStack'
+import { closeModal, isTopModal, openModal } from '../lib/modalStack'
 import { isSheetWidth, useSearchSheet } from '../lib/useSearchSheet'
 import { useTapPops } from '../lib/useTapPops'
 import { useAddedConfirmation } from '../lib/useAddedConfirmation'
@@ -513,8 +513,22 @@ function onSlash(event: KeyboardEvent) {
 }
 if (typeof document !== 'undefined') document.addEventListener('keydown', onSlash)
 
+// Escape closes the search from anywhere in it, not only from the search box:
+// after a tap on a shop chip the box no longer has focus, and a keyboard had
+// no way out of the whole-screen sheet (found by the bot swarm). Guarded by the
+// layer stack like AppModal's, so one press closes only what is on top.
+function onEscape(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !isTopModal(layer)) return
+  event.stopPropagation()
+  close()
+}
+if (typeof document !== 'undefined') document.addEventListener('keydown', onEscape)
+
 onBeforeUnmount(() => {
-  if (typeof document !== 'undefined') document.removeEventListener('keydown', onSlash)
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('keydown', onSlash)
+    document.removeEventListener('keydown', onEscape)
+  }
   // The slide timer, the viewport listeners and the transitionend handler are
   // useSearchSheet's own teardown, and the confirmation timer is
   // useAddedConfirmation's. Only the layer registration is this component's.
@@ -588,7 +602,7 @@ onBeforeUnmount(() => {
             :aria-activedescendant="activeOptionId"
             @focus="onFocus"
             @blur="onBlur"
-            @keydown.esc="close"
+            @keydown.esc.stop="close"
             @keydown.down.prevent="moveActive(1)"
             @keydown.up.prevent="moveActive(-1)"
             @keydown.enter="onEnter"
