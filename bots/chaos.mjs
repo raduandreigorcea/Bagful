@@ -18,6 +18,9 @@ const pause = ms => new Promise(r => setTimeout(r, ms))
 // Back on the app's first screen leaves it, as Android's back closes the app;
 // the person then opens it again.
 async function back(page) {
+  // Offline, a page that has been left cannot be loaded again (no service
+  // worker on the dev server), so an offline bot closes things with Escape.
+  if (!(await page.evaluate(() => navigator.onLine))) return page.keyboard.press('Escape')
   await page.goBack().catch(() => {})
   if (!page.url().startsWith(BASE_URL)) await page.goto(BASE_URL + '/')
 }

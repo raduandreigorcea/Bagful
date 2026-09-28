@@ -124,6 +124,21 @@ export async function joinList(bot, code) {
 
 export const deleteList = leaveAllLists
 
+// A stray tap in a modal storm can pick another language, and every locator
+// here is English. Put it back the way a person would find it after
+// reinstalling: the device and per-account keys (lib/locale), then a reload.
+// Returns the language it found, or null when it was already English.
+export async function ensureEnglish(bot) {
+  const lang = await bot.page.evaluate(() => document.documentElement.lang).catch(() => 'en')
+  if (!lang || lang.startsWith('en') || bot.offlineUntil) return null
+  await bot.page.evaluate(() => {
+    for (const key of Object.keys(localStorage)) if (key.startsWith('famcart-locale')) localStorage.setItem(key, 'en')
+  })
+  await bot.page.reload()
+  await addButton(bot.page).waitFor({ timeout: 30_000 })
+  return lang
+}
+
 export async function readList(page) {
   return page.locator(ROW).evaluateAll(rows => rows.map(r => ({
     name: r.querySelector('.item-name')?.textContent.trim() ?? '',

@@ -16,7 +16,7 @@
 import fs from 'node:fs'
 import { chromium } from 'playwright'
 import { parseArgs, parseEnv, isProductionUrl, makeRng, pickWeighted, findDisagreement, isIgnoredConsole, describeSentryEnvelope } from './core.mjs'
-import { BASE_URL, openBot, ensureSignedIn, leaveAllLists, createList, joinList, deleteList, readList, errorDialogText, addButton } from './app.mjs'
+import { BASE_URL, openBot, ensureSignedIn, leaveAllLists, createList, joinList, deleteList, readList, errorDialogText, addButton, ensureEnglish } from './app.mjs'
 import { ACTIONS } from './actions.mjs'
 import { CHAOS, RACE_OPS, kickMember, promoteOrDemote, regenerateCode } from './chaos.mjs'
 
@@ -171,6 +171,8 @@ const OWNER = [
 const POOL = [...ACTIONS, ...CHAOS, ...OWNER]
 
 async function runAction(b, action, own) {
+  const lang = await ensureEnglish(b)
+  if (lang) note(`bot${b.n} found its app in "${lang}" after a stray tap; back to English`)
   let what
   try {
     what = await action.run(b, own)
