@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({}) }))
 vi.mock('@clerk/vue', () => ({ useAuth: () => ({}) }))
 
-import { fetchWithRetry, fetchWithFreshToken, resolveAccessToken, setSupabaseTokenResolver } from '../src/supabase'
+import { fetchWithRetry, fetchWithFreshToken, resolveRealtimeToken, setSupabaseTokenResolver } from '../src/supabase'
 
 const networkError = () => Object.assign(new TypeError('Failed to fetch'), {})
 
@@ -88,7 +88,7 @@ describe('fetchWithFreshToken', () => {
   })
 })
 
-describe('resolveAccessToken', () => {
+describe('resolveRealtimeToken', () => {
   // A JWT whose only claim that matters here is exp, seconds from now.
   const tokenExpiringIn = (seconds) =>
     `h.${Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + seconds })).toString('base64url')}.s`
@@ -98,7 +98,7 @@ describe('resolveAccessToken', () => {
     const resolve = vi.fn().mockResolvedValue(cached)
     setSupabaseTokenResolver(resolve)
 
-    await expect(resolveAccessToken()).resolves.toBe(cached)
+    await expect(resolveRealtimeToken()).resolves.toBe(cached)
     expect(resolve).toHaveBeenCalledTimes(1)
   })
 
@@ -107,14 +107,14 @@ describe('resolveAccessToken', () => {
     const resolve = vi.fn().mockResolvedValueOnce(tokenExpiringIn(20)).mockResolvedValueOnce(fresh)
     setSupabaseTokenResolver(resolve)
 
-    await expect(resolveAccessToken()).resolves.toBe(fresh)
+    await expect(resolveRealtimeToken()).resolves.toBe(fresh)
     expect(resolve).toHaveBeenLastCalledWith({ skipCache: true })
   })
 
   it('passes through a token it cannot read, and a missing one', async () => {
     setSupabaseTokenResolver(vi.fn().mockResolvedValue('not-a-jwt'))
-    await expect(resolveAccessToken()).resolves.toBe('not-a-jwt')
+    await expect(resolveRealtimeToken()).resolves.toBe('not-a-jwt')
     setSupabaseTokenResolver(vi.fn().mockResolvedValue(null))
-    await expect(resolveAccessToken()).resolves.toBeNull()
+    await expect(resolveRealtimeToken()).resolves.toBeNull()
   })
 })
