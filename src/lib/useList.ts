@@ -66,8 +66,16 @@ export function useList(options: {
     // read that has started failing (a revoked membership, a transient 500) leaves
     // a stale header up indefinitely with no trace anywhere. Offline is the
     // expected case and is not a fault.
+    //
+    // Nor is the list row coming back empty (PGRST116, from .single()): that is
+    // what a removed member, or anyone with a list open when it was deleted,
+    // reads next, and the members channel already moves them off it. Reporting
+    // it filed a Sentry issue per removal (found by the bot swarm). The roster
+    // read beside it has no .single() and still reports as before.
     for (const err of [listErr, membersErr]) {
-      if (err && !isOfflineError(err)) captureException(err)
+      if (!err || isOfflineError(err)) continue
+      if (err === listErr && (err as { code?: string }).code === 'PGRST116') continue
+      captureException(err)
     }
 
     // The list moved on while this was in flight, so this answer describes
