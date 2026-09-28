@@ -128,6 +128,7 @@ async function close() {
 // expired meanwhile) and send what it queued, before the others can see it.
 async function checkAgreement(seconds = 5) {
   const online = bots.filter(b => !b.offlineUntil && !b.kicked)
+  for (const b of online) await signBackInIfOut(b)
   // A delete reaches the server only once its Undo toast has gone (5s), so
   // let open toasts finish before the 5s allowed for sync starts counting.
   await Promise.all(online.map(b => b.page.locator('.toast').first().waitFor({ state: 'detached', timeout: 15_000 }).catch(() => {})))
@@ -170,7 +171,16 @@ const OWNER = [
 ]
 const POOL = [...ACTIONS, ...CHAOS, ...OWNER]
 
+// A stray tap in a modal storm can land on "Sign out" (one tap, no
+// confirmation), and a person would just sign back in.
+async function signBackInIfOut(b) {
+  if (b.offlineUntil || !(await b.page.getByLabel('Email address').isVisible())) return
+  note(`bot${b.n} found itself signed out after a stray tap; signing back in`)
+  await ensureSignedIn(b)
+}
+
 async function runAction(b, action, own) {
+  await signBackInIfOut(b)
   const lang = await ensureEnglish(b)
   if (lang) note(`bot${b.n} found its app in "${lang}" after a stray tap; back to English`)
   // Left on the add screen by an interrupted action: Escape only closes it

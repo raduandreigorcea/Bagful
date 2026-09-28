@@ -158,5 +158,7 @@ export async function readList(page) {
 export async function errorDialogText(page) {
   const ok = button(page, 'OK')
   if (!(await ok.isVisible())) return null
+  // One that was just dismissed is still fading out: give it a second to go.
+  if (await ok.waitFor({ state: 'hidden', timeout: 1_000 }).then(() => true, () => false)) return null
   return (await page.getByRole('alertdialog').filter({ has: ok }).first().textContent())?.trim() || 'error dialog'
 }
