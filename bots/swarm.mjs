@@ -2,9 +2,10 @@
 // only real, concurrent, flaky-network use finds. Local only, by choice.
 //
 //   npm run dev                      (in another terminal)
-//   npm run bots -- --minutes 15 --bots 5 [--headed] [--seed N] [--setup-only] [--keep]
+//   npm run bots -- --minutes 15 --bots 5 [--headed] [--seed N] [--setup-only] [--keep] [--keep-going]
 //
-// Stops at the first failure and writes bots/runs/<time>/: a screenshot and a
+// Stops at the first failure (or, with --keep-going, notes it and carries on)
+// and writes bots/runs/<time>/: a screenshot and a
 // Playwright trace per bot (open with `npx playwright show-trace`), actions.log
 // and the seed. The seed replays the same actions; what the network does in
 // between (and so what a search returns, or which race wins) can still differ.
@@ -81,6 +82,21 @@ for (let n = 1; n <= opts.bots; n++) {
     return route.fulfill({ status: 200, body: '{}' })
   })
   bots.push(bot)
+}
+
+const findings = []
+
+// A finding ends the run, unless --keep-going: then it is saved like a failure
+// and the bots carry on, so one long run collects every finding it can.
+async function finding(reason) {
+  if (!opts.keepGoing) throw new Error(reason)
+  findings.push(reason.split('\n')[0])
+  await dump(reason)
+  for (const b of bots) {
+    await b.context.tracing.start({ screenshots: true, snapshots: true })
+    // An error dialog would otherwise be reported again on every round.
+    await b.page.getByRole('alertdialog').getByRole('button', { name: 'OK', exact: true }).click({ timeout: 2_000 }).catch(() => {})
+  }
 }
 
 async function dump(reason) {
@@ -187,19 +203,24 @@ try {
       const err = await errorDialogText(b.page)
       if (err) problems.push(`bot${b.n} app showed an error: ${err}`)
     }
-    if (problems.length) throw new Error(problems.join('\n'))
+    if (problems.length) await finding(problems.splice(0).join('\n'))
     if (++sinceCheck >= 10) {
       sinceCheck = 0
       const diff = await checkAgreement(reconnected ? 15 : 5)
       reconnected = false
-      if (diff) throw new Error(diff)
+      if (diff) await finding(diff)
     }
     await new Promise(r => setTimeout(r, 200 + rng() * 1800))
   }
   for (const b of bots) if (b.offlineUntil) await backOnline(b)
   const diff = await checkAgreement(15)
-  if (diff) throw new Error(diff)
+  if (diff) await finding(diff)
   if (!opts.keep) await deleteList(bots[0])
+  if (findings.length) {
+    note(`${findings.length} finding(s):\n${findings.map(f => `  - ${f}`).join('\n')}`)
+    await close()
+    process.exit(1)
+  }
   note('clean run')
   await close()
 } catch (e) {

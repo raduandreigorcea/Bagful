@@ -23,12 +23,13 @@ export function parseEnv(text) {
 }
 
 export function parseArgs(argv) {
-  const o = { minutes: 15, bots: 5, seed: Date.now() % 2 ** 31, headed: false, setupOnly: false, keep: false }
+  const o = { minutes: 15, bots: 5, seed: Date.now() % 2 ** 31, headed: false, setupOnly: false, keep: false, keepGoing: false }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--headed') o.headed = true
     else if (a === '--setup-only') o.setupOnly = true
     else if (a === '--keep') o.keep = true
+    else if (a === '--keep-going') o.keepGoing = true
     else if (a === '--minutes' || a === '--bots' || a === '--seed') {
       const n = Number(argv[++i])
       if (!Number.isInteger(n) || n < 1) throw new Error(`${a} needs a positive whole number`)

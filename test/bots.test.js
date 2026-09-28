@@ -19,7 +19,8 @@ describe('bots core', () => {
   })
   it('parses args and rejects nonsense', () => {
     expect(parseArgs(['--minutes', '2', '--bots', '3', '--seed', '7', '--headed']))
-      .toMatchObject({ minutes: 2, bots: 3, seed: 7, headed: true, setupOnly: false, keep: false })
+      .toMatchObject({ minutes: 2, bots: 3, seed: 7, headed: true, setupOnly: false, keep: false, keepGoing: false })
+    expect(parseArgs(['--keep-going'])).toMatchObject({ keepGoing: true, keep: false })
     expect(() => parseArgs(['--bots', '7'])).toThrow(/at most 6/)
     expect(() => parseArgs(['--minutes', 'x'])).toThrow(/whole number/)
     expect(() => parseArgs(['--wat'])).toThrow(/Unknown option/)
