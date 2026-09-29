@@ -17,6 +17,7 @@ import { getUserDisplayName, getUserInitial, getUserPrimaryEmail, initialOf } fr
 import { useSignOut } from '../lib/useSignOut'
 import { useConfirm } from '../lib/useConfirm'
 import { shareInvite } from '../lib/inviteShare'
+import { track } from '../lib/analytics'
 import type { ProductSuggestion } from '../lib/productSearch'
 
 // The settings modal is by far the heaviest part of the topbar; load its chunk
@@ -223,6 +224,7 @@ function inviteMembers() {
     // Backing out of the sheet is an answer, not a failure: stay exactly where
     // they were so a second try is one tap away.
     if (outcome === 'cancelled') return
+    if (outcome !== 'unavailable') track('invite_sent')
     if (outcome === 'unavailable') {
       openListSettings()
       return

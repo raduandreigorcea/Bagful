@@ -10,6 +10,7 @@ import { startNativeBack } from './lib/nativeBack'
 import { startAppUpdates } from './lib/appUpdate'
 import { startTheme } from './lib/theme'
 import { applyChannel } from './lib/appChannel'
+import { startAnalytics } from './lib/analytics'
 import { getClerkLocalization, initLocale, whenLocaleReady } from './lib/i18n'
 
 // First statement in the module on purpose: everything below can throw or reject,
@@ -103,6 +104,11 @@ const app = createApp(App)
 // so the stand-in handlers installed at the top hand over. Without this they
 // would keep running alongside Sentry's own and report everything twice.
 void startErrorReporting(app, router).finally(stopEarlyCapture)
+
+// Product analytics, a no-op without a key for this channel (and always on the
+// dev server). The SDK is a lazy chunk; events tracked before it lands queue.
+// Who is signed in is handed over from App.vue, once Clerk knows.
+void startAnalytics()
 
 // Registered after the locale settles so Clerk's own error copy — the one
 // string of Clerk's that the custom sign-in UI surfaces — arrives in the right

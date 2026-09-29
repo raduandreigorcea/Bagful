@@ -96,6 +96,7 @@ jobs:
           CATALOG_ANON_KEY: ${{ secrets.VITE_CATALOG_SUPABASE_ANON_KEY }}
           ONESIGNAL_APP_ID: ${{ secrets.VITE_ONESIGNAL_APP_ID }}
           SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
         run: |
           missing=
           # The catalog pair is required, not a warning. Without it the app
@@ -119,6 +120,7 @@ jobs:
           # error reporting is visible without digging through the log.
           [ -n "$ONESIGNAL_APP_ID" ] || echo "::warning::VITE_ONESIGNAL_APP_ID is empty — this build ships with push notifications disabled."
           [ -n "$SENTRY_DSN" ] || echo "::warning::VITE_SENTRY_DSN is empty — this build ships with no error reporting."
+          [ -n "$POSTHOG_KEY" ] || echo "::warning::VITE_POSTHOG_KEY is empty — this build ships with no analytics."
 
       # The signing key is not optional here, and failing without it has to be
       # loud. android/app/build.gradle falls back to the debug key when no
@@ -218,6 +220,7 @@ jobs:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
           VITE_ONESIGNAL_APP_ID: ${{ secrets.VITE_ONESIGNAL_APP_ID }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
           # Uploads source maps and stamps the release (vite.config.js). Without
           # it production APK errors reach Sentry with no release and minified
           # frames only; empty is allowed and just skips the upload.

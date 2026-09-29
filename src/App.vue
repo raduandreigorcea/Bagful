@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '@clerk/vue'
 import { isCurrentlyOffline } from './lib/connectivity'
 import { captureException } from './lib/errorReporting'
+import { identifyAnalytics } from './lib/analytics'
 import AppSplash from './components/AppSplash.vue'
 import AppButton from './components/AppButton.vue'
 import AppToast from './components/AppToast.vue'
@@ -22,11 +23,18 @@ router.isReady().finally(() => { ready.value = true })
 // anonymous role, each one refused, for half an hour. So a sign-out that
 // happens here goes to login. Offline is excluded: Clerk cannot verify a
 // session without the network, and the offline list must survive that.
-const { isLoaded, isSignedIn } = useAuth()
+const { isLoaded, isSignedIn, userId } = useAuth()
 watch([isLoaded, isSignedIn], ([loaded, signedIn]) => {
   if (!loaded || signedIn || isCurrentlyOffline()) return
   if (router.currentRoute.value.meta.requiresAuth) router.replace({ name: 'login' })
 })
+
+// Analytics files everything after sign-in under the Clerk id, and a sign-out
+// (null) starts a fresh anonymous visitor. Here because App is the one
+// component mounted through every route, signed in or not.
+watch([isLoaded, userId], ([loaded, id]) => {
+  if (loaded) identifyAnalytics(id ?? null)
+}, { immediate: true })
 
 // A throw during render unmounts the tree, which without this leaves a white
 // page: the one failure mode where the app tells the user nothing at all. Vue

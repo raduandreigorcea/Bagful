@@ -15,6 +15,7 @@ import { topListProducts } from './productRecents'
 import { fetchShopList } from './shopBadges'
 import type { Market } from './region'
 import type { ShoppingItemRow } from './listRealtime'
+import { track } from './analytics'
 
 // Everything behind the add form's search box: what the catalog is asked, what
 // this list's history does to the order, and what the screen offers before
@@ -454,6 +455,8 @@ export function useProductSuggestions(options: {
       if (!owns()) return
       if (degraded || settled.some((r) => r.status === 'rejected')) searchNote.value = 'degraded'
       publish(true)
+      // Once per settled search, after the debounce: a count, never the text.
+      track('search_performed', { results: suggestions.value.length })
 
       // THERE IS NO COLD PATH ANY MORE. This used to fall through to a
       // `discover` edge function that queried Open Food Facts live, on the
@@ -628,6 +631,7 @@ export function useProductSuggestions(options: {
   function setSearchShop(shop: string | null): void {
     if (searchShop.value === shop) return
     searchShop.value = shop
+    if (shop) track('shop_filter_used', { shop })
     startSearch(query.value.trim(), { debounce: false })
   }
 

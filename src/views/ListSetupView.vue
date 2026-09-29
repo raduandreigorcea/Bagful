@@ -19,6 +19,7 @@ import { isValidInviteCode, normalizeInviteCode, randomInviteCode } from '../lib
 import { LIST_MEMBERSHIP_CAP, LIST_NAME_MAX_LENGTH } from '../lib/limits'
 import { getLocale, setLocale, t, tAccent, type Locale } from '../lib/i18n'
 import { hasUserLocale } from '../lib/locale'
+import { track } from '../lib/analytics'
 
 const { userId } = useAuth()
 const { user } = useUser()
@@ -214,6 +215,7 @@ async function createList() {
     // uid check above has already ruled out. Treated as a plain failure rather
     // than dereferenced.
     if (!list) throw new UserFacingError(t('error.createListFailed'))
+    track('list_created')
 
     // Make the new list the active one so HomeView opens straight to it.
     saveActiveListId(localStorage, uid, list.id)
@@ -265,6 +267,7 @@ async function joinList() {
       error.value = t('error.noListForCode')
       return
     }
+    track('list_joined')
 
     // Make the joined list the active one so HomeView opens straight to it.
     saveActiveListId(localStorage, uid, list.id)

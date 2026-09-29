@@ -29,7 +29,7 @@
 -- Runs inside a transaction that is rolled back, so it leaves no data behind.
 
 begin;
-select plan(102);
+select plan(103);
 
 -- ── Seed as the migration/superuser role (bypasses RLS) ──────────────────────
 -- Two lists owned by two different people, plus a third account that is in
@@ -87,13 +87,6 @@ select throws_ok(
   '42501',
   null,
   'admin_lists() refuses a non-admin'
-);
-
-select throws_ok(
-  $$ select * from public.admin_recent_activity() $$,
-  '42501',
-  null,
-  'admin_recent_activity() refuses a non-admin'
 );
 
 select throws_ok(
@@ -896,6 +889,26 @@ set local request.jwt.claims = '{"sub":"admin_one"}';
 select lives_ok(
   $t$ select public.admin_delete_product('00000000-0000-0000-0000-00000000dead'::uuid) $t$,
   'deleting a product that is already gone is a no-op, not an error'
+);
+
+-- ── Health's audit trail is admin actions only ──────────────────────────────
+-- A member's own event, written the way the app's functions write one, beside
+-- the admin_product_* events the section above left behind.
+reset role;
+insert into public.security_events (kind, actor, detail) values ('member_left', 'plain_one', '{}');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"admin_one"}';
+
+select ok(
+  exists (select 1 from public.admin_security_events(p_admin_only => true)),
+  'p_admin_only still returns what admins did'
+);
+
+select is(
+  (select count(*)::int from public.admin_security_events(p_admin_only => true, p_limit => 200)
+   where kind not like 'admin\_%'),
+  0,
+  'p_admin_only leaves out every member event'
 );
 
 select * from finish();

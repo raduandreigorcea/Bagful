@@ -11,15 +11,26 @@
 // why scrubEvent drops every URL's query and hash (invite codes and Clerk's
 // __clerk_* callback params both ride there).
 //
+// scrubEvent matches by key suffix (url/referrer/pathname) instead of a fixed
+// list of property names, and checks all three bags PostHog fills on a capture
+// (properties, $set, $set_once). posthog-js grows new URL-bearing keys with
+// almost every release -- $session_entry_url and $external_click_url did not
+// exist in the SDK version this file was first written against -- and a fixed
+// list silently stops covering a key the day the SDK adds one, which is a
+// privacy leak that ships with no test failure to catch it.
+//
 // No cookies and no localStorage (persistence: 'memory'), so no consent banner
 // for the counts. An anonymous visitor is new on every launch; that costs the
 // login screen's numbers only, since identifyAnalytics ties everything after
 // sign-in to the Clerk id. Session replay is the opt-in part: off until the
 // person turns it on in settings, per account.
 //
-// Channels follow OneSignal's rule (getOneSignalAppId): nightly has its own
-// PostHog project and never falls back to production's, because .env holds the
-// production key and Vite loads it in every mode. The dev server sends nothing.
+// Channels follow OneSignal's rule (getOneSignalAppId): nightly reads its own
+// key and never falls back to production's, because .env holds the production
+// key and Vite loads it in every mode. Today both keys are the same project
+// (the free plan allows one) and the registered `channel` property tells the
+// two apart; the separate variable is what lets nightly move out later
+// without a code change. The dev server sends nothing.
 
 import type { PostHog } from 'posthog-js'
 import { Capacitor } from '@capacitor/core'
@@ -65,13 +76,29 @@ export function scrubUrl(url: unknown): unknown {
   return url.split(/[?#]/)[0]
 }
 
-const URL_PROPS = ['$current_url', '$referrer', '$pathname', '$initial_current_url', '$initial_referrer']
+// Matches $current_url, $referrer, $pathname, $initial_current_url,
+// $initial_referrer (in $set_once), $session_entry_url,
+// $session_entry_referrer (in properties, once per session) and
+// $external_click_url (autocapture on outbound links), plus whatever
+// posthog-js names the same way next.
+const URL_KEY_PATTERN = /(url|referrer|pathname)$/i
 
-export function scrubEvent<T extends { properties?: Record<string, unknown> }>(event: T | null): T | null {
-  if (!event?.properties) return event
-  for (const key of URL_PROPS) {
-    if (key in event.properties) event.properties[key] = scrubUrl(event.properties[key])
+function scrubBag(bag: Record<string, unknown> | undefined): void {
+  if (!bag) return
+  for (const key of Object.keys(bag)) {
+    if (URL_KEY_PATTERN.test(key)) bag[key] = scrubUrl(bag[key])
   }
+}
+
+export function scrubEvent<T extends {
+  properties?: Record<string, unknown>
+  $set?: Record<string, unknown>
+  $set_once?: Record<string, unknown>
+}>(event: T | null): T | null {
+  if (!event) return event
+  scrubBag(event.properties)
+  scrubBag(event.$set)
+  scrubBag(event.$set_once)
   return event
 }
 
@@ -87,6 +114,13 @@ let started = false
 let enabled = true
 let queue: Array<[string, Record<string, unknown> | undefined]> = []
 let identifiedAs: string | null = null
+// A sign-in (or sign-out) made before the SDK has loaded. Clerk routinely
+// resolves who is signed in before the dynamic import of posthog-js settles,
+// and without this the call was simply dropped: identifyAnalytics no-opped on
+// a null client, so every early sign-in shipped events under an anonymous id
+// forever (identify is never retried) and replay opt-in never started.
+// undefined = nothing pending; null is a real pending value (sign-out).
+let pendingUserId: string | null | undefined
 
 export function track<E extends AnalyticsEventName>(
   name: E,
@@ -106,7 +140,17 @@ export async function startAnalytics(): Promise<void> {
     queue = []
     return
   }
-  const { default: posthog } = await import('posthog-js')
+  let posthog: PostHog
+  try {
+    ({ default: posthog } = await import('posthog-js'))
+  } catch {
+    // A blocked or failed fetch of the SDK itself (an ad blocker, a flaky
+    // network on first launch). Same outcome as no key: go quiet rather than
+    // throw out of a call sites do not await for its result.
+    enabled = false
+    queue = []
+    return
+  }
   posthog.init(key, {
     api_host: apiHost(Capacitor.isNativePlatform(), typeof window === 'undefined' ? '' : window.location.origin),
     ui_host: UI_HOST,
@@ -123,11 +167,27 @@ export async function startAnalytics(): Promise<void> {
   })
   posthog.register({ channel, app_version: __APP_VERSION__ })
   client = posthog
+  // Applied before the queue flushes: a captured event with no identity set
+  // yet files under a fresh anonymous id, and every queued event lands before
+  // an identify that arrives after it would tie them to the wrong person.
+  if (pendingUserId !== undefined) {
+    const userId = pendingUserId
+    pendingUserId = undefined
+    applyIdentify(userId)
+  }
   for (const [name, properties] of queue) posthog.capture(name, properties)
   queue = []
 }
 
 export function identifyAnalytics(userId: string | null): void {
+  if (!client) {
+    pendingUserId = userId
+    return
+  }
+  applyIdentify(userId)
+}
+
+function applyIdentify(userId: string | null): void {
   if (!client) return
   if (!userId) {
     client.stopSessionRecording()
@@ -175,4 +235,5 @@ export function __resetAnalyticsForTests(): void {
   enabled = true
   queue = []
   identifiedAs = null
+  pendingUserId = undefined
 }

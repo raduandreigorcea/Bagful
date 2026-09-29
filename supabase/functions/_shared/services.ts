@@ -1,4 +1,4 @@
-// What the admin dashboard may ask of Sentry, OneSignal and Clerk, and what it
+// What the admin dashboard may ask of Sentry, OneSignal, Clerk and PostHog, and what it
 // gets back.
 //
 // The dashboard is a plain SPA and holds no secret, on purpose (admin's
@@ -14,13 +14,14 @@
 // private metadata and every address the person ever added; a Sentry issue
 // carries stack context. The browser gets what the page shows and no more.
 
-export type Service = 'sentry' | 'onesignal' | 'clerk'
+export type Service = 'sentry' | 'onesignal' | 'clerk' | 'posthog'
 
 export type ServiceRequest =
   | { service: 'sentry'; view: 'issues' | 'feedback' }
   | { service: 'onesignal'; view: 'notifications' }
   | { service: 'clerk'; view: 'summary' }
   | { service: 'clerk'; view: 'user'; userId: string }
+  | { service: 'posthog'; view: 'activity' }
 
 // The Sentry project the app reports to. The same two strings vite.config.js
 // uploads source maps under, so they are constants rather than two more secrets.
@@ -45,6 +46,8 @@ const SECRETS: Record<Service, string[]> = {
   // The same two push-on-item-insert already uses.
   onesignal: ['ONESIGNAL_APP_ID', 'ONESIGNAL_REST_API_KEY'],
   clerk: ['CLERK_SECRET_KEY'],
+  // A personal API key with the query:read scope, nothing else.
+  posthog: ['POSTHOG_PERSONAL_API_KEY'],
 }
 
 export const CORS_HEADERS = {
@@ -63,6 +66,7 @@ export function parseRequest(body: unknown): ServiceRequest | null {
   if (service === 'sentry' && (view === 'issues' || view === 'feedback')) return { service, view }
   if (service === 'onesignal' && view === 'notifications') return { service, view }
   if (service === 'clerk' && view === 'summary') return { service, view }
+  if (service === 'posthog' && view === 'activity') return { service, view }
   if (service === 'clerk' && view === 'user' && typeof userId === 'string' && CLERK_USER_ID.test(userId)) {
     return { service, view, userId }
   }
@@ -93,7 +97,7 @@ export class UpstreamError extends Error {
   }
 }
 
-const SERVICE_NAMES: Record<Service, string> = { sentry: 'Sentry', onesignal: 'OneSignal', clerk: 'Clerk' }
+const SERVICE_NAMES: Record<Service, string> = { sentry: 'Sentry', onesignal: 'OneSignal', clerk: 'Clerk', posthog: 'PostHog' }
 
 export function upstreamMessage(service: Service, status: number, context: UpstreamContext = {}): string {
   const name = SERVICE_NAMES[service]
@@ -342,4 +346,84 @@ export function shapeClerkUser(raw: Raw): ClerkUser {
 export function readClerkCount(raw: unknown): number {
   if (typeof raw === 'number') return raw
   return num((raw as Raw | null)?.total_count)
+}
+
+// ─── PostHog ─────────────────────────────────────────────────────────────────
+
+// The one EU project both channels send to (src/lib/analytics.ts). Constants,
+// like Sentry's org and project: neither is a secret and neither changes.
+export const POSTHOG_API = 'https://eu.posthog.com'
+export const POSTHOG_PROJECT_ID = '287898'
+export const POSTHOG_DAYS = 30
+
+/** The channel whose events this project's admin page shows. */
+export function posthogChannel(supabaseUrl: string | undefined): 'production' | 'nightly' {
+  const ref = (supabaseUrl ?? '').replace(/^https:\/\//, '').split('.')[0]
+  return ref === PRODUCTION_PROJECT_REF ? 'production' : 'nightly'
+}
+
+export function posthogQueryUrl(): string {
+  return `${POSTHOG_API}/api/projects/${POSTHOG_PROJECT_ID}/query/`
+}
+
+// COUNTS ONLY, and that is the privacy line of this page: the query groups by
+// day and never selects a person, a distinct_id or a property beyond the three
+// closed breakdowns below, so nothing that names or follows someone can reach
+// the browser even from an admin session. `$active` is people per day
+// (uniq), the one number that is not an event count.
+const TRACKED_EVENTS = [
+  'list_created', 'list_joined', 'item_added', 'item_checked', 'barcode_scanned',
+  'invite_sent', 'shop_filter_used', 'onboarding_completed', 'search_performed',
+]
+
+export function posthogActivityQuery(channel: string): Record<string, unknown> {
+  const since = `timestamp >= today() - INTERVAL ${POSTHOG_DAYS - 1} DAY AND properties.channel = {channel}`
+  return {
+    query: {
+      kind: 'HogQLQuery',
+      query: `
+        SELECT toString(toDate(timestamp)) AS day, event,
+          multiIf(event = 'item_added', toString(properties.source),
+                  event = 'barcode_scanned', toString(properties.found),
+                  event = 'shop_filter_used', toString(properties.shop), '') AS part,
+          count() AS n
+        FROM events
+        WHERE ${since} AND event IN (${TRACKED_EVENTS.map((e) => `'${e}'`).join(', ')})
+        GROUP BY day, event, part
+        UNION ALL
+        SELECT toString(toDate(timestamp)) AS day, '$active' AS event, '' AS part, uniq(person_id) AS n
+        FROM events
+        WHERE ${since}
+        GROUP BY day`,
+      values: { channel },
+    },
+  }
+}
+
+export interface PostHogActivity {
+  channel: string
+  /** YYYY-MM-DD, oldest first, every day of the window whether or not it had events. */
+  days: string[]
+  /** counts[event][part] is one number per day; part is '' for an event with no breakdown. */
+  counts: Record<string, Record<string, number[]>>
+}
+
+export function shapePostHogActivity(raw: unknown, channel: string, today: Date = new Date()): PostHogActivity {
+  const days: string[] = []
+  for (let i = POSTHOG_DAYS - 1; i >= 0; i--) {
+    days.push(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i)).toISOString().slice(0, 10))
+  }
+  const index = new Map(days.map((day, i) => [day, i]))
+  const counts: PostHogActivity['counts'] = {}
+  const results = ((raw as Raw | null)?.results ?? []) as unknown[]
+  for (const row of results) {
+    if (!Array.isArray(row)) continue
+    const [day, event, part, n] = row
+    const i = index.get(String(day))
+    if (i === undefined || typeof event !== 'string') continue
+    const byPart = (counts[event] ??= {})
+    const values = (byPart[String(part ?? '')] ??= days.map(() => 0))
+    values[i] = (values[i] ?? 0) + num(n)
+  }
+  return { channel, days, counts }
 }
