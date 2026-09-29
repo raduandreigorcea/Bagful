@@ -66,15 +66,17 @@ const label = shopLabel
 // icon-set version for the same reason as Lidl; every Aldi the catalog scrapes
 // is Aldi Sued. Delhaize's is their app tile, the white lion on red.
 //
-// Auchan's bird (their own favicon), Carrefour's two arrows and MPreis's M have
-// no background of their own and keep the inset, or they would touch the rim.
+// Auchan's bird (their own favicon), Carrefour's two arrows, Kaufland's K and
+// MPreis's M have no background of their own and keep the inset, or they would
+// touch the rim. Kaufland's is their Safari pinned-tab icon in their red, minus
+// the square frame around the K: in a disc a frame reads as a stray border.
 const FULL_BLEED = new Set(['aldi', 'delhaize', 'lidl', 'mega-image'])
 const WHITE_TILE = new Set(['mega-image'])
 
 // A retailer is one line in a registry and drawing its logo is a separate job,
 // so a shop with no asset gets its initial rather than an empty circle that
 // looks like a bug.
-const KNOWN_LOGOS = new Set(['aldi', 'auchan', 'carrefour', 'delhaize', 'lidl', 'mega-image', 'mpreis'])
+const KNOWN_LOGOS = new Set(['aldi', 'auchan', 'carrefour', 'delhaize', 'kaufland', 'lidl', 'mega-image', 'mpreis'])
 
 // Hofer is Aldi Sued's name in Austria and wears the same stripes.
 const SAME_MARK: Record<string, string> = { hofer: 'aldi' }

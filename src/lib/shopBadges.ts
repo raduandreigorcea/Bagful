@@ -42,6 +42,7 @@ const SHOP_NAMES: Record<string, string> = {
   carrefour: 'Carrefour',
   delhaize: 'Delhaize',
   hofer: 'Hofer',
+  kaufland: 'Kaufland',
   lidl: 'Lidl',
   'mega-image': 'Mega Image',
   mpreis: 'MPreis',
