@@ -46,6 +46,7 @@ const SHOP_NAMES: Record<string, string> = {
   lidl: 'Lidl',
   'mega-image': 'Mega Image',
   mpreis: 'MPreis',
+  penny: 'Penny',
 }
 
 /**
