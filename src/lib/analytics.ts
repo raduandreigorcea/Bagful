@@ -114,6 +114,10 @@ let started = false
 let enabled = true
 let queue: Array<[string, Record<string, unknown> | undefined]> = []
 let identifiedAs: string | null = null
+// Registered on every event. Kept so a sign-out can put them back: reset()
+// clears every registered property along with the identity, and an event with
+// no channel is invisible to the admin page, which filters on it.
+let superProperties: Record<string, unknown> = {}
 // A sign-in (or sign-out) made before the SDK has loaded. Clerk routinely
 // resolves who is signed in before the dynamic import of posthog-js settles,
 // and without this the call was simply dropped: identifyAnalytics no-opped on
@@ -165,7 +169,8 @@ export async function startAnalytics(): Promise<void> {
     session_recording: { maskAllInputs: true, maskTextSelector: '*' },
     before_send: scrubEvent,
   })
-  posthog.register({ channel, app_version: __APP_VERSION__ })
+  superProperties = { channel, app_version: __APP_VERSION__ }
+  posthog.register(superProperties)
   client = posthog
   // Applied before the queue flushes: a captured event with no identity set
   // yet files under a fresh anonymous id, and every queued event lands before
@@ -190,8 +195,14 @@ export function identifyAnalytics(userId: string | null): void {
 function applyIdentify(userId: string | null): void {
   if (!client) return
   if (!userId) {
+    // Nobody to forget. App.vue says "signed out" on every visit to the login
+    // screen, and resetting there wiped channel off the very first events a
+    // visitor sends -- which is how production's first day of events reached
+    // PostHog with no channel and never showed in the admin page.
+    if (identifiedAs === null) return
     client.stopSessionRecording()
     client.reset()
+    client.register(superProperties)
     identifiedAs = null
     return
   }
@@ -236,4 +247,5 @@ export function __resetAnalyticsForTests(): void {
   queue = []
   identifiedAs = null
   pendingUserId = undefined
+  superProperties = {}
 }

@@ -166,6 +166,38 @@ describe('track', () => {
     expect(ph.reset).toHaveBeenCalled()
   })
 
+  // Production had events arriving with no channel, so the admin page (which
+  // filters on it) showed nothing. reset() drops every registered property,
+  // and App.vue reports "nobody signed in" on the login screen.
+  it('does not reset a visitor who never signed in, so channel survives', async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_APP_CHANNEL', 'production')
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test')
+    await startAnalytics()
+    identifyAnalytics(null)
+    expect(ph.reset).not.toHaveBeenCalled()
+  })
+
+  it('registers channel and version again after a real sign-out', async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_APP_CHANNEL', 'production')
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test')
+    await startAnalytics()
+    identifyAnalytics('user_a')
+    identifyAnalytics(null)
+    expect(ph.register).toHaveBeenLastCalledWith(expect.objectContaining({ channel: 'production' }))
+    expect(ph.register.mock.invocationCallOrder.at(-1)).toBeGreaterThan(ph.reset.mock.invocationCallOrder[0])
+  })
+
+  it('does not reset a sign-out made before the SDK loads, when nobody was signed in', async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_APP_CHANNEL', 'production')
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test')
+    identifyAnalytics(null)
+    await startAnalytics()
+    expect(ph.reset).not.toHaveBeenCalled()
+  })
+
   it('starts and stops replay through the settings toggle, for the identified account', async () => {
     vi.stubEnv('DEV', false)
     vi.stubEnv('VITE_APP_CHANNEL', 'production')
