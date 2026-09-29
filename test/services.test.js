@@ -11,6 +11,9 @@ import {
   missingSecrets,
   oneSignalNotificationsUrl,
   parseRequest,
+  posthogActivityQuery,
+  posthogChannel,
+  shapePostHogActivity,
   readClerkCount,
   sentryEnvironments,
   sentryEnvironmentsUrl,
@@ -251,5 +254,46 @@ describe('Clerk', () => {
   it('reads the count in either shape', () => {
     expect(readClerkCount({ object: 'total_count', total_count: 12 })).toBe(12)
     expect(readClerkCount(12)).toBe(12)
+  })
+})
+
+describe('PostHog', () => {
+  it('parses the one view it answers', () => {
+    expect(parseRequest({ service: 'posthog', view: 'activity' })).toEqual({ service: 'posthog', view: 'activity' })
+    expect(parseRequest({ service: 'posthog', view: 'persons' })).toBeNull()
+  })
+
+  it('reads production on the production project and nightly everywhere else', () => {
+    expect(posthogChannel('https://qwpyiperbjaeykrvilhf.supabase.co')).toBe('production')
+    expect(posthogChannel('https://someotherref.supabase.co')).toBe('nightly')
+    expect(posthogChannel(undefined)).toBe('nightly')
+  })
+
+  it('passes the channel as a value, and never selects a person', () => {
+    const body = posthogActivityQuery('nightly')
+    expect(body.query.values).toEqual({ channel: 'nightly' })
+    // person_id only ever inside uniq(): a count of people, never a list of them.
+    expect(body.query.query.replaceAll('uniq(person_id)', '')).not.toMatch(/person_id|distinct_id|email/)
+    expect(body.query.query).not.toContain('nightly')
+  })
+
+  it('lays counts on a fixed 30-day axis, zero-filling empty days and dropping strays', () => {
+    const today = new Date('2026-09-29T12:00:00Z')
+    const shaped = shapePostHogActivity({
+      results: [
+        ['2026-09-29', 'item_added', 'search', 3],
+        ['2026-09-29', 'item_added', 'barcode', '2'],
+        ['2026-09-28', '$active', '', 5],
+        ['2026-01-01', 'item_added', 'search', 99],
+        'garbage',
+      ],
+    }, 'production', today)
+    expect(shaped.days).toHaveLength(30)
+    expect(shaped.days.at(0)).toBe('2026-08-31')
+    expect(shaped.days.at(-1)).toBe('2026-09-29')
+    expect(shaped.counts.item_added.search.at(-1)).toBe(3)
+    expect(shaped.counts.item_added.barcode.at(-1)).toBe(2)
+    expect(shaped.counts.item_added.search.reduce((a, b) => a + b)).toBe(3)
+    expect(shaped.counts.$active[''].at(-2)).toBe(5)
   })
 })

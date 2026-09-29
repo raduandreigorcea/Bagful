@@ -1,4 +1,4 @@
-// Sentry, OneSignal and Clerk, for the admin dashboard's Services pages.
+// Sentry, OneSignal, Clerk and PostHog, for the admin dashboard's Services pages.
 //
 // The dashboard holds no secret key and must never hold one, and all three of
 // these answer only to a secret key. So the keys live here, as secrets of the
@@ -15,6 +15,7 @@
 //   ONESIGNAL_APP_ID       shared with push-on-item-insert
 //   ONESIGNAL_REST_API_KEY shared with push-on-item-insert
 //   CLERK_SECRET_KEY       the sk_test_ key of the one Clerk instance
+//   POSTHOG_PERSONAL_API_KEY  a phx_ key scoped to query:read, same on both projects
 // A service whose secrets are missing answers 503 not_configured, naming them.
 //
 // WHO MAY ASK: verify_jwt is off (config.toml), because the platform's check
@@ -36,6 +37,10 @@ import {
   missingSecrets,
   oneSignalNotificationsUrl,
   parseRequest,
+  posthogActivityQuery,
+  posthogChannel,
+  posthogQueryUrl,
+  shapePostHogActivity,
   readClerkCount,
   sentryEnvironments,
   sentryIssuesUrl,
@@ -99,6 +104,26 @@ async function oneSignal() {
   return (body.notifications ?? []).map(shapeNotification)
 }
 
+async function posthog() {
+  const channel = posthogChannel(env('SUPABASE_URL'))
+  const res = await fetch(posthogQueryUrl(), {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${env('POSTHOG_PERSONAL_API_KEY')}`,
+      'content-type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify(posthogActivityQuery(channel)),
+    signal: AbortSignal.timeout(20_000),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as Record<string, unknown> | null
+    const detail = typeof body?.detail === 'string' ? body.detail : undefined
+    throw new UpstreamError('posthog', res.status, { path: new URL(posthogQueryUrl()).pathname, detail })
+  }
+  return shapePostHogActivity(await res.json(), channel)
+}
+
 async function clerk(request: Extract<ServiceRequest, { service: 'clerk' }>) {
   const auth = `Bearer ${env('CLERK_SECRET_KEY')}`
   if (request.view === 'user') {
@@ -154,7 +179,9 @@ Deno.serve(async (req) => {
         ? await sentry(request.view)
         : request.service === 'onesignal'
           ? await oneSignal()
-          : await clerk(request)
+          : request.service === 'posthog'
+            ? await posthog()
+            : await clerk(request)
     return reply(200, { data })
   } catch (error) {
     if (error instanceof UpstreamError) {
