@@ -72,7 +72,7 @@ describe('the shop marks specifically', () => {
   it('never leaves a mark tinted by the theme', () => {
     // These are the one place in the app where currentColor is wrong: a
     // recoloured Carrefour blue is not Carrefour.
-    for (const shop of ['aldi', 'auchan', 'carrefour', 'delhaize', 'kaufland', 'lidl', 'mega-image', 'mpreis']) {
+    for (const shop of ['aldi', 'auchan', 'carrefour', 'delhaize', 'kaufland', 'lidl', 'mega-image', 'mpreis', 'penny']) {
       expect(brands[`brands/${shop}.svg`], shop).not.toContain('currentColor')
     }
   })
