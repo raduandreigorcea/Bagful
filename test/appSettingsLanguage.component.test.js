@@ -123,12 +123,13 @@ describe('the Language section', () => {
     }
   })
 
-  it('sits after both segmented sections without disturbing their indices', () => {
+  it('sits after every segmented section without disturbing their indices', () => {
     // appSettingsModal.component.test.js reads .segmented positionally
     // (.at(0) Appearance, .at(1) Notifications). This control is classed
-    // .lang-seg precisely so it cannot join that list.
+    // .lang-seg precisely so it cannot join that list. The third .segmented is
+    // Screen recording, which comes after both.
     const w = mountModal()
-    expect(w.findAll('.segmented')).toHaveLength(2)
+    expect(w.findAll('.segmented')).toHaveLength(3)
 
     const html = w.html()
     expect(html.indexOf('lang-seg')).toBeGreaterThan(html.lastIndexOf('class="segmented'))

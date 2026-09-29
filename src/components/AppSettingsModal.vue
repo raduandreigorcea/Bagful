@@ -25,6 +25,7 @@ import {
 } from '../lib/theme'
 import AppIcon from './AppIcon.vue'
 import { IS_NIGHTLY, SUPABASE_PROJECT_REF } from '../lib/appChannel'
+import { replayEnabled, setReplayEnabled } from '../lib/analytics'
 
 // Settings that belong to the app on this device rather than to a list or
 // to the account: how it looks, whether it may notify, and what it is.
@@ -117,6 +118,9 @@ async function checkForUpdates() {
 const themeMode = ref<ThemeMode>('system')
 const notificationMode = ref<NotificationPreference>('on')
 const notificationHint = ref('')
+// Off until chosen, per account; lib/analytics owns the key and starts or stops
+// the recorder.
+const replayMode = ref<'on' | 'off'>('off')
 
 function syncPreferencesFromStorage() {
   // lib/theme owns the key and the fallback-to-system rule; this only mirrors
@@ -129,6 +133,14 @@ function syncPreferencesFromStorage() {
   // subscription that doesn't exist.
   notificationMode.value =
     getNotificationPreference(localStorage, userId.value ?? '') === 'on' ? 'on' : 'off'
+
+  replayMode.value = userId.value && replayEnabled(localStorage, userId.value) ? 'on' : 'off'
+}
+
+function applyReplay(mode: 'on' | 'off') {
+  if (!userId.value) return
+  replayMode.value = mode
+  setReplayEnabled(localStorage, userId.value, mode === 'on')
 }
 
 function applyTheme(mode: ThemeMode) {
@@ -259,8 +271,31 @@ watch(
           </div>
         </section>
 
-        <!-- The third of a kind: same section shell, same segmented control,
-             same apply-on-tap as the two above. LanguagePicker draws it, and
+        <section class="app-settings__section">
+          <h4 id="app-replay-label" class="app-settings__section-title">{{ t('settings.replay') }}</h4>
+          <p class="app-settings__row-hint">{{ t('settings.replay.hint') }}</p>
+          <div class="segmented segmented--two" role="group" aria-labelledby="app-replay-label">
+            <button
+              class="segmented__btn"
+              :class="{ 'segmented__btn--active': replayMode === 'on' }"
+              type="button"
+              @click="applyReplay('on')"
+            >
+              <span>{{ t('settings.replay.on') }}</span>
+            </button>
+            <button
+              class="segmented__btn"
+              :class="{ 'segmented__btn--active': replayMode === 'off' }"
+              type="button"
+              @click="applyReplay('off')"
+            >
+              <span>{{ t('settings.replay.off') }}</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- One more of a kind: same section shell, same segmented control,
+             same apply-on-tap as the ones above. LanguagePicker draws it, and
              classes it .lang-seg rather than .segmented — deliberately, so
              that the two helpers in test/appSettingsModal.component.test.js
              which index .segmented positionally (.at(0) Appearance, .at(1)

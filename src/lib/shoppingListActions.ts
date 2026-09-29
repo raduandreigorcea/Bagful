@@ -21,6 +21,7 @@ import { t } from './i18n'
 import { ITEM_NAME_MAX_LENGTH, ITEM_QUANTITY_MAX, sumQuantities } from './limits'
 import type { ShoppingItemRow } from './listRealtime'
 import type { ProductSuggestion } from './productSearch'
+import { track, type ItemSource } from './analytics'
 
 // How long a quantity stepper may keep being tapped before the change is sent.
 // Comfortably longer than the gap between two deliberate taps, short enough that
@@ -42,6 +43,14 @@ export interface AddedProduct extends ProductSuggestion {
   /** The barcode it was scanned from. Stored alongside a custom contribution so
    *  the next scan of the same package finds it instead of missing again. */
   barcode?: string | null
+}
+
+// Custom first: a product named after a failed scan carries its barcode too,
+// and what the person did there was name it.
+function itemSource(picked: AddedProduct | null): ItemSource {
+  if (!picked) return 'typed'
+  if (picked.custom) return 'custom'
+  return picked.barcode ? 'barcode' : 'search'
 }
 
 // Every write the list can make, and the optimistic bookkeeping around them.
@@ -503,6 +512,7 @@ export function useShoppingListActions(options: {
       const previousQty = Number(existing.quantity) || 1
       existing.quantity = sumQuantities(previousQty, quantity) // optimistic
       reportAdded(name, maker)
+      track('item_added', { source: itemSource(picked) })
       if (picked) recordProductAdd(picked)
 
       // Through the same coalescing writer the row's own stepper uses, rather
@@ -551,6 +561,7 @@ export function useShoppingListActions(options: {
     // The pick is spent — same reason as the merge branch above.
     selectedProduct.value = null
     reportAdded(name, maker)
+    track('item_added', { source: itemSource(picked) })
 
     if (isOffline()) {
       enqueueOfflineMutation(localStorage, userId.value, { kind: 'insert', id, row })
@@ -741,6 +752,7 @@ export function useShoppingListActions(options: {
     const previous = item.checked
     const previousCheckedAt = (item.checked_at as string | null) ?? null
     const nextChecked = !previous
+    if (nextChecked) track('item_checked')
 
     // Unchecking: if another unchecked item with the same name already exists,
     // fold this one into it instead of leaving two active rows — same merge rule

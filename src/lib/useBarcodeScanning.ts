@@ -5,6 +5,7 @@ import {
   scanWithNativeScanner,
 } from './barcodeScanner'
 import type { ProductSuggestion } from './productSearch'
+import { track } from './analytics'
 
 // Reading a barcode and deciding what it means.
 //
@@ -46,7 +47,7 @@ export function useBarcodeScanning(options: {
   /** Find the product a code names, or null if no database has one. */
   lookupBarcode: (code: string) => Promise<ProductSuggestion | null>
   /** Put a found product on the list — the same call a tapped suggestion makes. */
-  addProduct: (product: ProductSuggestion) => void
+  addProduct: (product: ProductSuggestion & { barcode: string }) => void
   /** Clear the search dropdown, so a camera does not open over a list of matches. */
   clearSuggestions: () => void
   /**
@@ -138,6 +139,9 @@ export function useBarcodeScanning(options: {
     // Left our camera screen while the lookup ran. Adding behind a screen they
     // have closed is not what they asked for.
     if (source === 'screen' && !scannerOpen.value) return
+    // Here and not in reportMiss, which re-fires for a code already known to
+    // miss every time it sits in front of the camera.
+    track('barcode_scanned', { found: !!product })
 
     if (product) {
       // The scan IS the add. It used to fill the form and hand the screen back so
@@ -156,7 +160,7 @@ export function useBarcodeScanning(options: {
       // ours could have kept reading and Google's could have been reopened, but a
       // camera that comes back on its own after every item is a thing to dismiss
       // rather than a thing to use.
-      addProduct(product)
+      addProduct({ ...product, barcode: code })
       closeScanner()
       return
     }

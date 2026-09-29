@@ -25,9 +25,12 @@
 // sign-in to the Clerk id. Session replay is the opt-in part: off until the
 // person turns it on in settings, per account.
 //
-// Channels follow OneSignal's rule (getOneSignalAppId): nightly has its own
-// PostHog project and never falls back to production's, because .env holds the
-// production key and Vite loads it in every mode. The dev server sends nothing.
+// Channels follow OneSignal's rule (getOneSignalAppId): nightly reads its own
+// key and never falls back to production's, because .env holds the production
+// key and Vite loads it in every mode. Today both keys are the same project
+// (the free plan allows one) and the registered `channel` property tells the
+// two apart; the separate variable is what lets nightly move out later
+// without a code change. The dev server sends nothing.
 
 import type { PostHog } from 'posthog-js'
 import { Capacitor } from '@capacitor/core'

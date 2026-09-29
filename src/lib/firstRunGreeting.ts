@@ -1,6 +1,7 @@
 import { ref, type Ref } from 'vue'
 import { t } from './i18n'
 import { hasSeenTour, markTourSeen } from './onboarding'
+import { track } from './analytics'
 import {
   enablePushNotifications,
   getNotificationPreference,
@@ -99,6 +100,7 @@ export function useFirstRunGreeting(options: {
   function closeTour(): void {
     onboardingTourOpen.value = false
     markTourSeen(storage)
+    track('onboarding_completed')
     maybePromptForNotifications()
   }
 
