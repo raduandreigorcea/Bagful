@@ -55,6 +55,7 @@ describe('one chain in several countries', () => {
     expect(shopLabel('aldi-gb')).toBe('Aldi')
     expect(shopLabel('carrefour-it')).toBe('Carrefour')
     expect(shopLabel('mpreis')).toBe('MPreis')
+    expect(shopLabel('kaufland')).toBe('Kaufland')
     expect(shopLabel('delhaize')).toBe('Delhaize')
     expect(shopLabel('mega-image')).toBe('Mega Image')
   })
