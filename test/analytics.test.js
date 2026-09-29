@@ -7,6 +7,18 @@ const ph = vi.hoisted(() => ({
 vi.mock('posthog-js', () => ({ default: ph }))
 vi.mock('posthog-js/dist/recorder', () => ({}))
 
+// A rejecting dynamic import() of 'posthog-js' (startAnalytics's try/catch
+// around the SDK load) is not covered here: vi.mock resolves 'posthog-js' to
+// one cached module record for the whole file, the same way native ESM
+// caches a module after its first successful resolution. Every other test
+// below imports it successfully, so a factory that starts throwing after
+// that point is never reached, and a factory that throws before it would
+// poison the cache for the rest of the file instead of just one test. Doing
+// this properly needs vi.resetModules() plus a fresh dynamic import of
+// analytics.ts itself, isolated from the module-level state (queue, client,
+// pendingUserId) every other test in this file shares -- awkward enough that
+// the try/catch is verified by reading, not by a test.
+
 import {
   posthogKey, apiHost, scrubUrl, scrubEvent, track, startAnalytics,
   identifyAnalytics, replayEnabled, setReplayEnabled, __resetAnalyticsForTests,
@@ -59,6 +71,31 @@ describe('scrubEvent', () => {
       $initial_referrer: 'https://x.app/', item: 1,
     })
   })
+  it('scrubs $set and $set_once, and the session-entry and click keys PostHog actually sends there', () => {
+    // A realistic capture: $set_once carries the first-touch URLs
+    // (get_initial_props), properties carries the once-per-session entry URL
+    // and an autocapture click on an outbound link -- none of these are the
+    // $current_url/$referrer/$pathname the previous test already covers.
+    const out = scrubEvent({
+      properties: {
+        $session_entry_url: 'https://x.app/list-setup?code=ABC#t',
+        $external_click_url: 'https://partner.example/?ref=xyz',
+        item: 1,
+      },
+      $set: { $referrer: 'https://x.app/?code=A' },
+      $set_once: {
+        $initial_current_url: 'https://x.app/list-setup?code=DEF',
+        $initial_referrer: 'https://x.app/?code=B',
+      },
+    })
+    expect(out.properties).toEqual({
+      $session_entry_url: 'https://x.app/list-setup', $external_click_url: 'https://partner.example/', item: 1,
+    })
+    expect(out.$set).toEqual({ $referrer: 'https://x.app/' })
+    expect(out.$set_once).toEqual({
+      $initial_current_url: 'https://x.app/list-setup', $initial_referrer: 'https://x.app/',
+    })
+  })
   it('passes null and property-less events through', () => {
     expect(scrubEvent(null)).toBe(null)
     expect(scrubEvent({})).toEqual({})
@@ -97,11 +134,24 @@ describe('track', () => {
     await startAnalytics()
     expect(ph.init).toHaveBeenCalledWith('phc_test', expect.objectContaining({
       persistence: 'memory', mask_all_text: true, disable_session_recording: true,
+      mask_all_element_attributes: true, disable_external_dependency_loading: true,
+      api_host: expect.any(String), before_send: scrubEvent,
     }))
     expect(ph.capture.mock.calls).toEqual([
       ['onboarding_completed', undefined],
       ['item_added', { source: 'barcode' }],
     ])
+  })
+
+  it('applies a sign-in made before the SDK loads, before the queued events flush', async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_APP_CHANNEL', 'production')
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test')
+    identifyAnalytics('user_a')
+    track('item_checked')
+    await startAnalytics()
+    expect(ph.identify).toHaveBeenCalledWith('user_a')
+    expect(ph.identify.mock.invocationCallOrder[0]).toBeLessThan(ph.capture.mock.invocationCallOrder[0])
   })
 
   it('stops replay and resets identity on sign-out', async () => {
@@ -114,6 +164,22 @@ describe('track', () => {
     identifyAnalytics(null)
     expect(ph.stopSessionRecording).toHaveBeenCalled()
     expect(ph.reset).toHaveBeenCalled()
+  })
+
+  it('starts and stops replay through the settings toggle, for the identified account', async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_APP_CHANNEL', 'production')
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test')
+    await startAnalytics()
+    identifyAnalytics('user_a')
+    const storage = memoryStorage()
+    setReplayEnabled(storage, 'user_a', true)
+    // setReplayEnabled fires the recorder's dynamic import without awaiting
+    // it (a settings toggle has nothing to await it for), so the assertion
+    // has to poll rather than assume one microtask is enough.
+    await vi.waitFor(() => expect(ph.startSessionRecording).toHaveBeenCalled())
+    setReplayEnabled(storage, 'user_a', false)
+    expect(ph.stopSessionRecording).toHaveBeenCalled()
   })
 })
 
