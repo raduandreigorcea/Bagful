@@ -96,6 +96,7 @@ drop function if exists public.admin_user_facts();
 drop function if exists public.admin_list_facts();
 drop function if exists public.admin_overview(timestamptz);
 drop function if exists public.admin_activity_series(timestamptz, text);
+-- Retired: the Overview feed it served did not scale past a handful of users.
 drop function if exists public.admin_recent_activity(integer);
 drop function if exists public.admin_list_users(text, text, text, integer, integer);
 drop function if exists public.admin_user_detail(text);
@@ -103,6 +104,7 @@ drop function if exists public.admin_lists(text, text, text, integer, integer);
 drop function if exists public.admin_list_detail(uuid);
 drop function if exists public.admin_local_products(text, text, text, integer, integer);
 drop function if exists public.admin_security_events(text, timestamptz, text, integer, integer);
+drop function if exists public.admin_security_events(text, timestamptz, text, integer, integer, boolean);
 drop function if exists public.admin_event_digest(timestamptz);
 drop function if exists public.admin_rate_limits(integer);
 drop function if exists public.admin_health();
@@ -638,96 +640,6 @@ $$;
 
 revoke all on function public.admin_activity_series(timestamptz, text) from public, anon;
 grant execute on function public.admin_activity_series(timestamptz, text) to authenticated;
-
--- ─── the recent activity feed ────────────────────────────────────────────────
--- What just happened, across every table that stamps a time. Ordered as one
--- stream rather than shown as five lists, because the question it answers is
--- "what is going on right now" and that is not a per-table question.
-create or replace function public.admin_recent_activity(p_limit integer default 40)
-returns table (
-  kind           text,
-  occurred_at    timestamptz,
-  actor          text,
-  actor_name     text,
-  actor_image_url text,
-  list_id   uuid,
-  list_name text,
-  subject        text,
-  detail         jsonb
-)
-language plpgsql
-stable
-security definer
-set search_path = public
-as $$
-begin
-  perform public.admin_guard();
-
-  return query
-  with events as (
-    select
-      'list_created'::text as kind,
-      hh.created_at             as occurred_at,
-      hh.created_by             as actor,
-      hh.id                     as list_id,
-      hh.name                   as subject,
-      jsonb_build_object('emoji', hh.emoji) as detail
-    from public.lists hh
-
-    union all
-    select 'member_joined', hm.joined_at, hm.user_id, hm.list_id, null,
-           jsonb_build_object('role', hm.role)
-    from public.list_members hm
-
-    union all
-    select 'item_added', si.created_at, si.added_by, si.list_id, si.name,
-           jsonb_build_object('quantity', si.quantity, 'maker', si.maker)
-    from public.shopping_list_items si
-
-    union all
-    select 'item_checked', si.checked_at, si.added_by, si.list_id, si.name,
-           jsonb_build_object('quantity', si.quantity)
-    from public.shopping_list_items si
-    where si.checked_at is not null
-
-    -- One row per checkout, not per bought item. A 20-item shop is one event in
-    -- a feed; twenty would bury everything else that happened that day.
-    union all
-    select 'checkout', max(ph.purchased_at), ph.purchased_by, ph.list_id, null,
-           jsonb_build_object('items', count(*), 'checkout_id', ph.checkout_id)
-    from public.purchase_history ph
-    group by ph.checkout_id, ph.purchased_by, ph.list_id
-
-    union all
-    select 'product_contributed', pc.created_at, pc.contributed_by, pc.list_id, pc.name,
-           jsonb_build_object('maker', pc.maker, 'barcode', pc.barcode)
-    from public.product_catalog pc
-    where pc.contributed_by is not null
-
-    union all
-    select 'security_event', se.created_at, se.actor, se.list_id, se.kind, se.detail
-    from public.security_events se
-  )
-  select
-    e.kind,
-    e.occurred_at,
-    e.actor,
-    p.display_name as actor_name,
-    p.image_url    as actor_image_url,
-    e.list_id,
-    hh.name        as list_name,
-    e.subject,
-    e.detail
-  from events e
-  left join public.profiles p on p.user_id = e.actor
-  left join public.lists hh on hh.id = e.list_id
-  order by e.occurred_at desc
-  limit greatest(coalesce(p_limit, 40), 1);
-end;
-$$;
-
-revoke all on function public.admin_recent_activity(integer) from public, anon;
-grant execute on function public.admin_recent_activity(integer) to authenticated;
 
 -- ─── the user list ───────────────────────────────────────────────────────────
 -- Sorting is expressed as one ORDER BY item per (column, direction) pair, each
@@ -1500,7 +1412,10 @@ create or replace function public.admin_security_events(
   p_since  timestamptz default null,
   p_actor  text        default null,
   p_limit  integer     default 50,
-  p_offset integer     default 0
+  p_offset integer     default 0,
+  -- Only what admins did (every admin_* kind). Health's audit trail reads this:
+  -- what members do is their own business and, at scale, a firehose.
+  p_admin_only boolean default false
 )
 returns table (
   id           bigint,
@@ -1529,6 +1444,7 @@ begin
     select se.*
     from public.security_events se
     where (p_kind  is null or se.kind = p_kind)
+      and (not coalesce(p_admin_only, false) or se.kind like 'admin\_%')
       and (p_actor is null or se.actor = p_actor)
       and (p_since is null or se.created_at >= p_since)
   )
@@ -1545,8 +1461,8 @@ begin
 end;
 $$;
 
-revoke all on function public.admin_security_events(text, timestamptz, text, integer, integer) from public, anon;
-grant execute on function public.admin_security_events(text, timestamptz, text, integer, integer) to authenticated;
+revoke all on function public.admin_security_events(text, timestamptz, text, integer, integer, boolean) from public, anon;
+grant execute on function public.admin_security_events(text, timestamptz, text, integer, integer, boolean) to authenticated;
 
 -- The same shape security_digest() produces, but reachable by an admin rather
 -- than only by service_role. Kept separate from that function rather than

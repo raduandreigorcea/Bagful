@@ -571,25 +571,12 @@ export type Database = {
           window_start: string
         }[]
       }
-      admin_recent_activity: {
-        Args: { p_limit?: number }
-        Returns: {
-          actor: string
-          actor_image_url: string
-          actor_name: string
-          detail: Json
-          kind: string
-          list_id: string
-          list_name: string
-          occurred_at: string
-          subject: string
-        }[]
-      }
       admin_restore_list: { Args: { p_id: string }; Returns: undefined }
       admin_revoke: { Args: { p_user_id: string }; Returns: undefined }
       admin_security_events: {
         Args: {
           p_actor?: string
+          p_admin_only?: boolean
           p_kind?: string
           p_limit?: number
           p_offset?: number
