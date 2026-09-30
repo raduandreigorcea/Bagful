@@ -32,7 +32,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import {
   CLERK_API,
-  CORS_HEADERS,
+  corsHeaders,
   UpstreamError,
   missingSecrets,
   oneSignalNotificationsUrl,
@@ -57,9 +57,6 @@ import {
 
 const env = (name: string) => Deno.env.get(name)
 
-function reply(status: number, body: unknown): Response {
-  return Response.json(body, { status, headers: CORS_HEADERS })
-}
 
 async function getJson(service: Service, url: string, authorization: string): Promise<unknown> {
   const res = await fetch(url, {
@@ -146,7 +143,9 @@ async function clerk(request: Extract<ServiceRequest, { service: 'clerk' }>) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  const headers = corsHeaders(req.headers.get('origin'))
+  const reply = (status: number, body: unknown) => Response.json(body, { status, headers })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers })
   if (req.method !== 'POST') return reply(405, { code: 'bad_request', error: 'POST only' })
 
   const authorization = req.headers.get('authorization')

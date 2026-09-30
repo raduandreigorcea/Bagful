@@ -8,6 +8,7 @@
 // object carries private metadata, and none of it should leave the function.
 import { describe, it, expect } from 'vitest'
 import {
+  corsHeaders,
   missingSecrets,
   oneSignalNotificationsUrl,
   parseRequest,
@@ -52,6 +53,21 @@ describe('parseRequest', () => {
   it('refuses a user id that could change the path it is put into', () => {
     expect(parseRequest({ service: 'clerk', view: 'user', userId: '../users/count' })).toBeNull()
     expect(parseRequest({ service: 'clerk', view: 'user', userId: 'user_abc123456/../../x' })).toBeNull()
+  })
+})
+
+describe('corsHeaders', () => {
+  it('lets the dashboard dev server read the answer', () => {
+    expect(corsHeaders('http://localhost:5174')['access-control-allow-origin']).toBe('http://localhost:5174')
+    expect(corsHeaders('http://127.0.0.1:5174')['access-control-allow-origin']).toBe('http://127.0.0.1:5174')
+  })
+
+  it('never names any other site, or everyone', () => {
+    for (const origin of ['https://evil.example', 'https://famcart-app.vercel.app', 'null', null]) {
+      const allowed = corsHeaders(origin)['access-control-allow-origin']
+      expect(allowed).not.toBe(origin)
+      expect(allowed).not.toBe('*')
+    }
   })
 })
 
