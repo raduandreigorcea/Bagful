@@ -43,6 +43,9 @@ import {
   type PurchaseRecord,
 } from '../_shared/push.ts'
 
+/** Must match PUSH_CHANNEL_ID in android/app/src/main/java/com/bagful/app/MainActivity.java. */
+const PUSH_CHANNEL_ID = 'list_updates'
+
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -103,6 +106,14 @@ async function sendPush(options: {
       chrome_web_badge: 'https://famcart-app.vercel.app/icons/badge-96.png',
       web_push_topic: tag,
       collapse_id: tag,
+      // The high-importance channel MainActivity creates, which is what makes
+      // Android drop a banner over the screen rather than only add an icon to
+      // the status bar. A phone on an app older than the channel does not have
+      // it, and OneSignal then falls back to its default channel as before.
+      existing_android_channel_id: PUSH_CHANNEL_ID,
+      // FCM high priority: delivered at once to a phone in Doze, not batched
+      // into its next maintenance window.
+      priority: 10,
       // Webhook retries (and per-row checkout fan-in) resend the same key;
       // OneSignal processes the first and swallows the rest.
       idempotency_key: options.idempotencyKey,

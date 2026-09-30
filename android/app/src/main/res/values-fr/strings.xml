@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="push_channel_name">Mises à jour des listes</string>
+    <string name="push_channel_description">Quand quelqu\'un ajoute un article à une liste partagée ou en fait les courses</string>
+</resources>

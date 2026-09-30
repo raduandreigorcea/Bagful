@@ -4,4 +4,9 @@
     <string name="title_activity_main">Bagful</string>
     <string name="package_name">com.bagful.app</string>
     <string name="custom_url_scheme">com.bagful.app</string>
+    <!-- The notification channel pushes arrive on (MainActivity). Android shows
+         these in the app's notification settings, so they are translated in
+         values-ro, -de, -fr, -es and -it. -->
+    <string name="push_channel_name">List updates</string>
+    <string name="push_channel_description">When someone adds to or shops from a list you share</string>
 </resources>
