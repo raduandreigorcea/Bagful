@@ -90,9 +90,9 @@ function applyNativeBars(): void {
 /**
  * Paint the saved mode, then keep following the OS while that mode is 'system'.
  *
- * Called once from main.ts. The listener used to live in the settings dialog,
- * so the login, setup and offline screens, which never mount it, stayed on
- * whatever the OS said at boot. The saved mode is re-read on each change rather
+ * Called once from main.ts rather than from the settings dialog, so the login,
+ * setup and offline screens, which never mount it, follow the OS too. The saved
+ * mode is re-read on each change rather
  * than remembered here, so a choice made in Settings needs no call back into
  * this module.
  */

@@ -77,14 +77,10 @@ export interface ProductSuggestions {
    * Forget everything scoped to the list being left, before the next one
    * loads.
    *
-   * Owned here rather than done by the caller. HomeView used to clear
-   * listProductStats and productStatsLoaded itself on a switch, which meant
-   * this composable's reset rule lived at a call site that could not see the
-   * rest of its state — and did not: recentsExcluded, a picked product and the
-   * last-added confirmation all belonged to the previous list and all
-   * survived the switch. The second of those had already caused a visible bug
-   * once (an empty list in a new list reading "All bought"), which is the
-   * kind that comes back every time state is added here and not there.
+   * Owned here rather than done by the caller, because only here can the reset
+   * see all of this composable's state: the stats, recentsExcluded, a picked
+   * product and the last-added confirmation all belong to the list being left,
+   * and state added here later has to be reset here too.
    */
   resetForList: () => void
   /** The regulars, for the search screen before anything is typed. */
@@ -321,16 +317,13 @@ export function useProductSuggestions(options: {
 
       // Two signals about this person, sent to the reference catalog only.
       //
-      // MARKET NOW FILTERS RATHER THAN DEMOTES, and that reversal came with the
-      // catalog rebuild. The old rule existed because market came from Open Food
-      // Facts country tags, which were unreliable enough that treating them as
-      // fact produced empty dropdowns. The catalog is now built from retailer
+      // MARKET FILTERS RATHER THAN DEMOTES. The catalog is built from retailer
       // listings, and Auchan Romania stocking something is a hard fact about
       // where you can buy it. Offering it to a phone in Germany is offering a
       // shop they cannot reach; they get nothing from the catalog and fall back
       // to this list's own product_catalog, which is the right answer.
       //
-      // LANGUAGE NO LONGER RANKS ANYTHING. Every product in the catalog is
+      // LANGUAGE RANKS NOTHING. Every product in the catalog is
       // Romanian, because every retailer in it is, so there is no second
       // language to prefer. p_langs is still sent and still accepted, because
       // dropping an argument is the same silent break as renaming one.
@@ -393,8 +386,8 @@ export function useProductSuggestions(options: {
       let globalRows: ProductSuggestion[] = []
       let localRows: ProductSuggestion[] = []
 
-      // EACH SOURCE LANDS ON ITS OWN. This used to await both, so every search
-      // was as slow as the slower one, and the slower one is the catalog project:
+      // EACH SOURCE LANDS ON ITS OWN. Awaiting both would make every search as
+      // slow as the slower one, and the slower one is the catalog project:
       // a small instance that swaps, measured at 230-870ms of server time for a
       // word nobody had searched yet, on top of the network. A list's own
       // rows had no reason to sit behind that.
@@ -466,14 +459,9 @@ export function useProductSuggestions(options: {
       // Once per settled search, after the debounce: a count, never the text.
       track('search_performed', { results: suggestions.value.length })
 
-      // THERE IS NO COLD PATH ANY MORE. This used to fall through to a
-      // `discover` edge function that queried Open Food Facts live, on the
-      // keystroke path, whenever the local rows did not look like an answer.
-      //
-      // The catalog it fed is gone and so is the reason for it: the catalog is
-      // now what real shops actually list, so an empty result means "no shop we
-      // read sells this", which is TRUE and useful. The old empty result meant
-      // "we have not heard of it yet", which is why it went looking.
+      // THERE IS NO COLD PATH. The catalog is what real shops actually list, so
+      // an empty result means "no shop we read sells this", which is TRUE and
+      // useful, and there is nowhere else worth asking.
     } catch {
       // Suggestions are a convenience; a failed lookup changes nothing.
     } finally {
@@ -567,14 +555,12 @@ export function useProductSuggestions(options: {
       }
 
       // Neither database has ever seen this code, and there is nowhere else to
-      // ask. A scan used to fall through to the `discover` edge function, which
-      // looked the barcode up in Open Food Facts; that catalog is gone, and a
-      // barcode no configured retailer lists is a barcode this catalog cannot
-      // resolve.
+      // ask: a barcode no configured retailer lists is a barcode this catalog
+      // cannot resolve.
       //
       // The user goes to the naming path, their answer lands in the app
       // database with the code attached, and the NEXT scan of it is answered
-      // from there. That loop still works and is now the only one.
+      // from there.
       return null
     } catch {
       // Treated as "the catalog does not have it", which puts the user on the
@@ -586,7 +572,7 @@ export function useProductSuggestions(options: {
   // Ask the current question, however it came to be asked.
   //
   // The two callers below differ in ONE thing -- whether the dispatch waits out
-  // the typing debounce -- and used to spell the other four steps out twice. The
+  // the typing debounce -- and share the other four steps here. The
   // steps are not obvious enough to duplicate safely: clearing the matches
   // before raising the skeleton is what stops the dropdown offering "Can't find
   // it?" mid-search, and the pending timer has to be cancelled whichever way the

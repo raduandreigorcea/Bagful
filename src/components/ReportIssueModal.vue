@@ -71,12 +71,11 @@ const canSend = computed(() =>
   isReportSendable({ kind: kind.value, surface: surface.value, message: message.value }),
 )
 
-// Both kinds are asked where, and now in the same words. A section that mounts
-// and unmounts resized the whole dialog under the finger every time someone
-// switched, and reserving the space instead would have left a blank gap — so it
-// stays put. It used to reword itself between the two kinds as well, which was
-// one more thing moving for no gain: "Where in the app?" is true of a bug and of
-// an idea, and only the optional badge needs to differ. The place is worth
+// Both kinds are asked where, in the same words. A section that mounts and
+// unmounts would resize the whole dialog under the finger on every switch, and
+// reserving the space would leave a blank gap, so it stays put: "Where in the
+// app?" is true of a bug and of an idea, and only the optional badge needs to
+// differ. The place is worth
 // having either way: "the scanner is confusing" is as easy to act on as "the
 // scanner is broken".
 const whereLabel = computed(() => t('report.whereLabel'))

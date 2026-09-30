@@ -45,9 +45,8 @@ const ReportIssueModal = defineAsyncComponent(() => import('./ReportIssueModal.v
 function prefetch(load: () => Promise<unknown>) {
   void load().catch(() => {})
 }
-// App settings used to load with the bar because it owned the theme, which had
-// to be applied on boot. lib/theme (startTheme) owns that now, so it loads on
-// demand like the others, warmed when the account menu that leads to it opens.
+// App settings loads on demand like the others (lib/theme applies the theme on
+// boot), warmed when the account menu that leads to it opens.
 const loadAppSettingsModal = () => import('./AppSettingsModal.vue')
 const AppSettingsModal = defineAsyncComponent(loadAppSettingsModal)
 import { t, tn } from '../lib/i18n'
@@ -61,8 +60,6 @@ const props = defineProps({
   // logo (or a way back) and the account button and nothing else.
   //
   // One header at every width, meaning the same thing on a phone and a desktop.
-  // It used to be a five-slot bottom bar on a phone and a different header on a
-  // desktop, where the list name opened a different thing on each.
   layout: { type: String as PropType<'bar' | 'header'>, default: 'header' },
   // Whether the header's left slot is a way back rather than the brand mark.
   // Only the 'header' shell has that slot, and only a screen with a step behind
@@ -199,7 +196,7 @@ function openReportIssue() {
   reportOpen.value = true
 }
 
-// One door: "Manage list" in the list sheet. It used to have three.
+// One door: "Manage list" in the list sheet.
 function openListSettings() {
   listSheetOpen.value = false
   settingsEverOpened.value = true
@@ -245,8 +242,8 @@ const { signingOut, signOut: handleSignOut } = useSignOut({
 })
 
 // Asked first, like every other action that is hard to take back: the row sits
-// where the account menu opens, and one stray tap on it signed a bot out
-// mid-shop (found by the bot swarm). Signing back in takes an emailed code.
+// where the account menu opens, so one stray tap would sign someone out
+// mid-shop, and signing back in takes an emailed code.
 const { state: signOutConfirm, confirm, resolveWith } = useConfirm()
 async function confirmSignOut() {
   const sure = await confirm({

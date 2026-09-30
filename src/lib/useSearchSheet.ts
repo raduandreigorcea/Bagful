@@ -7,23 +7,16 @@ import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 // field in a header band at the top of it and the matches running edge to edge
 // beneath, down to wherever the keyboard starts.
 //
-// It used to be a FLIP. The field lived inline above the list, and focusing it
-// froze the slot's height, translated the field's row back to where it had just
-// been and let the browser animate the release, so that the one thing the user
-// had touched was the one thing that did not blink out and reappear somewhere
-// else. That was the right answer for a field with a place in the flow.
-//
-// The field no longer has one. Adding starts from the action bar's centre button, so there is no origin to fly from and
-// the measurement, the inversion and the transitionend plumbing all had nothing
-// left to measure. What replaced them is the motion the app already owns for
+// Adding starts from the action bar's centre button, so there is no origin in
+// the flow to animate from. The sheet uses the motion the app already owns for
 // anything anchored to the bottom edge (--modal-rise: 100% with the shared
 // modal-rise keyframes in style.css), which is also the edge the keyboard is
 // about to come from.
 //
-// What survives is the part that was always the hard bit: knowing where the
-// visual viewport actually is. Android resizes the WebView and leaves offsetTop
-// at 0; iOS does not resize and puts the difference in offsetTop. Both are
-// wrong in different ways if you reach for window.innerHeight.
+// The hard bit is knowing where the visual viewport actually is. Android
+// resizes the WebView and leaves offsetTop at 0; iOS does not resize and puts
+// the difference in offsetTop. Both are wrong in different ways if you reach
+// for window.innerHeight.
 
 // The width at which the bar hands over to the header shell, matching the 900px
 // boundary in AppNavBar and --desktop-column. Above it the form stays in the

@@ -36,11 +36,10 @@ const props = defineProps({
   // A confirm dialog wants a click outside to mean cancel; a destructive one
   // may not want to be dismissed by accident.
   closeOnBackdrop: { type: Boolean, default: true },
-  // Opening a dialog does not focus anything in it. It used to focus the first
-  // focusable element, which is a reasonable default only if that element was
-  // chosen — and it never was: it is whatever comes first in the markup, which
-  // in most of these dialogs is the close button. So dialogs opened looking like
-  // the way out was the thing to press, and Enter dismissed them.
+  // Opening a dialog does not focus anything in it. The first focusable element
+  // is whatever comes first in the markup, which in most of these dialogs is
+  // the close button, so focusing it would make the way out look like the thing
+  // to press, and Enter would dismiss the dialog.
   //
   // On for a dialog that genuinely has a first thing to do; CustomProductModal
   // does its own instead, because it wants the field selected as well as

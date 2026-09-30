@@ -10,10 +10,9 @@ import ShopBadges from './ShopBadges.vue'
 // The button in the list header: how the list is ordered, and (nightly) which
 // shop it is narrowed to. PopoverMenu owns the panel itself.
 //
-// This used to be a filter -- All / To buy / Checked -- because ticked rows
-// stayed where they were and a long list mixed the two. Ticked rows now move
-// into their own "In cart" section, so that question answers itself, and the
-// one worth asking in a shop is "in what order do I walk this".
+// Ordering rather than a To buy / Checked filter: ticked rows have their own
+// "In cart" section, so the question worth asking in a shop is "in what order
+// do I walk this".
 const model = defineModel<ListSort>({ default: 'added' })
 
 // Independent of the order: "by aisle, at Lidl" is a fair question. NIGHTLY

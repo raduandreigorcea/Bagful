@@ -2,10 +2,8 @@
 // anything is typed. Groceries are mostly repeats, so the most useful thing that
 // space can hold is the shortcut past typing altogether.
 //
-// Deliberately NOT in productSearch.ts, which the catalog importer used to
-// vendor byte-for-byte, guarded by a test that went when that repo did. The
-// separation is still the right one: an importer collapses products and has no
-// use for a list's habits.
+// Deliberately NOT in productSearch.ts: that is the catalog-facing search, and
+// a list's habits are no business of anything that collapses products.
 
 import { productKey, type ListProductStat, type ProductSuggestion } from './productSearch'
 

@@ -111,10 +111,6 @@ export default {
   // links and a link cannot be a {placeholder}. The names are proper nouns and
   // stay untranslated, and Intl.ListFormat joins them. All six languages keep
   // the "from A, B and C" order, which is what makes splitting it this way safe.
-  //
-  // There used to be a fourth fragment, ', under', because this was an ODbL
-  // licence notice naming Open Food Facts and its two siblings. The catalog is
-  // built from retailer listings now, so there is no licence to name.
   'about.creditLead': 'Product data from',
   'about.creditEnd': '.',
 

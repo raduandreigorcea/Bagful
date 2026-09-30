@@ -34,10 +34,9 @@ import { useList } from '../lib/useList'
 import { isOfflineError } from '../lib/offlineQueue'
 import { identifyUser } from '../lib/errorReporting'
 // isCurrentlyOffline is the app's one answer to "are we offline", handed to
-// every composable below that has to choose between writing and queueing. The
-// composite it computes (Capacitor status first, navigator.onLine as the
-// definite-offline backstop) used to be re-derived here, which left realtime
-// reading navigator directly — see the note in lib/connectivity.
+// every composable below that has to choose between writing and queueing:
+// Capacitor status first, navigator.onLine as the definite-offline backstop.
+// See the note in lib/connectivity.
 import { isCurrentlyOffline, onReconnect, onlineStatus } from '../lib/connectivity'
 import { useRemoteChanges } from '../lib/useRemoteChanges'
 import { rememberUser, getRememberedUser } from '../lib/session'
@@ -110,11 +109,9 @@ const {
   refreshListAfterSettingsChange,
 } = useList({ db, userId })
 const newItem = ref('')
-// What one add puts on the list. No longer picked before the product it counts:
-// the add form got you to name a number before you had named the thing, and then
-// reset it after every add. Adding is one tap now, and the row's own stepper is
-// where a quantity is set — so this stays 1, and addItem's merge (same product
-// again sums the quantities) is what turns two taps into two.
+// What one add puts on the list: 1, unless the typed text named a number (see
+// addTyped). The row's own stepper is where a quantity is set, and addItem's
+// merge (same product again sums the quantities) turns two taps into two.
 const newQty = ref(1)
 // Everything behind the search box: the catalog query, this list's purchase
 // habits (which rank it), and the regulars offered before anything is typed.
@@ -476,10 +473,9 @@ onBeforeUnmount(() => {
 // already says exactly which product was meant, so a second confirming tap is
 // just friction.
 //
-// The query stays, and so do its matches. Adding used to empty the field and
-// drop the suggestions with it, which is right when one search means one item
-// and wrong the rest of the time -- "milk" is usually two kinds of milk, and
-// getting the second one meant typing the word again. Clearing the matches here
+// The query stays, and so do its matches: "milk" is usually two kinds of milk,
+// and emptying the field would mean typing the word again for the second one.
+// Clearing the matches here
 // while the text remained would be worse than either: the search is debounced on
 // the text changing, so an unchanged query would never fetch them back.
 function selectSuggestion(product: ProductSuggestion) {
@@ -504,8 +500,8 @@ function deleteItem(item: ShoppingItemRow) {
 }
 
 // What was typed, added. "6 ouă" is six eggs (see parseQuantity), and once the
-// row has landed the field empties, ready for the next thing: Enter used to add
-// the same words again, and the next item started with deleting the last one.
+// row has landed the field empties, ready for the next thing, so Enter does not
+// add the same words again.
 //
 // Emptied only if the add actually landed, which lastAdded changing says (it is
 // set synchronously by both the insert and the merge path). A refused add -- the
@@ -677,9 +673,9 @@ async function runInitializeHome() {
   // it, and the next load reconciles if it fails. Skipped when nothing changed
   // since this device last wrote it, see refreshOwnProfile.
   void refreshOwnProfile(db, userId.value, user.value, localStorage)
-  // Re-bind this device to the account in OneSignal. Signing out detaches it and
-  // nothing used to put it back, so a device could stay subscribed while
-  // belonging to nobody and silently receive nothing. No-op unless notifications
+  // Re-bind this device to the account in OneSignal. Signing out detaches it,
+  // and without this a device could stay subscribed while belonging to nobody
+  // and silently receive nothing. No-op unless notifications
   // were actually turned on. See syncPushUser.
   void syncPushUser(userId.value, localStorage)
   sanitizeAuthCallbackUrl()
@@ -772,7 +768,7 @@ async function switchList(id: string) {
   switchingList.value = true
   // Send the old list's debounced quantity taps before its rows are
   // cleared below. The flush looks each row up in the list, so run after the
-  // clear (as loadItems used to) it found none and dropped the taps. It picks
+  // clear it would find none and drop the taps. It picks
   // its rows up synchronously, so it is not awaited: the switch does not wait
   // on a round trip.
   void flushQuantityWrites()

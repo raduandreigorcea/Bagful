@@ -66,16 +66,15 @@ export type NotificationPreference = 'on' | 'off'
 // One preference per account, keyed like the offline queue and the list
 // snapshot, and for a sharper reason than either.
 //
-// This used to be a single device-wide key. Signing out clears the session, the
-// snapshot and the queue but deliberately not this — a preference is a standing
-// answer, and someone signing back in should not have to give it again. Which
-// meant it outlived the account that set it: A turns notifications on, A signs
-// out, B signs in, and syncPushUser below reads 'on' and calls
-// OneSignal.login(B). The first-run prompt then skips B, because a preference
-// exists. B is subscribed to push having never been asked.
+// Signing out clears the session, the snapshot and the queue but deliberately
+// not this: a preference is a standing answer, and someone signing back in
+// should not have to give it again. So a single device-wide key would outlive
+// the account that set it: A turns notifications on, A signs out, B signs in,
+// syncPushUser below reads 'on' and calls OneSignal.login(B), and the first-run
+// prompt skips B. B would be subscribed to push having never been asked.
 //
-// Keyed by user, that whole sequence is correct without anything else changing:
-// B has no preference and gets asked, and A's survives for when A comes back.
+// Keyed by user, B has no preference and gets asked, and A's survives for when
+// A comes back.
 const PREFERENCE_PREFIX = 'bagful-notifications'
 
 function preferenceKey(userId: string): string {
@@ -160,13 +159,9 @@ let webSdkRequested = false
 //
 // Deliberately NOT called from initPushNotifications. This is ~100KB from a
 // third-party CDN plus a service-worker registration, and until somebody has
-// actually turned notifications on there is nothing for any of it to do — yet
-// it used to load on every cold start for every visitor, including the desktop
-// users isDesktopBrowser goes out of its way never even to prompt. That is the
-// exact cost lib/errorReporting takes trouble to avoid for Sentry ("on a
-// grocery list opened on a phone in a shop, that is the wrong thing to spend a
-// connection on"), and the same reasoning applies here; it simply had not been
-// applied yet.
+// actually turned notifications on there is nothing for any of it to do, for
+// any visitor, including the desktop users isDesktopBrowser never even prompts.
+// It is the cost lib/errorReporting avoids for Sentry, for the same reason.
 //
 // So the SDK is fetched by the two paths that actually need it: syncPushUser for
 // a device already opted in, and enableWebPush for one turning it on. `immediate`
@@ -345,11 +340,10 @@ export async function enablePushNotifications(userId: string): Promise<EnablePus
 
 // Re-attach this device to the signed-in user, on every boot.
 //
-// login() is what ties a device to a Clerk id, and it used to run in exactly one
-// place: the moment somebody switched notifications on. That made the binding a
-// one-shot. Signing out calls logoutPushUser(), which detaches the device;
-// signing back in re-initialises the SDK but never re-binds, so the device stayed
-// subscribed to OneSignal while belonging to nobody. The symptom is invisible
+// login() is what ties a device to a Clerk id. Signing out calls
+// logoutPushUser(), which detaches the device, and signing back in
+// re-initialises the SDK but does not re-bind, so without this the device would
+// stay subscribed to OneSignal while belonging to nobody. The symptom is invisible
 // from the client — the toggle still reads On, because that is a separate local
 // preference — and only shows up at the far end: the edge function targets the
 // right external ids, OneSignal matches no devices, and the REST call comes back
@@ -384,13 +378,12 @@ export async function syncPushUser(
       return
     }
     // This is the path that fetches the web SDK for a device already opted in,
-    // and it is the reason boot no longer does. At idle, because nobody is
+    // so boot does not have to. At idle, because nobody is
     // waiting on it — the preference is already 'on', so the only thing at
     // stake is re-binding a device that is usually still bound.
     ensureWebSdkLoaded()
-    // The full cap rather than the shorter one this used to take: the script is
-    // no longer fetched during boot, so the wait now has an idle callback and a
-    // CDN download in front of it. Nobody is watching, and a repair that times
+    // The full cap: the wait has an idle callback and a CDN download in front
+    // of it. Nobody is watching, and a repair that times
     // out one launch short of arriving is a repair that never happens.
     const sdk = await webSdk()
     await sdk?.login(userId)

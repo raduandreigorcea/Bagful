@@ -29,11 +29,10 @@ export interface Checkout {
  * Which day a group of checkouts belongs to, as data rather than as rendered
  * text. The view turns this into words.
  *
- * This used to be a formatted `label: string`, which made a pure, unit-tested
- * grouping function depend on the display language — and grouped BY that
- * string, so two genuinely different days that happened to format identically
- * would have merged into one. Grouping is by start-of-day now, and the label
- * is the view's business.
+ * Not a formatted label: that would make a pure, unit-tested grouping function
+ * depend on the display language, and grouping BY a string would merge two
+ * different days that happen to format identically. Grouping is by
+ * start-of-day, and the label is the view's business.
  */
 export type DayLabel =
   | { kind: 'today' }

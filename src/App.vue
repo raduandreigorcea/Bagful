@@ -18,9 +18,9 @@ const ready = ref(false)
 router.isReady().finally(() => { ready.value = true })
 
 // The router guard checks the session only when the user navigates. A session
-// that Clerk ends while the app sits open (Sentry saw it after a token refresh
-// came back 401) left the list on screen with every request going out as the
-// anonymous role, each one refused, for half an hour. So a sign-out that
+// that Clerk ends while the app sits open (a token refresh coming back 401)
+// would leave the list on screen with every request going out as the
+// anonymous role, each one refused. So a sign-out that
 // happens here goes to login. Offline is excluded: Clerk cannot verify a
 // session without the network, and the offline list must survive that.
 const { isLoaded, isSignedIn, userId } = useAuth()

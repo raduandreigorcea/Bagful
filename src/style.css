@@ -1,26 +1,23 @@
 /* Plus Jakarta Sans, served from public/fonts/ rather than fonts.googleapis.com.
  *
- * The remote @import this replaces was the only network request standing between
- * a cold start and first paint. Inside Capacitor that is the whole story: every
+ * A remote @import would be the only network request standing between a cold
+ * start and first paint. Inside Capacitor that is the whole story: every
  * other asset is a local file, so the app would render and then stall on a DNS
  * lookup, a TLS handshake and a stylesheet from Google, which in turn pointed at
  * woff2 files on a second origin needing their own lookup and handshake. An
  * @import cannot be preloaded and cannot even be discovered until the stylesheet
  * holding it has been parsed, so none of that could overlap with anything.
  *
- * Offline it was worse than slow, it was wrong. The font never arrived, so the
- * app rendered in Segoe UI on a phone with no signal and in Plus Jakarta Sans on
- * the same phone a minute later. vite.config.ts precaches `woff2` and looked
- * like it covered this; the glob only ever sees dist/, so with the font on
- * Google's origin it was matching nothing. Now it matches these two files.
+ * Offline it would be worse than slow, it would be wrong: the font would never
+ * arrive, so the app would render in the system font with no signal and in Plus
+ * Jakarta Sans a minute later. The precache glob only ever sees dist/, which is
+ * why the files live here, where it matches them.
  *
  * Two files, not five. Plus Jakarta Sans is a variable font: Google emits one
  * @font-face per weight but every one of them points at a single file per subset,
- * so `font-weight: 200 800` below covers 400 through 800 out of 27KB. That also
- * quietly fixes a real bug. The old request asked for 500;600;700;800 while
- * --weight-regular is 400 and body text sets it, so every "regular" string in
- * the app was being rendered by the browser's nearest match at 500. 400 is a
- * real weight now.
+ * so `font-weight: 200 800` below covers 400 through 800 out of 27KB, and 400
+ * (--weight-regular, what body text sets) is a real weight rather than the
+ * browser's nearest match.
  *
  * latin-ext is not optional: Romanian needs ă, ș and ț, all of which live there.
  * unicode-range keeps the renderer from ever *using* it until such a character
@@ -277,9 +274,8 @@
   --ease-rise: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-fall: cubic-bezier(0.4, 0, 1, 1);
 
-  /* Stacking, as one scale. Layers used to pick numbers independently (999,
-     1100, 1200, then 6000-7500 for one teleported sheet), so which one won was
-     an accident of who typed the bigger number. Higher always means "more
+  /* Stacking, as one scale, so which layer wins is never an accident of who
+     typed the bigger number. Higher always means "more
      interrupting": a toast has to stay visible over an open sheet because its
      Undo is about something the sheet just did. */
   /* What the phone's bottom action bar takes, disc included, without the safe

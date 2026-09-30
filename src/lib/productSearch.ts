@@ -51,12 +51,7 @@ export interface ProductSuggestion {
   //
   // None of them changes behaviour. They are here so a ranking that is
   // otherwise very hard to argue with can be explained -- a wrong result looks
-  // exactly like a catalog that does not stock something, which is why `apa`
-  // returning onions read as bad data for weeks.
-  //
-  // (`concept_intent` used to live here and DID change behaviour: it let the
-  // client skip discovery for a generic word. Concepts and discovery are both
-  // gone.)
+  // exactly like a catalog that does not stock something.
   quantity?: number | null
   quantity_unit?: string | null
   retailers?: string[] | null
@@ -239,8 +234,7 @@ export function rankSuggestions(
     const name = String(candidate?.name ?? '').trim()
     if (!name) continue
     const key = productKey(name, candidate.maker)
-    // The key normalizes its inputs, so the trimmed name above and the raw one
-    // the comparator used to pass produce the same key. Nothing shifts.
+    // The key normalizes its inputs, so trimming the name above changes no key.
     if (!unique.has(key)) unique.set(key, { candidate, stat: listStats.get(key) })
   }
 

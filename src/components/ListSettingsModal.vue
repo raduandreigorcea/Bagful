@@ -204,13 +204,11 @@ function onListDeleted() {
             </div>
             <div>
               <h3>{{ t('list.title') }}</h3>
-              <!-- Which list this is. It used to read "Manage your
-                   list and members", which described the panels below
-                   rather than saying anything you could not already see — and
-                   left the one question the dialog has to answer unanswered.
-                   Renaming, removing members and deleting all happen in here,
-                   and someone in more than one list had nothing on screen
-                   confirming they were in the right one. -->
+              <!-- Which list this is, rather than a description of the
+                   panels below: that is the one question the dialog has to
+                   answer. Renaming, removing members and deleting all happen in here,
+                   and someone in more than one list needs something on screen
+                   confirming they are in the right one. -->
               <p class="settings-modal__subtitle">{{ listName || t('account.listFallback') }}</p>
             </div>
           </div>

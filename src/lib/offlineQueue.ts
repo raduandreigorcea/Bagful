@@ -18,8 +18,8 @@ export type OfflineMutation =
   | { kind: 'update'; id: string; patch: TablesUpdate<'shopping_list_items'> }
   | { kind: 'delete'; id: string }
   // A checkout made offline, replayed through buy_items so it still reaches
-  // purchase history (and the list's push) instead of being queued as bare
-  // deletes, which it used to be. `id` names the checkout, not a row, so the
+  // purchase history (and the list's push), which bare deletes would miss.
+  // `id` names the checkout, not a row, so the
   // per-row coalescing below never touches it. Safe to replay late or twice:
   // buy_items moves only rows that are still ticked and in the caller's
   // list, so a row already bought, or unticked since by someone else, is
@@ -166,17 +166,18 @@ function saveOfflineQueue(storage: Storage, userId: string, queued: OfflineMutat
   }
 }
 
+// The mutation flushOfflineQueue has sent and not yet heard back about. It can
+// no longer be changed or cancelled, so nothing may coalesce into it: a patch
+// folded into it is never sent, and cancelling it does not stop the row landing.
+let onWire: { userId: string; kind: OfflineMutation['kind']; id: string } | null = null
+
 // Append a mutation, coalescing against what is already queued so the replay
 // sends the fewest requests and never touches rows the server has never seen:
 // - update after a queued insert folds the patch into the insert row
 // - update after a queued update merges the patches (fields are absolute values)
 // - delete of a queued insert cancels the insert (and its updates) entirely
 // - delete otherwise supersedes any queued updates for that row
-// The mutation flushOfflineQueue has sent and not yet heard back about. It can
-// no longer be changed or cancelled, so nothing may coalesce into it: a patch
-// folded into it is never sent, and cancelling it does not stop the row landing.
-let onWire: { userId: string; kind: OfflineMutation['kind']; id: string } | null = null
-
+// None of this applies to the mutation on the wire; see onWire.
 export function enqueueOfflineMutation(
   storage: Storage,
   userId: string,
@@ -326,18 +327,16 @@ export function isRateLimitedError(error: unknown): boolean {
 // It lives beside isRateLimitedError because it is the same KIND of thing: a
 // server rejection that is a rule doing its job, not a fault, told apart from a
 // real failure by sniffing a raised exception's text. Sniffing is fragile, which
-// is the argument for having exactly one copy of it rather than the two
-// hand-written ones this replaces.
+// is the argument for having exactly one copy of it.
 //
-// `details` is read as well as `message`, which neither copy did: PostgREST
+// `details` is read as well as `message`: PostgREST
 // surfaces a raised exception's DETAIL there, and the field it lands in has
 // moved between versions — the same reason isRateLimitedError above checks both.
 // A cap misread as a fault shows a generic error where the friendly popup
 // belongs, and reports the trigger to Sentry.
 //
-// Only the machine token, which the trigger raises as its DETAIL. It also used
-// to match the words `limit of` in the human message, the trigger's older
-// wording, which any other error saying "limit of" would have matched too.
+// Only the machine token, which the trigger raises as its DETAIL, never the
+// human message: words like "limit of" turn up in other errors too.
 export function isItemLimitError(error: unknown): boolean {
   if (!error) return false
   const { message, details } = error as { message?: string; details?: string }
@@ -426,10 +425,9 @@ async function applyMutation(
 // Whether two queued mutations are the same intent, for the purpose of striking
 // one off after it has been sent.
 //
-// Kind and id, not deep equality. A coalesce landing during the request can
-// rewrite the row of a queued insert in place (see enqueueOfflineMutation), and
-// a mutation that no longer deep-equals the one we sent is still the one we
-// sent — refusing to recognise it would leave it at the head forever.
+// Kind and id, not deep equality: identity is all a strike-off needs, and the
+// stored copy is a fresh parse of storage, never the same object as the one
+// sent.
 function isSameMutation(a: OfflineMutation, b: OfflineMutation): boolean {
   return a.kind === b.kind && a.id === b.id
 }
@@ -442,16 +440,11 @@ function isSameMutation(a: OfflineMutation, b: OfflineMutation): boolean {
 // STORAGE IS RE-READ AROUND EVERY REQUEST, and that is the whole shape of this
 // loop rather than a detail of it.
 //
-// This used to load the queue once and write that array back after each
-// mutation. Every one of those writes therefore restored a snapshot taken
-// before the loop started — so anything enqueueOfflineMutation had written
-// during the preceding `await` was overwritten and gone, with the optimistic
-// row still on screen and nothing said. The window is not theoretical: a flush
-// runs on reconnect, on focus and on every watchdog tick, and costs a round
-// trip per mutation. If the connection drops inside one, the user's next tap
-// takes the offline path, lands in storage, and was erased by the next
-// iteration. Silent loss of a user's writes, in the module written to prevent
-// exactly that.
+// Carrying one array across the loop would write back, after each mutation, a
+// snapshot taken before it started, erasing whatever enqueueOfflineMutation
+// wrote during the preceding `await` while its row stays on screen. The window
+// is real: a flush runs on reconnect, on focus and on every watchdog tick, and
+// a tap made after the connection drops mid-flush lands in storage right then.
 //
 // So the queue in storage is the authority throughout, and this only ever
 // strikes off the one mutation it has just settled.

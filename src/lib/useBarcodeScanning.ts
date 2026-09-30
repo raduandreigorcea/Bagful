@@ -149,16 +149,14 @@ export function useBarcodeScanning(options: {
     if (product || !isCurrentlyOffline()) track('barcode_scanned', { found: !!product })
 
     if (product) {
-      // The scan IS the add. It used to fill the form and hand the screen back so
-      // the name and the quantity picker could be corrected before committing --
-      // but the picker has moved onto the list row, and a barcode is an exact key,
-      // so this was the one action in the app asking for a confirming tap while
-      // tapping a fuzzy search result committed outright.
+      // The scan IS the add, with no confirming tap: a barcode is an exact key,
+      // and even a fuzzy search result commits outright when tapped. The
+      // quantity is corrected on the list row.
       //
       // Same call a tapped suggestion makes, so the maker rides onto the row by
       // the same route. The add form is not touched at all: writing the name into
-      // it left the query sitting there afterwards, suppressing suggestions until
-      // it was edited by hand.
+      // it would leave the query sitting there afterwards, suppressing suggestions
+      // until it was edited by hand.
       //
       // Then the screen goes, and the list behind it is the confirmation -- the row
       // is there with its own stepper on it. One code per scan, on both scanners:

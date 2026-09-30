@@ -103,10 +103,8 @@ const toggleLabel = computed(() => {
 })
 
 // ── The quantity stepper ────────────────────────────────────────────────────
-// Quantity used to be picked in the add form, before the product it counted had
-// been named, and could never be changed afterwards: the row printed x2 as plain
-// text, so a wrong number meant deleting the item and adding it back. It lives
-// here now, on the thing it describes.
+// Quantity lives here, on the thing it describes, so a wrong number is fixed on
+// the row rather than by deleting the item and adding it back.
 //
 // It opens on a press rather than sitting on every row, because a shopping list
 // is mostly single items and three permanent targets per row would crowd both
@@ -374,7 +372,6 @@ function settle() {
   // no longer ours. onPointerUp clears this itself because its delete branch
   // deliberately does not settle — it leaves the face flung off-screen for the
   // removal animation — so the two together are what cover every exit.
-  // pointercancel had only this one, and left the id behind.
   pointerId = null
 }
 
@@ -409,8 +406,8 @@ function settle() {
       <AppIcon class="item-action__icon" name="x" />
     </div>
 
-    <!-- The gesture surface, and nothing more. It used to be role="button" with
-         the tap and the keyboard on it, which made every control inside it an
+    <!-- The gesture surface, and nothing more. Not role="button" with the tap
+         and the keyboard on it: that would make every control inside it an
          interactive descendant of a button -- markup a screen reader is entitled
          to flatten, and the quantity stepper is the thing it would flatten away.
          So the button is the real button below, and this is only what the finger

@@ -81,8 +81,7 @@ function finish() {
 }
 
 function copyCode() {
-  // Shared with OverviewPanel via lib/clipboard, which also owns the timer this
-  // used to leak — and stacked, so two taps could cancel each other's tick.
+  // Shared with OverviewPanel via lib/clipboard, which also owns the timer.
   // A blocked clipboard leaves `copied` false; the code is on screen to type.
   void copy(props.inviteCode)
 }

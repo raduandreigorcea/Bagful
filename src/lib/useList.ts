@@ -71,7 +71,7 @@ export function useList(options: {
     // Nor is the list row coming back empty (PGRST116, from .single()): that is
     // what a removed member, or anyone with a list open when it was deleted,
     // reads next, and the members channel already moves them off it. Reporting
-    // it filed a Sentry issue per removal (found by the bot swarm). The roster
+    // it would file a Sentry issue per removal. The roster
     // read beside it has no .single() and still reports as before.
     for (const err of [listErr, membersErr]) {
       if (!err || isOfflineError(err)) continue
@@ -124,9 +124,7 @@ export function useList(options: {
       .eq('user_id', userId.value)
     if (error) return { error }
     // A list row renders an emoji tile, a name and a marker, so that is all it
-    // carries, and the embed brings all of it back in this one query. It used to
-    // fetch every list's full roster here to draw composite member avatars;
-    // those are gone, and so is the extra round trip.
+    // carries, and the embed brings all of it back in this one query.
     const list = ((data ?? []) as unknown as MembershipRow[]).map((row) => ({
       id: row.list_id,
       name: row.lists?.name ?? '',

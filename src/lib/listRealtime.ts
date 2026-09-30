@@ -52,10 +52,10 @@ export function useListRealtime({
   hasPendingWrite,
 }: UseListRealtimeOptions) {
   const realtimeHealthy = ref(false)
-  // Healthy means ALL three channels are up, not any one of them. It used to be
-  // set by whichever acknowledgement came last, so a dead list channel beside a
-  // live members channel read as healthy, and the watchdog below, which only
-  // acts on an unhealthy socket, never came to fetch what it was missing.
+  // Healthy means ALL three channels are up, not any one of them. Set by
+  // whichever acknowledgement came last, a dead list channel beside a live
+  // members channel would read as healthy, and the watchdog below, which only
+  // acts on an unhealthy socket, would never come to fetch what it was missing.
   const CHANNEL_COUNT = 3
   const subscribedChannels = new Set<string>()
   const reconnectInProgress = ref(false)
@@ -71,11 +71,11 @@ export function useListRealtime({
 
   // ─── Pulling fresh state back, once ──────────────────────────────────────────
   // Everything here reads the same two things — the item list and the list
-  // header — and three separate paths used to ask for them independently, none
-  // able to see the others: the visibility handler, the reconnect it schedules,
-  // and each channel's own SUBSCRIBED callback. Coming back to the app ran all
-  // of them, so one foreground cost fourteen queries where four answer the
-  // question. On a phone, foregrounding is most of what happens to an app.
+  // header — and three paths ask for them, none able to see the others: the
+  // visibility handler, the reconnect it schedules, and each channel's own
+  // SUBSCRIBED callback. Coming back to the app fires all of them, which
+  // uncoalesced is fourteen queries where four answer the question. On a phone,
+  // foregrounding is most of what happens to an app.
   //
   // A trailing window rather than a lock, because the asks are naturally
   // simultaneous: three subscribe acknowledgements land within milliseconds of
@@ -151,12 +151,11 @@ export function useListRealtime({
   }
 
   // Every reconnect path is gated on this, so the connectivity signal it reads
-  // decides whether realtime can recover at all. It used to be navigator.onLine,
-  // which lib/connectivity exists precisely because of: inside the Android
-  // WebView that flag is unreliable and its online/offline events can fail to
-  // fire. A WebView wrongly reporting offline therefore pinned this to false and
-  // took the watchdog and the user-activity handler down with it — leaving the
-  // socket dead on the one platform the Capacitor status was added to serve.
+  // decides whether realtime can recover at all. Not navigator.onLine, which
+  // lib/connectivity exists precisely because of: inside the Android WebView
+  // that flag is unreliable and its online/offline events can fail to fire. A
+  // WebView wrongly reporting offline would pin this to false and take the
+  // watchdog and the user-activity handler down with it.
   function shouldKeepRealtimeActive() {
     return hasInitialized.value
       && !!listId.value
@@ -337,8 +336,8 @@ export function useListRealtime({
               items.value = sortItemsForDisplay(items.value)
             } else {
               // Through the refresh window like every other re-read here, not a
-              // direct loadItems: a burst of these used to start one fetch each,
-              // and they settled in completion order, older over newer.
+              // direct loadItems: a burst of these would start one fetch each,
+              // settling in completion order, older over newer.
               requestRefresh({ items: true })
             }
           },
