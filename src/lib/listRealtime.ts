@@ -231,7 +231,7 @@ export function useListRealtime({
       // problem from the watchdog never getting back on.
       captureException(
         error instanceof Error
-          ? Object.assign(error, { famcartReconnectReason: reason })
+          ? Object.assign(error, { bagfulReconnectReason: reason })
           : new Error(`Realtime reconnect failed (${reason}): ${String(error)}`),
       )
       scheduleRealtimeReconnect('retry after failure', RECONNECT_RETRY_MS)

@@ -42,7 +42,7 @@ describe('enqueueOfflineMutation', () => {
 
   it('returns an empty queue for corrupted storage instead of throwing', () => {
     const storage = makeStorage()
-    storage.setItem('famcart-offline-queue', '{not json')
+    storage.setItem('bagful-offline-queue', '{not json')
     expect(loadOfflineQueue(storage, USER)).toEqual([])
   })
 
@@ -144,7 +144,7 @@ describe('flushOfflineQueue', () => {
     const storage = makeStorage()
     // Exactly what an older build left behind: one key, the account stamped inside.
     storage.setItem(
-      'famcart-offline-queue',
+      'bagful-offline-queue',
       JSON.stringify({ version: 1, userId: USER, mutations: [insertMutation('a')] }),
     )
 
@@ -155,7 +155,7 @@ describe('flushOfflineQueue', () => {
     // The next save moves it across and retires the old key, so an emptied
     // per-user queue cannot fall back to this stale copy.
     enqueueOfflineMutation(storage, USER, insertMutation('b'))
-    expect(storage.getItem('famcart-offline-queue')).toBeNull()
+    expect(storage.getItem('bagful-offline-queue')).toBeNull()
     expect(loadOfflineQueue(storage, USER).map((m) => m.id)).toEqual(['a', 'b'])
   })
 
@@ -431,7 +431,7 @@ describe('rate-limited writes', () => {
 // failures by design. Without the rewrite on load, anything a user added while
 // offline during the upgrade would vanish with no error they ever see.
 describe('legacy pre-rename queue rows', () => {
-  const KEY = 'famcart-offline-queue'
+  const KEY = 'bagful-offline-queue'
 
   function writeLegacyQueue(storage, mutations) {
     storage.setItem(KEY, JSON.stringify({ version: 1, userId: USER, mutations }))

@@ -9,7 +9,7 @@ import { clearOfflineQueue } from './offlineQueue'
 import { clearProfileWritten } from './profile'
 import { clearCachedShops } from './shopBadges'
 
-const KEY = 'famcart-last-user'
+const KEY = 'bagful-last-user'
 
 export function rememberUser(storage: Storage, userId: string): void {
   try {
@@ -57,18 +57,18 @@ export function forgetUser(storage: Storage): void {
 // the next person reading "adding a fifth key has an obvious place to be added"
 // will add them. Both belong to the language choice (lib/locale):
 //
-//   famcart-locale:<userId>  A preference is a standing answer. Signing back in
+//   bagful-locale:<userId>  A preference is a standing answer. Signing back in
 //                            should not re-ask, which is the same argument the
 //                            notification preference makes for itself and the
 //                            reason neither is cleared here.
-//   famcart-locale           The device hint. Clearing it would flip the app to
+//   bagful-locale           The device hint. Clearing it would flip the app to
 //                            English at the one moment the user has no way to
 //                            change it back — the login screen, where there is
 //                            no account to read a preference from.
 //
 // The cost is that signing in as somebody who has never chosen leaves the app
 // in the previous account's language until they change it. That is cosmetic,
-// two taps to fix, and the same trade famcart-last-user already makes.
+// two taps to fix, and the same trade bagful-last-user already makes.
 export function forgetLocalUserState(storage: Storage, userId?: string): void {
   forgetUser(storage)
   clearListSnapshot(storage, userId)

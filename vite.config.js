@@ -43,7 +43,7 @@ self.addEventListener('activate', (event) => {
 
 function devServiceWorkerKillSwitch() {
   return {
-    name: 'famcart:dev-sw-kill-switch',
+    name: 'bagful:dev-sw-kill-switch',
     apply: 'serve',
     configureServer(server) {
       // Registered directly rather than from a returned function, so it runs

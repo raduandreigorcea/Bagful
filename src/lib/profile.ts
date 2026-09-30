@@ -33,7 +33,7 @@ async function upsertOwnProfile(
 // so it cannot be skipped for good, only thinned out.
 const PROFILE_REWRITE_MS = 24 * 60 * 60 * 1000
 
-const writtenKey = (userId: string) => `famcart.profileWritten.${userId}`
+const writtenKey = (userId: string) => `bagful.profileWritten.${userId}`
 
 // The boot-time refresh. Every write counts against the profile_write rate
 // limit (003_lists_and_members.sql), and writing an unchanged name on
@@ -82,7 +82,7 @@ export function clearProfileWritten(storage: Storage, userId?: string): void {
       storage.removeItem(writtenKey(userId))
       return
     }
-    const prefix = 'famcart.profileWritten.'
+    const prefix = 'bagful.profileWritten.'
     const keys: string[] = []
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i)

@@ -129,7 +129,7 @@ const visibleItems = computed(() =>
 // The cart folds away to its heading, remembered on this device. Someone
 // working down a long list in a shop wants the rows left to find and nothing
 // else; someone checking what they already have taps it open.
-const CART_COLLAPSED_KEY = 'famcart-cart-collapsed'
+const CART_COLLAPSED_KEY = 'bagful-cart-collapsed'
 function readCartCollapsed(): boolean {
   try {
     return localStorage.getItem(CART_COLLAPSED_KEY) === '1'

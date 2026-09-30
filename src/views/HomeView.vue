@@ -75,7 +75,7 @@ const shopMap = useShopMap(items, region)
 // this device, because it is a habit ("I always shop by aisle") rather than a
 // passing view -- unlike the shop filter below, it hides nothing, so opening
 // the app to it can never make an item look missing.
-const LIST_SORT_KEY = 'famcart-list-sort'
+const LIST_SORT_KEY = 'bagful-list-sort'
 function readListSort(): ListSort {
   try {
     return localStorage.getItem(LIST_SORT_KEY) === 'aisle' ? 'aisle' : 'added'

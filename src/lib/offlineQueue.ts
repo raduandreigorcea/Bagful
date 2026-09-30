@@ -59,7 +59,7 @@ type Db = Pick<SupabaseClient, 'from' | 'rpc'>
 // queue deliberately (see clearOfflineQueue), so this only bit when a session
 // ended some other way — an expired Clerk session, then somebody else signing in
 // on the same device — which is exactly the case the queue exists to survive.
-const STORAGE_PREFIX = 'famcart-offline-queue'
+const STORAGE_PREFIX = 'bagful-offline-queue'
 // What every build before this one wrote: a single key holding whichever
 // account's queue was last saved. Read once and migrated on the next save.
 //

@@ -76,7 +76,7 @@ export type NotificationPreference = 'on' | 'off'
 //
 // Keyed by user, that whole sequence is correct without anything else changing:
 // B has no preference and gets asked, and A's survives for when A comes back.
-const PREFERENCE_PREFIX = 'famcart-notifications'
+const PREFERENCE_PREFIX = 'bagful-notifications'
 
 function preferenceKey(userId: string): string {
   return userScopedKey(PREFERENCE_PREFIX, userId)

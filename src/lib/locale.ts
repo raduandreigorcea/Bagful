@@ -13,7 +13,7 @@
 // render before Clerk has resolved, and there is no user id to scope by yet.
 // So the scoped key is the truth and the device key is a hint about what to
 // show until the truth arrives, which is exactly the division
-// 'famcart-last-user' makes in lib/session for the same reason.
+// 'bagful-last-user' makes in lib/session for the same reason.
 
 import { userScopedKey } from './perUserStorage'
 
@@ -37,18 +37,18 @@ export const LOCALE_ENDONYMS: Record<Locale, string> = {
 
 // The device hint: what this device last applied, for any account or none.
 // Read pre-mount and by the login screen, where no user id exists yet.
-export const LOCALE_DEVICE_KEY = 'famcart-locale'
+export const LOCALE_DEVICE_KEY = 'bagful-locale'
 
-// The truth, once an account is known: `famcart-locale:<userId>`.
+// The truth, once an account is known: `bagful-locale:<userId>`.
 //
 // Note the prefix and the device key are the same string, which is safe and
 // only just so. `clearUserScopedKeys(storage, LOCALE_PREFIX)` sweeps keys
-// starting with `famcart-locale:` — the colon is in the pattern — so an
+// starting with `bagful-locale:` — the colon is in the pattern — so an
 // unscoped sweep takes every account's and leaves the device hint standing.
 // That is the behaviour we want, but it is a near-collision of exactly the
 // kind perUserStorage's own comment warns about, so it is stated rather than
 // left to be rediscovered.
-export const LOCALE_PREFIX = 'famcart-locale'
+export const LOCALE_PREFIX = 'bagful-locale'
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value)

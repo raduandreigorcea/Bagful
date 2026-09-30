@@ -145,7 +145,7 @@ describe('resolveBootLocale', () => {
 describe('the seam between the two keys', () => {
   it('leaves the device hint standing when every account is swept', () => {
     // The prefix and the device key are the same string; only the colon in
-    // `famcart-locale:` keeps an unscoped sweep off the hint. If that ever
+    // `bagful-locale:` keeps an unscoped sweep off the hint. If that ever
     // stops being true, the login screen starts reverting to English.
     const storage = makeStorage()
     saveLocale(storage, 'user-1', 'ro')

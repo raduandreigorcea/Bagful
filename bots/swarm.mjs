@@ -11,7 +11,7 @@
 // between (and so what a search returns, or which race wins) can still differ.
 // The bot accounts are famcart-bot1..6+clerk_test@example.com on the Clerk
 // development instance; test emails always accept the code 424242. Five by
-// default: bot6 belongs to the /exploring-famcart skill, and a swarm that
+// default: bot6 belongs to the /exploring-bagful skill, and a swarm that
 // signs it in would pull it out of the explorer's list.
 import fs from 'node:fs'
 import { chromium } from 'playwright'

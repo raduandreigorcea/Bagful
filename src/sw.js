@@ -47,7 +47,7 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
 registerRoute(
   ({ url, sameOrigin }) => sameOrigin && url.pathname.endsWith('.wasm'),
   new CacheFirst({
-    cacheName: 'famcart-wasm',
+    cacheName: 'bagful-wasm',
     plugins: [new ExpirationPlugin({ maxEntries: 1 })],
   }),
 )

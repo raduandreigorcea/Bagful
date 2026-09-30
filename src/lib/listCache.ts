@@ -48,7 +48,7 @@ interface StoredSnapshot extends ListSnapshot {
 // lives in lib/perUserStorage rather than being spelled out a third time here.
 // The stored name predates the households→lists rename; changing it would
 // strand every snapshot already sitting in a phone's localStorage.
-const STORAGE_PREFIX = 'famcart-household-snapshot'
+const STORAGE_PREFIX = 'bagful-household-snapshot'
 // Bumped 1→2 for the households→lists rename: a version-1 snapshot's fields
 // are `householdId` etc., not `listId`, and this module has no interest in
 // reading that shape back out. It is only a cache, so discarding it costs one
@@ -165,7 +165,7 @@ export function clearListSnapshot(storage: Storage, userId?: string): void {
 // is how it comes back somewhere it matters.
 // Also a stored name that predates the rename; left byte-identical for the
 // same reason as STORAGE_PREFIX above.
-const ACTIVE_LIST_PREFIX = 'famcart-active-household'
+const ACTIVE_LIST_PREFIX = 'bagful-active-household'
 
 function activeListKey(userId: string): string {
   return userScopedKey(ACTIVE_LIST_PREFIX, userId)

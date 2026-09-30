@@ -36,7 +36,7 @@ def appVersionCode = versionParts.group(1).toInteger() * 1000000 +
 // back to the debug key so a plain local `assembleRelease` still produces
 // something installable on the phone in front of you — a build that cannot
 // update anyone else's install, which is exactly what a local build is.
-def keystorePath = System.getenv('FAMCART_KEYSTORE_FILE')
+def keystorePath = System.getenv('BAGFUL_KEYSTORE_FILE')
 def hasKeystore = keystorePath != null && !keystorePath.isEmpty() && file(keystorePath).exists()
 
 android {
@@ -93,9 +93,9 @@ android {
         release {
             if (hasKeystore) {
                 storeFile file(keystorePath)
-                storePassword System.getenv('FAMCART_KEYSTORE_PASSWORD')
-                keyAlias System.getenv('FAMCART_KEY_ALIAS')
-                keyPassword System.getenv('FAMCART_KEY_PASSWORD')
+                storePassword System.getenv('BAGFUL_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('BAGFUL_KEY_ALIAS')
+                keyPassword System.getenv('BAGFUL_KEY_PASSWORD')
             }
         }
     }

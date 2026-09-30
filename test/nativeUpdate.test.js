@@ -271,7 +271,7 @@ describe('findUpdate', () => {
 // so the automatic check goes quiet and stays quiet. The manual check is the
 // only way back, because it is the one route that ignores the record.
 describe('a release published below a declined version', () => {
-  const declined = { 'famcart-update-skipped-version': '0.3.0' }
+  const declined = { 'bagful-update-skipped-version': '0.3.0' }
 
   it('is never offered, however long the phone waits', async () => {
     const storage = fakeStorage(declined)

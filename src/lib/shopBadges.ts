@@ -65,7 +65,7 @@ export function shopLabel(slug: string): string {
 
 // v2 stores the country with each slug; a v1 list of bare slugs cannot be
 // filtered, so it is simply not read.
-const SHOPS_KEY = 'famcart.shops.v2'
+const SHOPS_KEY = 'bagful.shops.v2'
 
 interface ShopEntry {
   slug: string
@@ -183,7 +183,7 @@ export function shopsEnabled(): boolean {
 // That comparison only holds because of clearCachedShops below: the snapshot
 // cache is also DROPPED when its account signs out, and for a while this was
 // not, so the names outlived the session on a shared device.
-const CACHE_KEY = 'famcart.shop-badges.v1'
+const CACHE_KEY = 'bagful.shop-badges.v1'
 // Enough for a big list several times over. A cap at all is what stops a cache
 // that is only ever added to from growing until a browser refuses to write it.
 const CACHE_MAX = 500

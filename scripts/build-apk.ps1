@@ -83,7 +83,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 # what the note at the top of this file is about.
 #
 # Release rather than debug so a local build is the same shape as the published
-# one: not debuggable, and signed with the release key if FAMCART_KEYSTORE_FILE
+# one: not debuggable, and signed with the release key if BAGFUL_KEYSTORE_FILE
 # and its three companions are set in this shell. Without them the build falls
 # back to the debug key (see android/app/build.gradle) -- fine here, since a
 # nightly APK is only ever installed by hand, but it does mean a nightly built

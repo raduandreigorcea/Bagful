@@ -37,12 +37,12 @@ export const RELEASES_PAGE_URL =
 // version already declined is nagging; a *newer* version than the declined one
 // is news, so this stores the version rather than a boolean.
 //
-// Kebab-case like every other key this app writes (famcart-theme,
-// famcart-last-user, famcart-offline-queue, famcart-household-snapshot). These
+// Kebab-case like every other key this app writes (bagful-theme,
+// bagful-last-user, bagful-offline-queue, bagful-household-snapshot). These
 // two were the only snake_case ones, which meant the storage surface needed two
 // grep patterns to enumerate — and the pair was duly missed when auditing what
 // signing out clears.
-const SKIPPED_VERSION_KEY = 'famcart-update-skipped-version'
+const SKIPPED_VERSION_KEY = 'bagful-update-skipped-version'
 
 // The GitHub API allows 60 unauthenticated requests an hour per IP, shared by
 // everyone in the house behind one router. Checking on every single app open
@@ -55,7 +55,7 @@ const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
 // A check that turns up a newer version does not write this at all, because the
 // interval exists to keep quiet, not to sit on news (see findUpdate).
 //
-// Renamed from famcart_update_last_check, which recorded the other fact. Any
+// Renamed from bagful_update_last_check, which recorded the other fact. Any
 // value left under the old name is stale by definition and is simply ignored,
 // which is the point of moving rather than reusing it.
 //
@@ -63,7 +63,7 @@ const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
 // all it can say is "we looked recently and found nothing", and losing that
 // costs exactly one extra release check on one launch. Carrying a migration for
 // it would be more machinery than the fact is worth.
-const QUIET_SINCE_KEY = 'famcart-update-quiet-since'
+const QUIET_SINCE_KEY = 'bagful-update-quiet-since'
 
 export interface AvailableUpdate {
   version: string
