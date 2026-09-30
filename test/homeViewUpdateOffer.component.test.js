@@ -62,8 +62,8 @@ vi.mock('@capacitor/core', async () => {
 })
 
 const RELEASE = {
-  name: 'FamCart v9.9.9',
-  assets: [{ name: 'FamCart.apk', browser_download_url: 'https://example.test/FamCart.apk' }],
+  name: 'Bagful v9.9.9',
+  assets: [{ name: 'Bagful.apk', browser_download_url: 'https://example.test/Bagful.apk' }],
 }
 
 const mountedWrappers = []

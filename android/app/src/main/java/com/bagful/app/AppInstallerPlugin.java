@@ -1,4 +1,4 @@
-package com.famcart.app;
+package com.bagful.app;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -20,9 +20,9 @@ import java.net.URL;
 import java.util.Locale;
 
 /**
- * Installing a new FamCart APK from inside the old one.
+ * Installing a new Bagful APK from inside the old one.
  *
- * FamCart ships as a downloadable APK rather than through a store, so nothing
+ * Bagful ships as a downloadable APK rather than through a store, so nothing
  * updates it on the user's behalf. The web layer finds out that a newer release
  * exists (see src/lib/nativeUpdate.ts); this is the half that can actually act
  * on it, because fetching a file to disk and asking Android to install it are
@@ -50,7 +50,7 @@ import java.util.Locale;
 public class AppInstallerPlugin extends Plugin {
 
     private static final String UPDATE_DIR = "updates";
-    private static final String UPDATE_FILE = "FamCart-update.apk";
+    private static final String UPDATE_FILE = "Bagful-update.apk";
     private static final int MAX_REDIRECTS = 5;
     private static final int BUFFER_SIZE = 64 * 1024;
 
@@ -94,7 +94,7 @@ public class AppInstallerPlugin extends Plugin {
         call.resolve(result);
     }
 
-    /** Opens the per-app "install unknown apps" screen for FamCart. */
+    /** Opens the per-app "install unknown apps" screen for Bagful. */
     @PluginMethod
     public void openInstallSettings(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -203,7 +203,7 @@ public class AppInstallerPlugin extends Plugin {
      * for a plaintext hop — nothing would have complained.
      *
      * The host allowlist is not the load-bearing half (the signing key is: an
-     * APK signed with a different one cannot install over FamCart). It is here
+     * APK signed with a different one cannot install over Bagful). It is here
      * because the URL's only legitimate source is the release API, so anything
      * else is already wrong by the time it reaches this method.
      */

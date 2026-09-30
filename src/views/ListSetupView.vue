@@ -440,7 +440,7 @@ async function joinList() {
 
 /* ── Welcome hero ────────────────────────────────────────── */
 /* The hero is the thesis: a shared list with one item already ticked off, and
-   two people beside it — FamCart in a single glance. */
+   two people beside it — Bagful in a single glance. */
 .welcome-hero {
   display: flex;
   justify-content: center;

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from resources/icon-notification.svg by scripts/build-icons.mjs. Do not edit. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="348" android:viewportHeight="348">
+    <group android:translateX="-82" android:translateY="-76">
+        <group>
+            <clip-path android:pathData="M0 0 H512 V232 H0 Z"/>
+            <path android:fillColor="#FFFFFFFF" android:pathData="M321.03 118.53 A29 29 0 0 1 372.24 145.75 L314.97 253.47 A29 29 0 0 1 263.76 226.25 Z"/>
+            <path android:fillColor="#FFFFFFFF" android:pathData="M214 256 C222.06 207.14 184.03 150.77 135.71 139.93 C127.66 188.79 165.68 245.17 214 256 Z"/>
+            <path android:fillColor="#FFFFFFFF" android:pathData="M222 256 C245.55 222.4 237.48 164.96 205.58 139.15 C182.03 172.75 190.1 230.19 222 256 Z"/>
+            <path android:fillColor="#FFFFFFFF" android:pathData="M220 214 A46 46 0 1 0 312 214 A46 46 0 1 0 220 214 Z"/>
+            <path android:fillColor="#FFFFFFFF" android:pathData="M266 170 C276 158 290 156 300 160 C292 172 278 174 266 170 Z"/>
+        </group>
+        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M144 262 A18 18 0 0 1 162 244 H350 A18 18 0 0 1 368 262 V374 A38 38 0 0 1 330 412 H182 A38 38 0 0 1 144 374 Z M206 314 A50 50 0 0 0 306 314 A10 10 0 0 0 286 314 A30 30 0 0 1 226 314 A10 10 0 0 0 206 314 Z"/>
+    </group>
+</vector>

@@ -1,4 +1,4 @@
-// Driving FamCart like a person: every locator is an accessible name from
+// Driving Bagful like a person: every locator is an accessible name from
 // src/locales/en.ts, so a renamed label breaks the bots loudly, not silently.
 import fs from 'node:fs'
 import { chromium } from 'playwright'

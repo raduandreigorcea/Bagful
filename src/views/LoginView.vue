@@ -102,7 +102,7 @@ async function signInWithOAuth(providerId: string) {
 
   // Native app: the WebView cannot run OAuth (Google refuses embedded
   // browsers), so the round-trip happens in the system browser and returns
-  // through the famcart:// deep link. A null session id means the user
+  // through the bagful:// deep link. A null session id means the user
   // closed the browser — quietly re-arm the buttons.
   if (Capacitor.isNativePlatform()) {
     try {

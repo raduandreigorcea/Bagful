@@ -17,7 +17,7 @@ import {
 //
 // It is a small state machine rather than a boolean because the install can stop
 // in a place that is nobody's fault and needs a different sentence: Android has
-// not been told FamCart may install packages, and that consent lives on a
+// not been told Bagful may install packages, and that consent lives on a
 // settings screen rather than in a dialog we can raise. Treating that as an
 // error would tell the user something is broken when the truth is that one
 // switch is off, so it gets its own phase and its own button.
@@ -35,7 +35,7 @@ export const updateCheckKey = Symbol('famcart-update-check') as InjectionKey<
 export type UpdatePhase =
   // A new version exists; the user has not answered yet.
   | 'available'
-  // Android needs "install unknown apps" for FamCart before this can go on.
+  // Android needs "install unknown apps" for Bagful before this can go on.
   | 'permission'
   | 'downloading'
   // Handed over. The installer is on screen and this process is about to be

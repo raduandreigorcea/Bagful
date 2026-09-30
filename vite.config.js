@@ -96,9 +96,9 @@ export default defineConfig({
       injectRegister: null,
       includeAssets: ['icons/*.png', 'screen.webp'],
       manifest: {
-        name: 'FamCart: Family Shopping List',
-        short_name: 'FamCart',
-        description: 'A shared grocery list for your family, with live updates.',
+        name: 'Bagful: Shared Shopping List',
+        short_name: 'Bagful',
+        description: 'A shared grocery list for everyone you shop with, with live updates.',
         // The manifest stays English, deliberately, even though the app speaks
         // six languages. Localising it means shipping six manifests and
         // swapping <link rel="manifest"> at runtime, which browsers honour

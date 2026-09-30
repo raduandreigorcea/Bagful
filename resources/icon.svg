@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- The Bagful logo: a bag full of groceries whose die-cut handle is a smile.
+       Every app icon is rendered from this file by scripts/build-icons.mjs
+       (npm run icons). The #bg rect is left out of Android's foreground layer,
+       which gets its green from ic_launcher_background instead; keep the two
+       colours equal. -->
+  <rect id="bg" width="512" height="512" fill="#4D8C65"/>
+  <g transform="translate(318 186) rotate(28)">
+    <rect x="-29" y="-90" width="58" height="180" rx="29" fill="#EDBE6E"/>
+    <path d="M-13 -44 L13 -60 M-13 -8 L13 -24 M-13 28 L13 12" stroke="#C98B3A" stroke-width="9" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(214 256) rotate(-34)">
+    <path d="M0 0 C34 -36 34 -104 0 -140 C-34 -104 -34 -36 0 0 Z" fill="#9CCF84"/>
+    <path d="M0 -14 L0 -112" stroke="#6FAE62" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(222 256) rotate(-8)">
+    <path d="M0 0 C28 -30 28 -88 0 -118 C-28 -88 -28 -30 0 0 Z" fill="#BFE2A6"/>
+    <path d="M0 -12 L0 -94" stroke="#8CC27B" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <circle cx="266" cy="214" r="46" fill="#EE7550"/>
+  <circle cx="251" cy="199" r="10" fill="#F59C7E"/>
+  <path d="M266 170 C276 158 290 156 300 160 C292 172 278 174 266 170 Z" fill="#2F6B47"/>
+  <path d="M144 262 a18 18 0 0 1 18 -18 H350 a18 18 0 0 1 18 18 V374 a38 38 0 0 1 -38 38 H182 a38 38 0 0 1 -38 -38 Z" fill="#FBF7F0"/>
+  <path d="M144 262 a18 18 0 0 1 18 -18 H350 a18 18 0 0 1 18 18 V280 H144 Z" fill="#E9DFD0"/>
+  <path d="M216 314 a40 40 0 0 0 80 0" fill="none" stroke="#4D8C65" stroke-width="20" stroke-linecap="round"/>
+</svg>

@@ -1,4 +1,4 @@
-// A family of browser bots using FamCart on famcart-dev, to find the bugs that
+// A family of browser bots using Bagful on famcart-dev, to find the bugs that
 // only real, concurrent, flaky-network use finds. Local only, by choice.
 //
 //   npm run dev                      (in another terminal)

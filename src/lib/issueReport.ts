@@ -8,7 +8,7 @@
 // is asking them to do the app's job. So the dialog collects the two things
 // only they can answer (where, and what happened) and this assembles the rest.
 //
-// The places below are named the way someone using FamCart would name them, not
+// The places below are named the way someone using Bagful would name them, not
 // the way the code is organised: "Adding items", not AddItemForm. A report that
 // says "Barcode scanner" narrows the search to two files without the reporter
 // knowing either of them exists.

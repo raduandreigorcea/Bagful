@@ -497,7 +497,7 @@ const orderedActiveMembers = computed(() =>
       <BackButton v-else-if="back" class="topbar-back" @click="emit('back')" />
       <template v-else>
         <!-- eslint-disable-next-line vue/no-bare-strings-in-template -- brand name, the same in every language -->
-        <img src="/icons/pwa-192.png" alt="FamCart" class="topbar-logo" />
+        <img src="/icons/pwa-192.png" alt="Bagful" class="topbar-logo" />
       </template>
     </div>
 

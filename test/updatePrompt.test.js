@@ -91,8 +91,8 @@ function makePrompt() {
 }
 
 beforeEach(() => {
-  native.update = { version: '0.1.24', apkUrl: 'https://x/FamCart.apk' }
-  native.latest = { version: '0.1.24', apkUrl: 'https://x/FamCart.apk' }
+  native.update = { version: '0.1.24', apkUrl: 'https://x/Bagful.apk' }
+  native.latest = { version: '0.1.24', apkUrl: 'https://x/Bagful.apk' }
   native.granted = true
   native.canInstallThrows = false
   native.installThrows = false
@@ -260,7 +260,7 @@ describe('useUpdatePrompt', () => {
     })
 
     it('reports being up to date', async () => {
-      native.latest = { version: '0.1.23', apkUrl: 'https://x/FamCart.apk' }
+      native.latest = { version: '0.1.23', apkUrl: 'https://x/Bagful.apk' }
       const prompt = makePrompt()
       expect(await prompt.checkNow()).toBe('up-to-date')
       expect(prompt.updateOpen.value).toBe(false)

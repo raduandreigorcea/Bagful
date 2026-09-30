@@ -1,6 +1,6 @@
 // Handing someone an invite, by whatever means the device actually has.
 //
-// Three paths, because there is no single API that covers where FamCart runs:
+// Three paths, because there is no single API that covers where Bagful runs:
 //
 //   • The Android app — @capacitor/share, which fires an ACTION_SEND intent.
 //     This is the one the Web Share API does NOT cover: navigator.share is a
@@ -46,7 +46,7 @@ export function shareableOrigin(href = typeof window === 'undefined' ? '' : wind
 
 // Written to be read in a chat thread, which is where it is going. It says what
 // the recipient is being asked to join, what they get out of it, and the code —
-// in that order, because someone who does not know what FamCart is needs the
+// in that order, because someone who does not know what Bagful is needs the
 // first two before the third means anything.
 export function buildInviteMessage(
   listName: string,

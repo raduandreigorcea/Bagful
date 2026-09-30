@@ -42,13 +42,13 @@ graphify-out
 # every `supabase link` was rewriting files in the working tree.
 #
 # Only the app's own. The catalog is a submodule again (catalog/, published as
-# raduandreigorcea/FamCart-catalog) and keeps its own .gitignore for the
+# raduandreigorcea/Bagful-catalog) and keeps its own .gitignore for the
 # equivalent files, which is where a rule about that repo's local state belongs.
 supabase/.branches
 supabase/.temp
 
 # The Android signing key. Whoever holds this can publish an APK that installs
-# over everyone's FamCart as an update, so it lives in the repo secrets and on
+# over everyone's Bagful as an update, so it lives in the repo secrets and on
 # whatever machine generated it — never here.
 *.keystore
 *.jks

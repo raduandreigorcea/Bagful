@@ -83,7 +83,7 @@ describe('Check for updates', () => {
     const wrapper = await openAbout(mountSettings({ check: async () => 'up-to-date' }))
     await updateButton(wrapper).trigger('click')
     await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('FamCart is up to date')
+    expect(wrapper.text()).toContain('Bagful is up to date')
   })
 
   it('does not call a failed check a clean bill of health', async () => {

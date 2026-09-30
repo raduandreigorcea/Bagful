@@ -93,7 +93,7 @@ async function checkout({ page }) {
 }
 
 // Skipped offline: the dev server runs no service worker, so an offline reload
-// is Chrome's dino page, not FamCart's offline path.
+// is Chrome's dino page, not Bagful's offline path.
 // ponytail: covers online reloads only; test offline reloads against `npm run preview` if they matter.
 async function reload({ page, offlineUntil }) {
   if (offlineUntil) return null

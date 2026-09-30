@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="82 76 348 348">
+  <!-- The logo as one shape, for places that draw only an outline: Android's
+       notification icon and the badge web push shows on Android Chrome. The
+       groceries are merged into one silhouette (drawn apart they read as a
+       little figure) and stop at y=232, a gap above the bag. Plain paths and
+       fill-rule only, because scripts/build-icons.mjs turns this file into an
+       Android vector drawable, which has no transforms or masks to lean on. -->
+  <clipPath id="above"><rect x="0" y="0" width="512" height="232"/></clipPath>
+  <g clip-path="url(#above)" fill="#FFFFFF">
+    <path d="M321.03 118.53 A29 29 0 0 1 372.24 145.75 L314.97 253.47 A29 29 0 0 1 263.76 226.25 Z"/>
+    <path d="M214 256 C222.06 207.14 184.03 150.77 135.71 139.93 C127.66 188.79 165.68 245.17 214 256 Z"/>
+    <path d="M222 256 C245.55 222.4 237.48 164.96 205.58 139.15 C182.03 172.75 190.1 230.19 222 256 Z"/>
+    <path d="M220 214 A46 46 0 1 0 312 214 A46 46 0 1 0 220 214 Z"/>
+    <path d="M266 170 C276 158 290 156 300 160 C292 172 278 174 266 170 Z"/>
+  </g>
+  <path fill="#FFFFFF" fill-rule="evenodd" d="M144 262 A18 18 0 0 1 162 244 H350 A18 18 0 0 1 368 262 V374 A38 38 0 0 1 330 412 H182 A38 38 0 0 1 144 374 Z M206 314 A50 50 0 0 0 306 314 A10 10 0 0 0 286 314 A30 30 0 0 1 226 314 A10 10 0 0 0 206 314 Z"/>
+</svg>

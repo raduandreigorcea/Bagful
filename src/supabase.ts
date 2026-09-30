@@ -14,7 +14,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 // against the app database's own `product_catalog`.
 //
 // Its schema lives in a repository of its own, checked out here as a submodule
-// at `catalog/` (raduandreigorcea/FamCart-catalog). The separation is real
+// at `catalog/` (raduandreigorcea/Bagful-catalog). The separation is real
 // rather than a naming convention: its own Supabase project in its own
 // organisation, its own migrations, its own pgTAP suite and its own release
 // cadence. It has no edge function of any kind, which is worth saying because
