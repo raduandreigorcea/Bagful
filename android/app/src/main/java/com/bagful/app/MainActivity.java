@@ -1,5 +1,7 @@
 package com.bagful.app;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -50,5 +52,34 @@ public class MainActivity extends BridgeActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getWindow().setNavigationBarContrastEnforced(false);
         }
+
+        createPushChannel();
     }
+
+    /**
+     * The channel every push is sent to, by id, from push-on-item-insert
+     * (existing_android_channel_id). Without it OneSignal posts to its own
+     * default channel, whose importance is DEFAULT: a sound and an icon in the
+     * status bar, but no banner across the top of the screen. HIGH is what
+     * Android needs for that banner.
+     *
+     * A channel's importance is the user's once it exists, and creating one
+     * again with the same id changes nothing but its name, which is why this is
+     * a new id rather than a fix to OneSignal's. Safe on every launch for the
+     * same reason: it re-applies the translated name and nothing else.
+     */
+    private void createPushChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        NotificationChannel channel = new NotificationChannel(
+            PUSH_CHANNEL_ID,
+            getString(R.string.push_channel_name),
+            NotificationManager.IMPORTANCE_HIGH
+        );
+        channel.setDescription(getString(R.string.push_channel_description));
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) manager.createNotificationChannel(channel);
+    }
+
+    /** Must match PUSH_CHANNEL_ID in supabase/functions/push-on-item-insert. */
+    static final String PUSH_CHANNEL_ID = "list_updates";
 }
