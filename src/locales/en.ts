@@ -476,8 +476,6 @@ export default {
   'listIcon.tea-cup': 'tea cup',
   'listIcon.takeaway-cup': 'coffee to go',
   'listIcon.glass': 'glass',
-  'listIcon.boy': 'boy',
-  'listIcon.girl': 'girl',
   'listIcon.crown': 'crown',
   'listIcon.sun': 'sun',
   'listIcon.moon': 'moon',

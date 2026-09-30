@@ -443,8 +443,6 @@ const de: Catalog = {
   'listIcon.tea-cup': 'Teetasse',
   'listIcon.takeaway-cup': 'Coffee to go',
   'listIcon.glass': 'Glas',
-  'listIcon.boy': 'Junge',
-  'listIcon.girl': 'Mädchen',
   'listIcon.crown': 'Krone',
   'listIcon.sun': 'Sonne',
   'listIcon.moon': 'Mond',
