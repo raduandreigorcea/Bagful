@@ -195,7 +195,7 @@ interface ShopRow {
   retailers?: unknown
 }
 
-export function shopsEnabled(): boolean {
+function shopsEnabled(): boolean {
   return getCatalogSupabase() !== null
 }
 

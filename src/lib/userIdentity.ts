@@ -80,7 +80,7 @@ export function getUserPrimaryEmail(user: UserLike | null | undefined): string {
 // exact string: it is a value the database stores, and a German user's profile
 // row must not read "Mitglied" where every query and every other member's app
 // expects "Member".
-export const MEMBER_FALLBACK_NAME = 'Member'
+const MEMBER_FALLBACK_NAME = 'Member'
 
 // The display side of the same idea, and the only place the two part company.
 // A member with no name is described in the reader's language rather than in
