@@ -12,7 +12,7 @@
 # this machine's env files.
 #
 # So this builds the second app instead: Bagful Nightly, application id
-# com.bagful.app.nightly, pointed at famcart-dev. It installs BESIDE the real
+# com.bagful.app.nightly, pointed at bagful-dev. It installs BESIDE the real
 # app rather than over it, so the phone you shop with keeps working while you
 # test on the same device.
 $ErrorActionPreference = 'Stop'
@@ -42,7 +42,7 @@ if (-not $env:JAVA_HOME) {
 # values sitting in .env without that file being touched.
 $devEnvFile = Join-Path $root '.env.development.local'
 if (-not (Test-Path $devEnvFile)) {
-  Write-Error "No .env.development.local in $root. It holds the famcart-dev credentials this build needs; without it the APK would be built against the production database."
+  Write-Error "No .env.development.local in $root. It holds the bagful-dev credentials this build needs; without it the APK would be built against the production database."
 }
 
 Get-Content $devEnvFile | ForEach-Object {
@@ -64,7 +64,7 @@ $env:VITE_APP_CHANNEL = 'nightly'
 # writing to real lists.
 $productionProjectRef = 'qwpyiperbjaeykrvilhf'
 if (-not $env:VITE_SUPABASE_URL) {
-  Write-Error 'VITE_SUPABASE_URL is not set after reading .env.development.local. Add the famcart-dev URL to that file.'
+  Write-Error 'VITE_SUPABASE_URL is not set after reading .env.development.local. Add the bagful-dev URL to that file.'
 }
 if ($env:VITE_SUPABASE_URL -like "*$productionProjectRef*") {
   Write-Error "VITE_SUPABASE_URL points at the production project ($productionProjectRef). A nightly build must not. Check .env.development.local."
@@ -83,7 +83,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 # what the note at the top of this file is about.
 #
 # Release rather than debug so a local build is the same shape as the published
-# one: not debuggable, and signed with the release key if FAMCART_KEYSTORE_FILE
+# one: not debuggable, and signed with the release key if BAGFUL_KEYSTORE_FILE
 # and its three companions are set in this shell. Without them the build falls
 # back to the debug key (see android/app/build.gradle) -- fine here, since a
 # nightly APK is only ever installed by hand, but it does mean a nightly built

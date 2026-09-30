@@ -42,7 +42,7 @@ initPushNotifications()
 // it never reset, so the next deploy in the same tab got no reload at all.
 // preventDefault only when reloading: otherwise Vite rethrows, and a broken
 // chunk surfaces as an error instead of a route that silently never loads.
-const CHUNK_RELOAD_KEY = 'famcart-chunk-reloaded-at'
+const CHUNK_RELOAD_KEY = 'bagful-chunk-reloaded-at'
 const CHUNK_RELOAD_WINDOW_MS = 10_000
 window.addEventListener('vite:preloadError', (event) => {
   try {

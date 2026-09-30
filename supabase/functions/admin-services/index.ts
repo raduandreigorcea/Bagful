@@ -6,7 +6,7 @@
 // signed-in person's Clerk token.
 //
 // Deployed to BOTH app projects, and each answers with its own secrets. That is
-// what lets the pages follow the dashboard's project switcher: famcart-dev has
+// what lets the pages follow the dashboard's project switcher: bagful-dev has
 // no OneSignal secrets today, so its OneSignal page says "not configured"
 // rather than showing production's notifications under a dev badge.
 //

@@ -36,11 +36,11 @@ vi.mock('../src/lib/pushNotifications', () => ({
   // that belongs to whoever gave it, not to the device.
   getNotificationPreference: (s, userId) => {
     if (!userId) return null
-    const v = s.getItem(`famcart-notifications:${userId}`)
+    const v = s.getItem(`bagful-notifications:${userId}`)
     return v === 'on' || v === 'off' ? v : null
   },
   setNotificationPreference: (s, userId, mode) => {
-    if (userId) s.setItem(`famcart-notifications:${userId}`, mode)
+    if (userId) s.setItem(`bagful-notifications:${userId}`, mode)
   },
 }))
 
@@ -90,7 +90,7 @@ describe('the sequence', () => {
   })
 
   it('goes straight to the ask for someone who has seen the tour', () => {
-    const g = greeting({ storage: makeStorage({ 'famcart_tour_seen_v4': '1' }) })
+    const g = greeting({ storage: makeStorage({ 'bagful_tour_seen_v4': '1' }) })
     g.start()
 
     expect(g.onboardingTourOpen.value).toBe(false)
@@ -109,7 +109,7 @@ describe('the sequence', () => {
 // Every skip below leaves the preference unset on purpose, so the same account
 // is asked again somewhere the answer can actually stick.
 describe('when the ask would be pointless', () => {
-  const seen = () => makeStorage({ 'famcart_tour_seen_v4': '1' })
+  const seen = () => makeStorage({ 'bagful_tour_seen_v4': '1' })
 
   it('skips it where push is unsupported', () => {
     push.supported = false
@@ -140,7 +140,7 @@ describe('when the ask would be pointless', () => {
 
   it('never re-asks once a decision is stored', () => {
     const g = greeting({
-      storage: makeStorage({ 'famcart_tour_seen_v4': '1', 'famcart-notifications:user-1': 'off' }),
+      storage: makeStorage({ 'bagful_tour_seen_v4': '1', 'bagful-notifications:user-1': 'off' }),
     })
     g.start()
     expect(g.notificationPromptOpen.value).toBe(false)
@@ -154,7 +154,7 @@ describe('answering the ask', () => {
     g.declineNotifications()
 
     expect(g.notificationPromptOpen.value).toBe(false)
-    expect(storage.getItem('famcart-notifications:user-1')).toBe('off')
+    expect(storage.getItem('bagful-notifications:user-1')).toBe('off')
   })
 
   it('stores it and subscribes on accept', async () => {
@@ -162,7 +162,7 @@ describe('answering the ask', () => {
     const g = greeting({ storage })
     await g.acceptNotifications()
 
-    expect(storage.getItem('famcart-notifications:user-1')).toBe('on')
+    expect(storage.getItem('bagful-notifications:user-1')).toBe('on')
     expect(push.enableCalls).toEqual(['user-1'])
     expect(g.notificationError.value).toBe('')
   })
@@ -175,7 +175,7 @@ describe('answering the ask', () => {
     const g = greeting({ storage })
     await g.acceptNotifications()
 
-    expect(storage.getItem('famcart-notifications:user-1')).toBe('off')
+    expect(storage.getItem('bagful-notifications:user-1')).toBe('off')
     expect(g.notificationError.value).toContain('blocked')
   })
 
@@ -185,7 +185,7 @@ describe('answering the ask', () => {
     const g = greeting({ storage })
     await g.acceptNotifications()
 
-    expect(storage.getItem('famcart-notifications:user-1')).toBe('off')
+    expect(storage.getItem('bagful-notifications:user-1')).toBe('off')
     expect(g.notificationError.value).toContain('try again')
   })
 
@@ -204,7 +204,7 @@ describe('answering the ask', () => {
       // The regression: a fresh install always opens the tour, so anything that
       // ran alongside start() found the screen busy and gave up permanently.
       const onSettled = vi.fn()
-      const storage = makeStorage({ 'famcart-notifications:user-1': 'off' })
+      const storage = makeStorage({ 'bagful-notifications:user-1': 'off' })
       const g = greeting({ storage, onSettled })
 
       g.start()
@@ -238,8 +238,8 @@ describe('answering the ask', () => {
     it('settles immediately for a returning user with nothing to show', () => {
       const onSettled = vi.fn()
       const storage = makeStorage({
-        'famcart_tour_seen_v4': '1',
-        'famcart-notifications:user-1': 'off',
+        'bagful_tour_seen_v4': '1',
+        'bagful-notifications:user-1': 'off',
       })
       greeting({ storage, onSettled }).start()
 

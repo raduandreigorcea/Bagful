@@ -1,7 +1,7 @@
 // Which build this is, and how the app says so on screen.
 //
 // Bagful ships from one codebase to two places: the production app, wired to
-// the `famcart` Supabase project, and the nightly one, wired to `famcart-dev`.
+// the `bagful` Supabase project, and the nightly one, wired to `bagful-dev`.
 // Until this module existed the two were pixel-identical, so a screenshot, a
 // bug report or a phone left on a desk could not tell you which database it
 // had been talking to. Worse, the failure was silent in the dangerous
@@ -15,7 +15,7 @@
 
 export type AppChannel = 'production' | 'nightly'
 
-// The `famcart` project. Public: this ref is half of VITE_SUPABASE_URL, which
+// The `bagful` project. Public: this ref is half of VITE_SUPABASE_URL, which
 // ships in every bundle. Hardcoding it is the point, since the URL it is
 // compared against is exactly the thing that might be wrong.
 export const PRODUCTION_PROJECT_REF = 'qwpyiperbjaeykrvilhf'
@@ -69,7 +69,7 @@ export const IS_NIGHTLY = APP_CHANNEL === 'nightly'
  * their own names, since neither is a build anybody installed.
  *
  * The admin dashboard's Sentry page reads by this tag, `production` on the
- * famcart project and `nightly` plus `development` on famcart-dev
+ * bagful project and `nightly` plus `development` on bagful-dev
  * (sentryEnvironments in supabase/functions/_shared/services.ts).
  */
 export function sentryEnvironment(mode: string, channel: AppChannel): string {

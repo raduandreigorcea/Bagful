@@ -43,7 +43,7 @@ self.addEventListener('activate', (event) => {
 
 function devServiceWorkerKillSwitch() {
   return {
-    name: 'famcart:dev-sw-kill-switch',
+    name: 'bagful:dev-sw-kill-switch',
     apply: 'serve',
     configureServer(server) {
       // Registered directly rather than from a returned function, so it runs
@@ -129,7 +129,7 @@ export default defineConfig({
     }),
     uploadSourceMaps &&
       sentryVitePlugin({
-        org: 'famcart',
+        org: 'bagful',
         project: 'javascript-vue',
         sourcemaps: { filesToDeleteAfterUpload: 'dist/**/*.map' },
       }),

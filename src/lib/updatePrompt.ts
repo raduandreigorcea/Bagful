@@ -28,7 +28,7 @@ import {
 // HomeView owns the prompt; the row that runs it lives in AppSettingsModal,
 // which is two components down inside AppNavBar. Provided rather than passed,
 // because nothing in between has any business knowing about app updates.
-export const updateCheckKey = Symbol('famcart-update-check') as InjectionKey<
+export const updateCheckKey = Symbol('bagful-update-check') as InjectionKey<
   () => Promise<'found' | 'up-to-date' | 'failed'>
 >
 

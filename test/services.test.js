@@ -77,10 +77,10 @@ describe('upstreamMessage', () => {
   // from Sentry means different things on the project and on the issues.
   it('says what was asked and what the vendor said about it', () => {
     const message = upstreamMessage('sentry', 404, {
-      path: '/api/0/projects/famcart/javascript-vue/',
+      path: '/api/0/projects/bagful/javascript-vue/',
       detail: 'The requested resource does not exist',
     })
-    expect(message).toContain('/api/0/projects/famcart/javascript-vue/')
+    expect(message).toContain('/api/0/projects/bagful/javascript-vue/')
     expect(message).toContain('The requested resource does not exist')
     // Never the query string, which can carry more than a path should.
     expect(upstreamMessage('sentry', 404, { path: '/api/0/x/?token=abc' })).not.toContain('token')
@@ -104,7 +104,7 @@ describe('Sentry', () => {
     expect(feedback.searchParams.get('query')).toBe('issue.category:feedback')
   })
 
-  // The famcart organisation lives in Sentry's EU region. A personal token
+  // The bagful organisation lives in Sentry's EU region. A personal token
   // carries no region, and sentry.io answers 404 for an EU organisation's
   // projects and issues -- which is what the Health page showed.
   // Sentry's issues endpoint answers 404 when a requested environment has never
@@ -116,7 +116,7 @@ describe('Sentry', () => {
     ])
     expect(knownEnvironments(['nightly'], [{ name: 'production' }])).toEqual([])
     expect(knownEnvironments(['production'], [{ name: 'production' }, { name: 42 }, null])).toEqual(['production'])
-    expect(new URL(sentryEnvironmentsUrl()).pathname).toBe('/api/0/projects/famcart/javascript-vue/environments/')
+    expect(new URL(sentryEnvironmentsUrl()).pathname).toBe('/api/0/projects/bagful/javascript-vue/environments/')
   })
 
   it('asks the EU region, where the organisation lives', () => {
@@ -145,7 +145,7 @@ describe('Sentry', () => {
       userCount: 3,
       firstSeen: '2026-09-01T10:00:00Z',
       lastSeen: '2026-09-14T10:00:00Z',
-      permalink: 'https://famcart.sentry.io/issues/7/',
+      permalink: 'https://bagful.sentry.io/issues/7/',
       stats: { '24h': [[1, 2]] },
     })
     expect(issue.events).toBe(128)
@@ -160,7 +160,7 @@ describe('Sentry', () => {
       title: 'User Feedback',
       status: 'ignored',
       firstSeen: '2026-09-10T08:00:00Z',
-      permalink: 'https://famcart.sentry.io/issues/9/',
+      permalink: 'https://bagful.sentry.io/issues/9/',
       metadata: { message: 'The list does not sync', name: 'Ana', contact_email: 'ana@example.com' },
     })
     expect(report).toMatchObject({

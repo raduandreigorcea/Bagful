@@ -52,7 +52,7 @@ describe('refreshOwnProfile', () => {
   })
 
   it('writes when the stored record is unreadable', async () => {
-    storage = makeStorage({ 'famcart.profileWritten.u1': '{not json' })
+    storage = makeStorage({ 'bagful.profileWritten.u1': '{not json' })
     const { db, upsert } = makeDb()
     await refreshOwnProfile(db, 'u1', user, storage, 1000)
     expect(upsert).toHaveBeenCalledTimes(1)
@@ -71,6 +71,6 @@ describe('refreshOwnProfile', () => {
     await refreshOwnProfile(db, 'u1', user, storage, 1000)
     await refreshOwnProfile(db, 'u2', user, storage, 1000)
     clearProfileWritten(storage)
-    expect([...storage.map.keys()].some((k) => k.startsWith('famcart.profileWritten.'))).toBe(false)
+    expect([...storage.map.keys()].some((k) => k.startsWith('bagful.profileWritten.'))).toBe(false)
   })
 })

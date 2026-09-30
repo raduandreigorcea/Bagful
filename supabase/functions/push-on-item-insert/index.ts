@@ -81,7 +81,7 @@ async function sendPush(options: {
 }): Promise<Response> {
   // One collapsing notification per list: web_push_topic (browsers) and
   // collapse_id (native) make a burst of changes update in place, not stack.
-  const tag = `famcart-${options.listId}`
+  const tag = `bagful-${options.listId}`
   const res = await fetch('https://api.onesignal.com/notifications?c=push', {
     method: 'POST',
     headers: {

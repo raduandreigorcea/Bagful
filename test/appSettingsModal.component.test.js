@@ -48,11 +48,11 @@ describe('appearance', () => {
     await themeButtons(wrapper)[0].trigger('click') // Light
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
-    expect(localStorage.getItem('famcart-theme')).toBe('light')
+    expect(localStorage.getItem('bagful-theme')).toBe('light')
 
     await themeButtons(wrapper)[1].trigger('click') // Dark
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
-    expect(localStorage.getItem('famcart-theme')).toBe('dark')
+    expect(localStorage.getItem('bagful-theme')).toBe('dark')
   })
 
   it('marks the active choice, and only that one', async () => {
@@ -70,7 +70,7 @@ describe('appearance', () => {
   // theme has to be on the document from boot, not from the first time someone
   // opens this dialog.
   it('applies the saved theme on mount, before it is ever opened', () => {
-    localStorage.setItem('famcart-theme', 'dark')
+    localStorage.setItem('bagful-theme', 'dark')
     mountModal(false)
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
@@ -79,7 +79,7 @@ describe('appearance', () => {
     const wrapper = mountModal()
     await themeButtons(wrapper)[2].trigger('click') // System
 
-    expect(localStorage.getItem('famcart-theme')).toBe('system')
+    expect(localStorage.getItem('bagful-theme')).toBe('system')
     // happy-dom reports no dark preference, so system resolves to light.
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
   })

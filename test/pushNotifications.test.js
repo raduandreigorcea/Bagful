@@ -275,7 +275,7 @@ describe('notification preference', () => {
 
   it('treats a corrupted stored value as undecided', () => {
     expect(
-      getNotificationPreference(fakeStorage({ 'famcart-notifications:user_a': 'maybe' }), 'user_a'),
+      getNotificationPreference(fakeStorage({ 'bagful-notifications:user_a': 'maybe' }), 'user_a'),
     ).toBe(null)
   })
 
@@ -294,7 +294,7 @@ describe('notification preference', () => {
   // A consent has no account recorded beside it, so a device-wide value must
   // never be adopted by whoever happens to be signed in.
   it('ignores a device-wide value', () => {
-    const storage = fakeStorage({ 'famcart-notifications': 'on' })
+    const storage = fakeStorage({ 'bagful-notifications': 'on' })
     expect(getNotificationPreference(storage, 'user_a')).toBe(null)
   })
 
@@ -314,7 +314,7 @@ describe('notification preference', () => {
 // separate local preference, so it still said On. It only surfaced at the far
 // end, as an empty notification id with a non-zero targeted count.
 describe('re-binding the device on boot', () => {
-  const storage = (value) => ({ getItem: (key) => (key.startsWith('famcart-notifications:') ? value : null) })
+  const storage = (value) => ({ getItem: (key) => (key.startsWith('bagful-notifications:') ? value : null) })
 
   it('logs the device back in when notifications are on', async () => {
     vi.stubEnv('VITE_ONESIGNAL_APP_ID', 'app-123')

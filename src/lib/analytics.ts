@@ -39,7 +39,7 @@ import { userScopedKey } from './perUserStorage'
 
 const DIRECT_HOST = 'https://eu.i.posthog.com'
 const UI_HOST = 'https://eu.posthog.com'
-const REPLAY_KEY = 'famcart-session-replay'
+const REPLAY_KEY = 'bagful-session-replay'
 
 export type ItemSource = 'search' | 'barcode' | 'custom' | 'typed'
 

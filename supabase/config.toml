@@ -1,7 +1,7 @@
 # Minimal Supabase CLI config: enough for `supabase db start` + `supabase test db`
 # (local RLS/pgTAP tests and CI). All other settings use CLI defaults; run
 # `supabase init` to expand this if the full local stack is ever needed.
-project_id = "famcart"
+project_id = "bagful"
 
 [db]
 # 54502, not the CLI's default 54322.
