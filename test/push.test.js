@@ -97,6 +97,15 @@ describe('the localised bodies', () => {
     { name: 'Ouă', quantity: 1 },
   ]
 
+  // A profile with no name used to put the English word into every language:
+  // "Someone a adăugat Lapte" on a Romanian lock screen.
+  it('says "someone" in the reader\'s language when the actor has no name', () => {
+    expect(itemAddedBody(null, item, 'en')).toBe('Someone added Lapte ×2')
+    expect(itemAddedBody(null, item, 'ro')).toBe('Cineva a adăugat Lapte ×2')
+    expect(itemAddedBody(null, item, 'fr')).toBe("Quelqu'un a ajouté Lapte ×2")
+    expect(checkoutBody(null, bought, 'de')).toBe('Jemand hat Pâine, Lapte ×2 und 1 weiteres gekauft')
+  })
+
   it('speaks each language for an added item', () => {
     expect(itemAddedBody('Radu', item, 'en')).toBe('Radu added Lapte ×2')
     expect(itemAddedBody('Radu', item, 'ro')).toBe('Radu a adăugat Lapte ×2')
