@@ -1,3 +1,5 @@
+// First, before any module can read a setting under its new name.
+import './lib/legacyStorage'
 import { createApp } from 'vue'
 import { clerkPlugin } from '@clerk/vue'
 import './style.css'
