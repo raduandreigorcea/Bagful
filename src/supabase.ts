@@ -83,6 +83,7 @@ export async function fetchWithRetry(
   const retriable = method === 'GET' || method === 'HEAD'
   for (let attempt = 0; ; attempt++) {
     let timer: ReturnType<typeof setTimeout> | undefined
+    let forwardAbort: (() => void) | undefined
     let attemptOptions = options
     if (retriable) {
       const controller = new AbortController()
@@ -90,9 +91,15 @@ export async function fetchWithRetry(
         () => controller.abort(new DOMException('No answer from the server', 'TimeoutError')),
         READ_TIMEOUT_MS,
       )
-      options.signal?.addEventListener('abort', () => controller.abort(options.signal!.reason), {
-        once: true,
-      })
+      // Forwards the caller's abort, including one that happened before this
+      // call, which a listener alone would never hear. Removed in the finally
+      // below, or a long-lived signal collects one per attempt.
+      const signal = options.signal
+      if (signal) {
+        forwardAbort = () => controller.abort(signal.reason)
+        if (signal.aborted) forwardAbort()
+        else signal.addEventListener('abort', forwardAbort, { once: true })
+      }
       attemptOptions = { ...options, signal: controller.signal }
     }
     try {
@@ -106,6 +113,7 @@ export async function fetchWithRetry(
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]))
     } finally {
       clearTimeout(timer)
+      if (forwardAbort) options.signal?.removeEventListener('abort', forwardAbort)
     }
   }
 }
