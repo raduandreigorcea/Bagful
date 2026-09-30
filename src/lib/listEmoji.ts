@@ -9,7 +9,10 @@
 // gold for what is gold (sun, star, fire, crown, trophy, key), its coral for
 // what is red, and a soft hue each for the rest (leaf green, purple #B79AE8,
 // blue #7EB2EA, teal #6CC7B9, pink #F4A6C0, each with a darker band shade) so
-// the picker is not one colour. Keep a
+// the picker is not one colour. ONE family per icon, in light and dark shades:
+// a purple canopy on a green handle reads as two icons glued together. Gold is
+// the only second colour, and only where the object is gold (a ribbon, a
+// rocket's flame). Keep a
 // new one to those rules and chunky enough to read at 16px. They sit on the
 // green topbar tile, on white menus and in dark mode, so no part that matters
 // is the logo's main green or its cream: each vanishes on one of the three.
