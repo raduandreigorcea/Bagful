@@ -172,12 +172,24 @@ function saveOfflineQueue(storage: Storage, userId: string, queued: OfflineMutat
 // - update after a queued update merges the patches (fields are absolute values)
 // - delete of a queued insert cancels the insert (and its updates) entirely
 // - delete otherwise supersedes any queued updates for that row
+// The mutation flushOfflineQueue has sent and not yet heard back about. It can
+// no longer be changed or cancelled, so nothing may coalesce into it: a patch
+// folded into it is never sent, and cancelling it does not stop the row landing.
+let onWire: { userId: string; kind: OfflineMutation['kind']; id: string } | null = null
+
 export function enqueueOfflineMutation(
   storage: Storage,
   userId: string,
   mutation: OfflineMutation,
 ): void {
-  const mutations = loadOfflineQueue(storage, userId)
+  const loaded = loadOfflineQueue(storage, userId)
+  const wire = onWire?.userId === userId ? onWire : null
+  const isOnWire = (m: OfflineMutation) => !!wire && m.kind === wire.kind && m.id === wire.id
+  // Only what has not been sent yet can be coalesced into or cancelled.
+  const mutations = loaded.filter((m) => !isOnWire(m))
+  const inFlight = loaded.filter(isOnWire)
+  const save = (queued: OfflineMutation[]) =>
+    saveOfflineQueue(storage, userId, [...inFlight, ...queued])
 
   if (mutation.kind === 'update') {
     const insert = mutations.find(
@@ -186,7 +198,7 @@ export function enqueueOfflineMutation(
     )
     if (insert) {
       insert.row = { ...insert.row, ...mutation.patch }
-      saveOfflineQueue(storage, userId, mutations)
+      save(mutations)
       return
     }
     const update = mutations.find(
@@ -195,7 +207,7 @@ export function enqueueOfflineMutation(
     )
     if (update) {
       update.patch = { ...update.patch, ...mutation.patch }
-      saveOfflineQueue(storage, userId, mutations)
+      save(mutations)
       return
     }
   }
@@ -203,18 +215,20 @@ export function enqueueOfflineMutation(
   if (mutation.kind === 'delete') {
     const hadQueuedInsert = mutations.some((m) => m.kind === 'insert' && m.id === mutation.id)
     const kept = mutations.filter((m) => m.id !== mutation.id)
-    // The row only ever existed locally — nothing to delete on the server.
+    // The row only ever existed locally — nothing to delete on the server. An
+    // insert already on the wire does not count: it is not in `mutations`, and
+    // the row it creates still needs this delete.
     if (hadQueuedInsert) {
-      saveOfflineQueue(storage, userId, kept)
+      save(kept)
       return
     }
     kept.push(mutation)
-    saveOfflineQueue(storage, userId, kept)
+    save(kept)
     return
   }
 
   mutations.push(mutation)
-  saveOfflineQueue(storage, userId, mutations)
+  save(mutations)
 }
 
 // Keep the queue inside its ceiling, dropping from the front when it is over.
@@ -455,7 +469,14 @@ export async function flushOfflineQueue(
     if (!queued.length) return result
 
     const sent = queued[0]!
-    const { ok, transient } = await applyMutation(db, sent)
+    onWire = { userId, kind: sent.kind, id: sent.id }
+    let outcome
+    try {
+      outcome = await applyMutation(db, sent)
+    } finally {
+      onWire = null
+    }
+    const { ok, transient } = outcome
 
     // The window closed. Whatever is in storage now is what the next decision
     // has to be made against.
@@ -477,10 +498,11 @@ export async function flushOfflineQueue(
     // Strike off what was just settled, and only that. Anything enqueued while
     // it was on the wire sits behind it and survives untouched.
     //
-    // The head can fail to match: a delete arriving for a row whose insert was
-    // in flight cancels that insert out of the queue entirely, so there is
-    // nothing left to remove. Leaving the queue alone is right there, and the
-    // loop still makes progress because the next pass reads a different head.
+    // The head can fail to match, e.g. the queue was cleared by a sign-out
+    // while this was on the wire. Leaving the queue alone is right there, and
+    // the loop still makes progress because the next pass reads a different
+    // head. (A delete or update for the row on the wire queues behind it
+    // rather than rewriting it; see onWire.)
     if (current.length && isSameMutation(current[0]!, sent)) {
       saveOfflineQueue(storage, userId, current.slice(1))
     }
