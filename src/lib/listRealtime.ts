@@ -4,7 +4,7 @@ import type { AppClient } from '../supabase'
 import type { Tables } from '../types/database'
 import { sortItemsForDisplay } from './shoppingList'
 import { captureException } from './errorReporting'
-import { isCurrentlyOffline, onReconnect } from './connectivity'
+import { isCurrentlyOffline } from './connectivity'
 
 // A shopping_list_items row as held in view state: exactly the generated row,
 // so a renamed or retyped column fails the typecheck here too.
@@ -132,7 +132,7 @@ export function useListRealtime({
     }
   }
 
-  function handleVisibilityOrOnline() {
+  function handleVisibilityChange() {
     if (!hasInitialized.value) return
 
     if (document.visibilityState === 'visible') {
@@ -142,7 +142,7 @@ export function useListRealtime({
       }
     } else {
       // Backgrounded: drop the socket rather than hold a connection nobody is
-      // looking at. handleVisibilityOrOnline reconnects on the way back.
+      // looking at. handleVisibilityChange reconnects on the way back.
       if (db && db.realtime) {
         db.realtime.disconnect()
       }
@@ -451,20 +451,17 @@ export function useListRealtime({
     }
   }
 
-  // Unregisters the connectivity subscription below.
-  let stopReconnect: (() => void) | null = null
-
   onMounted(() => {
     // On `document`, which is where the event is actually dispatched. It bubbles
     // to window, so the old binding worked — but HomeView listens on document
     // for the same signal, and two spellings of one API is a pause for whoever
     // reads them next.
-    document.addEventListener('visibilitychange', handleVisibilityOrOnline)
-    // Not window's 'online' event: in a WebView it can simply never fire, which
-    // left this the dead half of the recovery path. lib/connectivity fires its
-    // handlers off the Capacitor status (with the window events as its own web
-    // fallback), so subscribing here covers both platforms through one signal.
-    stopReconnect = onReconnect(handleVisibilityOrOnline)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    // Coming back online is not handled here. HomeView owns that edge
+    // (handleBackOnline): it flushes the offline queue, reloads and calls
+    // setupRealtimeSubscriptions, whose subscribe reconnects the socket.
+    // Answering the same edge here too fetched everything twice and rebuilt
+    // the channels twice on every reconnect.
     window.addEventListener('pointerdown', handleUserActivity)
     window.addEventListener('keydown', handleUserActivity)
     window.addEventListener('touchstart', handleUserActivity, { passive: true })
@@ -474,11 +471,7 @@ export function useListRealtime({
   onBeforeUnmount(() => {
     cleanupRealtimeSubscriptions()
     cleanupReconnectResources()
-    document.removeEventListener('visibilitychange', handleVisibilityOrOnline)
-    if (stopReconnect) {
-      stopReconnect()
-      stopReconnect = null
-    }
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.removeEventListener('pointerdown', handleUserActivity)
     window.removeEventListener('keydown', handleUserActivity)
     window.removeEventListener('touchstart', handleUserActivity)
