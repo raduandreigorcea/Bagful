@@ -78,7 +78,6 @@ const it: Catalog = {
   'about.checkFailed':
     'Impossibile contattare GitHub. Riprova quando sei di nuovo online.',
   'about.creditLead': 'Dati sui prodotti da',
-  'about.creditAnd': 'e',
   'about.creditEnd': '.',
 
   'error.genericTitle': 'Qualcosa è andato storto',

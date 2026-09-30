@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 //
-// The catalog is built from what Auchan, Carrefour and Lidl actually list, and
-// the app says so somewhere a user can reach.
+// The catalog is built from what the shops themselves list, and the app says
+// which shops, for the phone's country, somewhere a user can reach.
 //
 // THIS USED TO BE A LICENCE TEST. The catalog was imported from Open Food Facts
 // and its two sibling projects, all ODbL, which obliged anyone publishing an app
@@ -14,7 +14,7 @@
 // So this is now a courtesy rather than a licence term, tested to the same
 // standard, because a credit nobody tests is one a redesign quietly deletes.
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import AppSettingsModal from '../src/components/AppSettingsModal.vue'
 import AccountActionModal from '../src/components/AccountActionModal.vue'
 import ListSettingsModal from '../src/components/ListSettingsModal.vue'
@@ -30,6 +30,19 @@ vi.mock('@clerk/vue', async () => {
 vi.mock('../src/supabase', () => ({
   useSupabase: () => ({}),
   getCatalogSupabase: () => null,
+}))
+// The shop list comes from the catalog (see fetchShopCredits); here it is the
+// Romanian answer, which is what a phone in Bucharest gets.
+const shops = vi.hoisted(() => ({
+  credits: [
+    { name: 'Auchan', url: 'https://auchan.ro' },
+    { name: 'Carrefour', url: 'https://carrefour.ro' },
+    { name: 'Lidl', url: 'https://lidl.ro' },
+  ],
+}))
+vi.mock('../src/lib/shopBadges', async (importOriginal) => ({
+  ...(await importOriginal()),
+  fetchShopCredits: vi.fn(async () => shops.credits),
 }))
 vi.mock('../src/lib/pushNotifications', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -54,6 +67,7 @@ async function openAbout() {
   const button = wrapper.findAll('button').find((b) => b.text().includes('About'))
   if (!button) throw new Error('no About button in App Settings')
   await button.trigger('click')
+  await flushPromises()
   return wrapper
 }
 
@@ -84,9 +98,34 @@ describe('product data attribution', () => {
 
   it('links to each shop', async () => {
     const hrefs = attributionLinks(await openAbout()).map((a) => a.attributes('href'))
-    expect(hrefs).toContain('https://www.auchan.ro')
-    expect(hrefs).toContain('https://carrefour.ro')
-    expect(hrefs).toContain('https://www.lidl.ro')
+    expect(hrefs).toEqual(['https://auchan.ro', 'https://carrefour.ro', 'https://lidl.ro'])
+  })
+
+  it('reads as a sentence, with the language joining the names', async () => {
+    const text = (await openAbout()).find('.about-credit').text().replace(/s+/g, ' ')
+    expect(text).toBe('Product data from Auchan, Carrefour and Lidl.')
+  })
+
+  it('names a shop without a known site, unlinked', async () => {
+    const saved = shops.credits
+    shops.credits = [...saved, { name: 'Penny', url: null }]
+    try {
+      const wrapper = await openAbout()
+      expect(wrapper.find('.about-credit').text()).toContain('Penny')
+      expect(wrapper.findAll('.about-credit a').map((a) => a.text())).not.toContain('Penny')
+    } finally {
+      shops.credits = saved
+    }
+  })
+
+  it('says nothing rather than guess when the catalog never answered', async () => {
+    const saved = shops.credits
+    shops.credits = []
+    try {
+      expect((await openAbout()).find('.about-credit').exists()).toBe(false)
+    } finally {
+      shops.credits = saved
+    }
   })
 
   it('opens those links safely', async () => {

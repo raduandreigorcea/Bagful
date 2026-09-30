@@ -25,6 +25,8 @@ import {
 } from '../lib/theme'
 import AppIcon from './AppIcon.vue'
 import { IS_NIGHTLY, SUPABASE_PROJECT_REF } from '../lib/appChannel'
+import { fetchShopCredits, type ShopCredit } from '../lib/shopBadges'
+import { deviceTimeZone, resolveRegion } from '../lib/region'
 import { replayEnabled, setReplayEnabled } from '../lib/analytics'
 
 // Settings that belong to the app on this device rather than to a list or
@@ -56,6 +58,34 @@ const { userId } = useAuth()
 const appVersion = IS_NIGHTLY ? `${__APP_VERSION__}-nightly` : __APP_VERSION__
 
 const aboutOpen = ref(false)
+
+// Loaded when About opens, not when settings does: it is one small cached read,
+// and most visits to settings never reach About.
+const shopCredits = ref<ShopCredit[]>([])
+watch(aboutOpen, (isOpen) => {
+  if (!isOpen) return
+  void fetchShopCredits(resolveRegion(deviceTimeZone())).then((credits) => {
+    shopCredits.value = credits
+  })
+})
+
+// "Auchan, Carrefour and Lidl" in whatever the app's language makes of a list,
+// split into the names (links) and the text between them.
+const creditParts = computed(() => {
+  if (shopCredits.value.length === 0) return []
+  const names = shopCredits.value.map((c) => c.name)
+  let index = 0
+  // Plain `en` lists with an Oxford comma ("Carrefour, and Lidl"); the app's
+  // English never uses one ("Milk, Eggs and 2 more"), so English lists as en-GB.
+  const locale = getLocale()
+  return new Intl.ListFormat(locale === 'en' ? 'en-GB' : locale, { type: 'conjunction' })
+    .formatToParts(names)
+    .map((part) =>
+      part.type === 'element'
+        ? { text: part.value, url: shopCredits.value[index++]?.url ?? null }
+        : { text: part.value, url: null },
+    )
+})
 
 // Language is a third section of the same kind as Appearance and
 // Notifications: a title, a segmented control, applied on tap. It went through
@@ -319,8 +349,8 @@ watch(
 
        This USED to be an ODbL licence notice for Open Food Facts and its two
        sibling projects, which was an obligation rather than a courtesy. The
-       catalog no longer uses any of them -- it is built from what Auchan,
-       Carrefour and Lidl actually list -- so the obligation is gone and the
+       catalog no longer uses any of them -- it is built from what the shops
+       themselves list -- so the obligation is gone and the
        credit changed with it. It is kept because naming your sources is right,
        not because a licence now compels it. -->
   <AppModal :open="aboutOpen" overlay-class="about-overlay" transition="modal-fade" @close="aboutOpen = false">
@@ -355,17 +385,23 @@ watch(
         </p>
       </div>
 
-      <!-- Fragments because the names are links, and a link cannot be a
-           {placeholder}. Every name here is a proper noun and stays as it is;
-           only the connective text is translated. -->
-      <p class="about-credit">
+      <!-- The shops are the catalog's own list for this phone's country, so a
+           new retailer is credited the day it starts producing data, with no
+           release. The commas and the "and" come from Intl.ListFormat in the
+           app's language; each name is a proper noun, linked to the site its
+           scraper reads. Hidden when the catalog has never answered. -->
+      <p v-if="creditParts.length" class="about-credit">
         {{ t('about.creditLead') }}
-        <!-- eslint-disable vue/no-bare-strings-in-template -- proper nouns; the shops are named, not described -->
-        <a class="settings-note-link" href="https://www.auchan.ro" target="_blank" rel="noopener noreferrer">Auchan</a>,
-        <a class="settings-note-link" href="https://carrefour.ro" target="_blank" rel="noopener noreferrer">Carrefour</a>
-        {{ t('about.creditAnd') }}
-        <a class="settings-note-link" href="https://www.lidl.ro" target="_blank" rel="noopener noreferrer">Lidl</a>{{ t('about.creditEnd') }}
-        <!-- eslint-enable vue/no-bare-strings-in-template -->
+        <template v-for="(part, i) in creditParts" :key="i">
+          <a
+            v-if="part.url"
+            class="settings-note-link"
+            :href="part.url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{{ part.text }}</a>
+          <template v-else>{{ part.text }}</template>
+        </template>{{ t('about.creditEnd') }}
       </p>
     </div>
   </AppModal>

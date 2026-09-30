@@ -70,7 +70,14 @@ const SHOPS_KEY = 'bagful.shops.v2'
 interface ShopEntry {
   slug: string
   country: string | null
+  /** The site the scraper reads, e.g. `lidl.de`; the About credit links to it. */
+  domain: string | null
 }
+
+// Read from the catalog and put into an href, so it is checked for being a bare
+// hostname: letters, digits and dashes in dot-separated labels, nothing that
+// could carry a scheme, a path or a script.
+const DOMAIN = /^(?=.{4,100}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
 let shopRows: ShopEntry[] | null = null
 
@@ -92,22 +99,47 @@ function forMarket(rows: ShopEntry[], market: Market | null): string[] {
  * one that returns nothing and looks broken.
  */
 export async function fetchShopList(market: Market | null = null): Promise<string[]> {
-  if (shopRows) return forMarket(shopRows, market)
+  return forMarket(await loadShops(), market)
+}
+
+export interface ShopCredit {
+  name: string
+  url: string | null
+}
+
+/**
+ * The shops this market's product data comes from, for the About credit: one
+ * entry per chain, by display name, linked to the site its scraper reads. Empty
+ * when the catalog has never answered, which hides the credit rather than
+ * naming shops that may not be the source.
+ */
+export async function fetchShopCredits(market: Market | null = null): Promise<ShopCredit[]> {
+  const rows = (await loadShops()).filter((r) => market === null || r.country === market)
+  const byName = new Map<string, ShopCredit>()
+  for (const row of rows) {
+    const name = shopLabel(row.slug)
+    if (!byName.has(name)) byName.set(name, { name, url: row.domain ? `https://${row.domain}` : null })
+  }
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+async function loadShops(): Promise<ShopEntry[]> {
+  if (shopRows) return shopRows
 
   const cached = readShopCache()
   const catalogDb = getCatalogSupabase()
-  if (!catalogDb) return forMarket(cached, market)
+  if (!catalogDb) return cached
 
   try {
     const { data, error } = await catalogDb
       .from('catalog_retailers')
-      .select('slug, country')
+      .select('slug, country, domain')
       .eq('enabled', true)
       .order('slug')
-    if (error || !Array.isArray(data)) return forMarket(cached, market)
+    if (error || !Array.isArray(data)) return cached
 
     const rows = cleanEntries(data)
-    if (rows.length === 0) return forMarket(cached, market)
+    if (rows.length === 0) return cached
 
     shopRows = rows
     try {
@@ -116,19 +148,22 @@ export async function fetchShopList(market: Market | null = null): Promise<strin
       // Same posture as the badge cache below: a filter's convenience must
       // never be the thing that throws.
     }
-    return forMarket(rows, market)
+    return rows
   } catch {
-    return forMarket(cached, market)
+    return cached
   }
 }
 
 function cleanEntries(raw: unknown[]): ShopEntry[] {
   return raw
-    .map((row) => row as { slug?: unknown; country?: unknown })
+    .map((row) => row as { slug?: unknown; country?: unknown; domain?: unknown })
     .filter((row) => typeof row.slug === 'string' && SLUG.test(row.slug))
     .map((row) => ({
       slug: row.slug as string,
       country: typeof row.country === 'string' ? row.country : null,
+      // A cache written before domains were read has none: the credit then
+      // names that shop without a link until the next fetch.
+      domain: typeof row.domain === 'string' && DOMAIN.test(row.domain) ? row.domain : null,
     }))
 }
 
