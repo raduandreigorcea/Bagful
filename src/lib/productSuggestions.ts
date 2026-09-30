@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
 import {
   buildListProductStats,
   matchListStats,
@@ -16,6 +16,14 @@ import { fetchShopList } from './shopBadges'
 import type { Market } from './region'
 import type { ShoppingItemRow } from './listRealtime'
 import { track } from './analytics'
+
+// An explicit null for a defaulted RPC argument. The generated types mark such
+// an argument optional and never nullable, but the app database's RPCs are
+// sent null on purpose rather than omitted: an omitted argument lets PostgREST
+// match an older overload a database may still hold (006_product_catalog.sql
+// drops the three-argument add_custom_product, and an edited migration never
+// reaches production). Null on the wire, typed as absent.
+const SQL_NULL = null as unknown as undefined
 
 // Everything behind the add form's search box: what the catalog is asked, what
 // this list's history does to the order, and what the screen offers before
@@ -113,7 +121,7 @@ const RECENT_LIMIT = 8
 const RESTART_LIMIT = 6
 
 export function useProductSuggestions(options: {
-  db: SupabaseClient
+  db: AppClient
   listId: Ref<string | null>
   items: Ref<ShoppingItemRow[]>
   /** What is currently typed into the add form. */
@@ -441,7 +449,7 @@ export function useProductSuggestions(options: {
           ? { data: [], error: null }
           : db.rpc('search_catalog', {
               p_query: text,
-              p_list_id: listId.value || null,
+              p_list_id: listId.value || SQL_NULL,
               p_limit: SUGGEST_POOL,
             }),
       ).then((res) => {
@@ -704,12 +712,13 @@ export function useProductSuggestions(options: {
     // rule that eventually turns three lists' contributions into one global
     // row runs there too.
     if (product.custom) {
+      if (!listId.value) return
       ignore(
         db.rpc('add_custom_product', {
           p_list_id: listId.value,
           p_name: product.name,
-          p_maker: product.maker ?? null,
-          p_barcode: product.barcode ?? null,
+          p_maker: product.maker ?? SQL_NULL,
+          p_barcode: product.barcode ?? SQL_NULL,
         }),
       )
       return
@@ -740,8 +749,8 @@ export function useProductSuggestions(options: {
       ignore(
         db.rpc('bump_product_popularity', {
           p_name: product.name,
-          p_maker: product.maker ?? null,
-          p_list_id: listId.value,
+          p_maker: product.maker ?? SQL_NULL,
+          p_list_id: listId.value ?? SQL_NULL,
         }),
       )
     }

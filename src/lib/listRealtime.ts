@@ -1,15 +1,14 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
-import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
-import { sortItemsForDisplay, type ShoppingItem } from './shoppingList'
+import type { RealtimeChannel } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
+import type { Tables } from '../types/database'
+import { sortItemsForDisplay } from './shoppingList'
 import { captureException } from './errorReporting'
 import { isCurrentlyOffline, onReconnect } from './connectivity'
 
-// A shopping_list_items row as held in view state: the pure-helper shape plus
-// the DB columns the realtime handlers touch.
-export interface ShoppingItemRow extends ShoppingItem {
-  created_at: string
-  [key: string]: unknown
-}
+// A shopping_list_items row as held in view state: exactly the generated row,
+// so a renamed or retyped column fails the typecheck here too.
+export type ShoppingItemRow = Tables<'shopping_list_items'>
 
 export interface ListMemberProfile {
   user_id: string
@@ -19,7 +18,7 @@ export interface ListMemberProfile {
 }
 
 export interface UseListRealtimeOptions {
-  db: SupabaseClient
+  db: AppClient
   listId: Ref<string | null>
   hasInitialized: Ref<boolean>
   items: Ref<ShoppingItemRow[]>

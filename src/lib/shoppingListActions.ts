@@ -1,5 +1,5 @@
 import { onBeforeUnmount, ref, type Ref } from 'vue'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
 import {
   countActiveItemsByMember,
   findActiveItemByName,
@@ -90,7 +90,7 @@ export interface ShoppingListActions {
 }
 
 export function useShoppingListActions(options: {
-  db: SupabaseClient
+  db: AppClient
   items: Ref<ShoppingItemRow[]>
   listId: Ref<string | null>
   /** The Clerk id, or the remembered one while Clerk is still loading offline. */
@@ -267,6 +267,7 @@ export function useShoppingListActions(options: {
     // Which list these rows will be ABOUT, read before the round trip and
     // checked against the live one after it. See the guard below.
     const forList = listId.value
+    if (!forList) return
 
     const [uncheckedRes, checkedRes] = await Promise.all([
       db
@@ -414,6 +415,7 @@ export function useShoppingListActions(options: {
   ): Promise<ShoppingItemRow | null> {
     const local = findActiveItemByName(items.value, name, options)
     if (local) return local
+    if (!listId.value) return null
 
     const { data } = await db
       .from('shopping_list_items')
@@ -482,7 +484,8 @@ export function useShoppingListActions(options: {
     product: AddedProduct | null = null,
   ): Promise<void> {
     const name = (product?.name ?? draftName.value).trim()
-    if (!name) return
+    const list = listId.value
+    if (!name || !list) return
     if (name.length > ITEM_NAME_MAX_LENGTH) {
       addError.value = t('error.itemNameTooLong', { max: ITEM_NAME_MAX_LENGTH })
       return
@@ -546,7 +549,7 @@ export function useShoppingListActions(options: {
     const id = crypto.randomUUID()
     const row = {
       id,
-      list_id: listId.value,
+      list_id: list,
       name,
       maker,
       quantity,

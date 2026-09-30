@@ -105,10 +105,12 @@ const AVATARS = [face('#6fb39b'), face('#e3a063'), face('#9489d4')]
 // Romanian) gives each the right picture everywhere. "Milch" or "Latte" would
 // have come out as a shopping bag and a coffee. `who` picks the avatar and
 // travels with the row, so a row leaving does not reshuffle the faces.
-const row = (id: string, name: string, who: number, quantity = 1, checked = false): ShoppingItemRow => ({
+type TourRow = ShoppingItemRow & { who: number }
+const row = (id: string, name: string, who: number, quantity = 1, checked = false): TourRow => ({
   id, name, quantity, checked, maker: null, created_at: '', who,
+  added_by: '', checked_at: null, list_id: '',
 })
-const avatarOf = (item: ShoppingItemRow) => AVATARS[Number(item.who) % AVATARS.length]
+const avatarOf = (item: TourRow) => AVATARS[item.who % AVATARS.length]
 
 // Asked for stillness, each scene is set straight to the frame that tells its
 // story and nothing is scheduled.
@@ -219,7 +221,7 @@ function playSearch() {
 
 // Scan: the barcode button in the empty box, the camera, the read, and the
 // product landing on the list with the glow a new row gets.
-const scanRows = ref<ShoppingItemRow[]>([])
+const scanRows = ref<TourRow[]>([])
 const scanPhase = ref<'list' | 'camera' | 'hit'>('list')
 const freshId = ref('')
 
@@ -244,7 +246,7 @@ function playScan() {
 
 // Quantity: the tour presses the real stepper. The count animates the way the
 // list animates it, and the control puts itself away on its own idle timer.
-const qtyRows = ref<ShoppingItemRow[]>([])
+const qtyRows = ref<TourRow[]>([])
 const qtyOpenId = ref<string | null>(null)
 
 function setQuantity({ item, quantity }: { item: ShoppingItemRow; quantity: number }) {
@@ -271,7 +273,7 @@ function playQty() {
 
 // Swipe: a real row pulled right until it arms and ticks, then another pulled
 // left until it arms and goes.
-const swipeRows = ref<ShoppingItemRow[]>([])
+const swipeRows = ref<TourRow[]>([])
 const swipeOffsets = reactive<Record<string, number | null>>({})
 
 // A drag: the finger lands at `from` (a point it measures when the time comes),
@@ -351,7 +353,7 @@ const BUY_THUMB = 56
 const BUY_TRACK = 53
 const BUY_INSET = (BUY_THUMB - BUY_TRACK) / 2
 
-const buyRows = ref<ShoppingItemRow[]>([])
+const buyRows = ref<TourRow[]>([])
 const buyX = ref(0)
 const buyDragging = ref(false)
 const buySuccess = ref(false)

@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
 import { deriveProfileFields, type UserLike } from './userIdentity'
 
 // Write the caller's own profiles row (name + Clerk avatar), the single source
@@ -15,7 +15,7 @@ import { deriveProfileFields, type UserLike } from './userIdentity'
 // upserts the profile and inserts the membership in one server-side step, so
 // there is no client-side window where the FK target is missing.
 async function upsertOwnProfile(
-  db: SupabaseClient,
+  db: AppClient,
   userId: string,
   user: UserLike | null | undefined,
 ) {
@@ -43,7 +43,7 @@ const writtenKey = (userId: string) => `bagful.profileWritten.${userId}`
 // passed since it. The record is kept only after the database accepted the
 // write, so a failure (offline, banned) is retried on the next boot as before.
 export async function refreshOwnProfile(
-  db: SupabaseClient,
+  db: AppClient,
   userId: string,
   user: UserLike | null | undefined,
   storage: Storage,

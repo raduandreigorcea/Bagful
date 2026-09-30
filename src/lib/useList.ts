@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
 import type { ListMemberProfile } from './listRealtime'
 import { captureException } from './errorReporting'
 import { clampItemLimit, ITEM_LIMIT_DEFAULT } from './limits'
@@ -26,7 +26,7 @@ interface MembershipRow {
 }
 
 export function useList(options: {
-  db: SupabaseClient
+  db: AppClient
   /** The Clerk id; memberships are read for this user only. */
   userId: Ref<string | null | undefined>
 }) {
@@ -52,6 +52,7 @@ export function useList(options: {
     // Which list this answer will be ABOUT, read before the round trip and
     // checked against the live one after it. See the note on the guard below.
     const forList = listId.value
+    if (!forList) return
     const [{ data: list, error: listErr }, { data: members, error: membersErr }] = await Promise.all([
       db.from('lists').select('name, invite_code, created_by, max_items_per_member, emoji').eq('id', forList).single(),
       // Name/avatar live in profiles now; embed them so the roster keeps the same
@@ -114,6 +115,9 @@ export function useList(options: {
   // Every list the user belongs to, with names for the account dialog's list.
   // Only refreshes the roster; the active list is chosen by the caller.
   async function loadLists() {
+    // Signed out mid-session: an error, so callers keep what they have rather
+    // than read an empty answer as "belongs to no list" and send you to setup.
+    if (!userId.value) return { error: new Error('No signed-in user') }
     const { data, error } = await db
       .from('list_members')
       .select('list_id, lists(name, emoji)')

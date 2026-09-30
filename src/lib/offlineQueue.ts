@@ -1,4 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
+import type { TablesInsert, TablesUpdate } from '../types/database'
 import { findActiveItemByName, type ShoppingItem } from './shoppingList'
 import { captureException } from './errorReporting'
 import { clearUserScopedKeys, userScopedKey } from './perUserStorage'
@@ -13,8 +14,8 @@ import { sumQuantities } from './limits'
 // like, the queue restores what still has to reach the server.
 
 export type OfflineMutation =
-  | { kind: 'insert'; id: string; row: Record<string, unknown> }
-  | { kind: 'update'; id: string; patch: Record<string, unknown> }
+  | { kind: 'insert'; id: string; row: TablesInsert<'shopping_list_items'> }
+  | { kind: 'update'; id: string; patch: TablesUpdate<'shopping_list_items'> }
   | { kind: 'delete'; id: string }
   // A checkout made offline, replayed through buy_items so it still reaches
   // purchase history (and the list's push) instead of being queued as bare
@@ -47,7 +48,7 @@ interface StoredQueue {
 // typing them as the real client keeps the `any` out: SupabaseClient['from'] carries PostgREST's own
 // builder types, so a typo in a filter or a patch is caught rather than waved
 // through. Structural rather than the whole client so tests can hand in a fake.
-type Db = Pick<SupabaseClient, 'from' | 'rpc'>
+type Db = Pick<AppClient, 'from' | 'rpc'>
 
 // One queue per account, rather than one queue with an account stamped on it.
 //
@@ -120,7 +121,14 @@ export function loadOfflineQueue(storage: Storage, userId: string): OfflineMutat
     if (!Array.isArray(stored.mutations)) return []
     return stored.mutations.map((mutation) =>
       mutation.kind === 'insert'
-        ? { ...mutation, row: renameLegacyRowKeys(mutation.row) }
+        ? {
+            ...mutation,
+            // Read back from storage, so the shape is whatever an older build
+            // wrote; renameLegacyRowKeys is what makes it today's row again.
+            row: renameLegacyRowKeys(
+              mutation.row as Record<string, unknown>,
+            ) as TablesInsert<'shopping_list_items'>,
+          }
         : mutation,
     )
   } catch {
