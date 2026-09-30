@@ -438,8 +438,6 @@ const fr: Catalog = {
   'listIcon.tea-cup': 'tasse',
   'listIcon.takeaway-cup': 'café à emporter',
   'listIcon.glass': 'verre',
-  'listIcon.boy': 'garçon',
-  'listIcon.girl': 'fille',
   'listIcon.crown': 'couronne',
   'listIcon.sun': 'soleil',
   'listIcon.moon': 'lune',

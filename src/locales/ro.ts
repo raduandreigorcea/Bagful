@@ -442,8 +442,6 @@ const ro: Catalog = {
   'listIcon.tea-cup': 'ceașcă',
   'listIcon.takeaway-cup': 'cafea la pahar',
   'listIcon.glass': 'pahar',
-  'listIcon.boy': 'băiat',
-  'listIcon.girl': 'fată',
   'listIcon.crown': 'coroană',
   'listIcon.sun': 'soare',
   'listIcon.moon': 'lună',
