@@ -27,7 +27,7 @@ import AppIcon from './AppIcon.vue'
 import { IS_NIGHTLY, SUPABASE_PROJECT_REF } from '../lib/appChannel'
 import { fetchShopCredits, type ShopCredit } from '../lib/shopBadges'
 import { deviceTimeZone, resolveRegion } from '../lib/region'
-import { replayEnabled, setReplayEnabled } from '../lib/analytics'
+import { analyticsAvailable, replayEnabled, setReplayEnabled } from '../lib/analytics'
 
 // Settings that belong to the app on this device rather than to a list or
 // to the account: how it looks, whether it may notify, and what it is.
@@ -151,6 +151,10 @@ const notificationHint = ref('')
 // Off until chosen, per account; lib/analytics owns the key and starts or stops
 // the recorder.
 const replayMode = ref<'on' | 'off'>('off')
+// Fixed per build: with no key (dev server, nightly without its own key)
+// nothing is sent, so a replay switch there would promise something it
+// cannot do.
+const replayAvailable = analyticsAvailable()
 
 function syncPreferencesFromStorage() {
   // lib/theme owns the key and the fallback-to-system rule; this only mirrors
@@ -301,7 +305,7 @@ watch(
           </div>
         </section>
 
-        <section class="app-settings__section">
+        <section v-if="replayAvailable" class="app-settings__section">
           <h4 id="app-replay-label" class="app-settings__section-title">{{ t('settings.replay') }}</h4>
           <p class="app-settings__row-hint">{{ t('settings.replay.hint') }}</p>
           <div class="segmented segmented--two" role="group" aria-labelledby="app-replay-label">
