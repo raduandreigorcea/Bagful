@@ -4,8 +4,12 @@
 // (dimmed) so the preview never sits empty.
 //
 // The icons are flat SVGs in src/assets/list-icons/, drawn in the logo's style
-// (resources/icon.svg): its palette, no outlines, gradients or shine, a darker
-// band across the top, round-capped detail strokes. Keep a
+// (resources/icon.svg): no outlines, gradients or shine, a darker band across
+// the top, round-capped detail strokes. Colour follows the object: the logo's
+// gold for what is gold (sun, star, fire, crown, trophy, key), its coral for
+// what is red, and a soft hue each for the rest (leaf green, purple #B79AE8,
+// blue #7EB2EA, teal #6CC7B9, pink #F4A6C0, each with a darker band shade) so
+// the picker is not one colour. Keep a
 // new one to those rules and chunky enough to read at 16px. They sit on the
 // green topbar tile, on white menus and in dark mode, so no part that matters
 // is the logo's main green or its cream: each vanishes on one of the three.
