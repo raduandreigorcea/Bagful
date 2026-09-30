@@ -48,7 +48,7 @@ const catalogAnonKey = import.meta.env.VITE_CATALOG_SUPABASE_ANON_KEY
 
 // Both schemas are generated, not written. `npm run types` rewrites
 // src/types/*.ts from the two LOCAL stacks, so `db reset` both first (the
-// migrations are the source of truth, not whatever famcart-dev happens to
+// migrations are the source of truth, not whatever bagful-dev happens to
 // hold). CI regenerates them the same way and fails on any difference, so a
 // migration that lands without them turns the build red, and a renamed column
 // or RPC argument then fails the typecheck instead of returning [] at runtime.

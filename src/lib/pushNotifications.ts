@@ -48,7 +48,7 @@ export function getOneSignalAppId(): string {
   // Nightly has its OWN OneSignal app, and never the production one. A device
   // is keyed by its Clerk id, and Clerk is one instance for both channels, so a
   // nightly phone subscribed to the production app would receive every real
-  // list's notifications for that person, and famcart-dev's test pushes
+  // list's notifications for that person, and bagful-dev's test pushes
   // would reach the phone they shop with.
   //
   // Its own variable rather than VITE_ONESIGNAL_APP_ID from another file: .env

@@ -138,7 +138,7 @@ export function sentryIssuesUrl(
   return `${SENTRY_API}/organizations/${SENTRY_ORG}/issues/?${params}`
 }
 
-// The `famcart` project. The same public ref src/lib/appChannel.ts compares
+// The `bagful` project. The same public ref src/lib/appChannel.ts compares
 // against, and for the same reason: it is what production IS.
 export const PRODUCTION_PROJECT_REF = 'qwpyiperbjaeykrvilhf'
 
@@ -147,7 +147,7 @@ export const PRODUCTION_PROJECT_REF = 'qwpyiperbjaeykrvilhf'
  *
  * One Sentry project takes reports from every build, told apart by the
  * environment tag src/lib/errorReporting.ts sets from the app's channel. So the
- * production database reads `production` only, and famcart-dev reads what is
+ * production database reads `production` only, and bagful-dev reads what is
  * wired to it: the nightly builds and a local `npm run dev`. Reports sent before
  * the tag followed the channel say `production` whatever sent them.
  */
@@ -167,7 +167,7 @@ export function sentryEnvironmentsUrl(): string {
  * NOT A FILTER FOR TIDINESS. Sentry's issues endpoint answers 404, "The requested
  * resource does not exist", when ANY environment it is asked for has never
  * received an event -- and a new channel's environment has not: `nightly` was
- * added on 2026-09-15, and famcart-dev's Sentry line on the admin Health page
+ * added on 2026-09-15, and bagful-dev's Sentry line on the admin Health page
  * failed on it until this existed. An empty result means none of them has seen
  * an event, whose true answer is no issues rather than an error.
  */

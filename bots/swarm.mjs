@@ -1,4 +1,4 @@
-// A family of browser bots using Bagful on famcart-dev, to find the bugs that
+// A family of browser bots using Bagful on bagful-dev, to find the bugs that
 // only real, concurrent, flaky-network use finds. Local only, by choice.
 //
 //   npm run dev                      (in another terminal)
@@ -23,7 +23,7 @@ import { CHAOS, RACE_OPS, kickMember, promoteOrDemote, regenerateCode } from './
 const opts = parseArgs(process.argv.slice(2))
 const env = parseEnv(fs.readFileSync('.env.development.local', 'utf8'))
 if (!env.VITE_SUPABASE_URL || isProductionUrl(env.VITE_SUPABASE_URL)) {
-  console.error('.env.development.local must point at famcart-dev, never production. Refusing.')
+  console.error('.env.development.local must point at bagful-dev, never production. Refusing.')
   process.exit(1)
 }
 if (!(await fetch(BASE_URL).then(r => r.ok, () => false))) {
