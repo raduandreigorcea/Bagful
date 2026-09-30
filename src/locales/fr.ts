@@ -78,7 +78,6 @@ const fr: Catalog = {
   'about.checkFailed':
     'Impossible de joindre GitHub. Réessayez une fois de retour en ligne.',
   'about.creditLead': 'Données produits de',
-  'about.creditAnd': 'et',
   'about.creditEnd': '.',
 
   'error.genericTitle': 'Une erreur est survenue',

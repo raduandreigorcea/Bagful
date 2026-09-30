@@ -78,7 +78,6 @@ const de: Catalog = {
   'about.checkFailed':
     'GitHub war nicht erreichbar. Versuche es erneut, wenn du wieder online bist.',
   'about.creditLead': 'Produktdaten von',
-  'about.creditAnd': 'und',
   'about.creditEnd': '.',
 
   'error.genericTitle': 'Etwas ist schiefgelaufen',
