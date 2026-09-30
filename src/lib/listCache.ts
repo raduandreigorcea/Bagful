@@ -46,9 +46,9 @@ interface StoredSnapshot extends ListSnapshot {
 // problem one severity down, and leaving the shape in place is how it survives
 // to reappear somewhere it does matter — which is why the keying itself now
 // lives in lib/perUserStorage rather than being spelled out a third time here.
-// The stored name predates the households→lists rename; changing it would
-// strand every snapshot already sitting in a phone's localStorage.
-const STORAGE_PREFIX = 'bagful-household-snapshot'
+// Stored as bagful-household-snapshot until the households→lists rename caught
+// up with it; lib/legacyStorage carries old snapshots over to this name.
+const STORAGE_PREFIX = 'bagful-list-snapshot'
 // Bumped 1→2 for the households→lists rename: a version-1 snapshot's fields
 // are `householdId` etc., not `listId`, and this module has no interest in
 // reading that shape back out. It is only a cache, so discarding it costs one
@@ -163,9 +163,8 @@ export function clearListSnapshot(storage: Storage, userId?: string): void {
 // their first list instead of the one they last picked. It is fixed anyway
 // because it is the same shape one severity down, and leaving the shape in place
 // is how it comes back somewhere it matters.
-// Also a stored name that predates the rename; left byte-identical for the
-// same reason as STORAGE_PREFIX above.
-const ACTIVE_LIST_PREFIX = 'bagful-active-household'
+// Was bagful-active-household; carried over the same way as STORAGE_PREFIX.
+const ACTIVE_LIST_PREFIX = 'bagful-active-list'
 
 function activeListKey(userId: string): string {
   return userScopedKey(ACTIVE_LIST_PREFIX, userId)

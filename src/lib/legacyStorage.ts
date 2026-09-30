@@ -12,7 +12,12 @@
 // on every launch after the first. Safe to delete once no browser that last ran
 // a FamCart build is likely to come back.
 
+// First match wins, so the two household keys (renamed later, after the
+// households→lists rename) come before the general prefix rule, and cover
+// both generations of their old name.
 const RENAMES: [RegExp, string][] = [
+  [/^(famcart|bagful)-household-snapshot/, 'bagful-list-snapshot'],
+  [/^(famcart|bagful)-active-household/, 'bagful-active-list'],
   [/^famcart-/, 'bagful-'],
   [/^famcart\./, 'bagful.'],
   [/^famcart_/, 'bagful_'],
@@ -23,7 +28,7 @@ export function migrateLegacyKeys(storage: Storage): void {
     const oldKeys: string[] = []
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i)
-      if (key?.startsWith('famcart')) oldKeys.push(key)
+      if (key && RENAMES.some(([from]) => from.test(key))) oldKeys.push(key)
     }
     for (const oldKey of oldKeys) {
       const rule = RENAMES.find(([from]) => from.test(oldKey))

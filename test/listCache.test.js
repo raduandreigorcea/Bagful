@@ -96,7 +96,7 @@ describe('listCache', () => {
 
   it('returns null for corrupt or structurally invalid data', () => {
     const storage = makeStorage()
-    storage.setItem('bagful-household-snapshot', '{not json')
+    storage.setItem('bagful-list-snapshot', '{not json')
     expect(loadListSnapshot(storage, 'user-1')).toBeNull()
 
     saveListSnapshot(storage, 'user-1', makeSnapshot({ listId: '' }))
@@ -218,7 +218,7 @@ describe('per-user active list', () => {
   it('refuses an id that is not an opaque identifier', () => {
     const storage = makeStorage()
     storage.setItem(
-      'bagful-active-household:user-1',
+      'bagful-active-list:user-1',
       JSON.stringify({ userId: 'user-1', listId: 'fam-1,name.eq.x' }),
     )
     expect(loadActiveListId(storage, 'user-1')).toBeNull()
@@ -234,7 +234,7 @@ describe('reads an active list saved before the rename', () => {
   it('falls back to householdId when listId is absent', () => {
     const storage = makeStorage()
     storage.setItem(
-      userScopedKey('bagful-active-household', 'user-1'),
+      userScopedKey('bagful-active-list', 'user-1'),
       JSON.stringify({ userId: 'user-1', householdId: UUID }),
     )
     expect(loadActiveListId(storage, 'user-1')).toBe(UUID)
@@ -255,7 +255,7 @@ describe('snapshot saved before the rename', () => {
   it('is discarded rather than misread', () => {
     const storage = makeStorage()
     storage.setItem(
-      userScopedKey('bagful-household-snapshot', 'user-1'),
+      userScopedKey('bagful-list-snapshot', 'user-1'),
       JSON.stringify({
         version: 1,
         userId: 'user-1',

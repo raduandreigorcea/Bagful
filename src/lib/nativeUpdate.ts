@@ -38,7 +38,7 @@ export const RELEASES_PAGE_URL =
 // is news, so this stores the version rather than a boolean.
 //
 // Kebab-case like every other key this app writes (bagful-theme,
-// bagful-last-user, bagful-offline-queue, bagful-household-snapshot). These
+// bagful-last-user, bagful-offline-queue, bagful-list-snapshot). These
 // two were the only snake_case ones, which meant the storage surface needed two
 // grep patterns to enumerate — and the pair was duly missed when auditing what
 // signing out clears.
