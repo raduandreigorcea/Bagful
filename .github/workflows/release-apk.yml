@@ -2,7 +2,7 @@ name: Android APK
 
 # Builds the debug APK and pins it to the rolling "latest" release, so the newest
 # build is always at the same download URL:
-# https://github.com/raduandreigorcea/FamCart/releases/latest
+# https://github.com/raduandreigorcea/Bagful/releases/latest
 #
 # Runs on push to master, and the APK carries the same version as the web app
 # because the bump is already in the commit being pushed (.githooks/pre-commit).
@@ -44,7 +44,7 @@ jobs:
         with:
           ref: master
       # The test step reads the catalog's market list (test/catalog/).
-      # FamCart-catalog is private, which the workflow token cannot read, so it is
+      # Bagful-catalog is private, which the workflow token cannot read, so it is
       # fetched on its own with a read-only deploy key (secret CATALOG_DEPLOY_KEY,
       # deploy key "FamCart CI (read-only)" on that repo), at the exact commit this
       # repo pins for it. admin/ is private too and nothing here needs it.
@@ -53,7 +53,7 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD:catalog)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          repository: raduandreigorcea/FamCart-catalog
+          repository: raduandreigorcea/Bagful-catalog
           ref: ${{ steps.catalog.outputs.sha }}
           path: catalog
           ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
@@ -140,7 +140,7 @@ jobs:
           if [ -z "$KEYSTORE" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
             echo "Missing signing secrets: set ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD under Settings → Secrets and variables → Actions."
             echo "ANDROID_KEYSTORE_BASE64 is 'base64 -w0 famcart-release.keystore' from the existing keystore -- NOT a new one."
-            echo "Generating a fresh key here would publish an APK that installs for nobody who already has FamCart."
+            echo "Generating a fresh key here would publish an APK that installs for nobody who already has Bagful."
             exit 1
           fi
 
@@ -268,7 +268,7 @@ jobs:
         run: rm -f "$RUNNER_TEMP/famcart-release.keystore"
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/production/release/app-production-release.apk FamCart.apk
+        run: cp android/app/build/outputs/apk/production/release/app-production-release.apk Bagful.apk
 
       # Read back what was actually built rather than reporting github.sha. On a
       # workflow_dispatch that variable is the tip at dispatch time, which is not
@@ -312,19 +312,19 @@ jobs:
           SHA: ${{ steps.built.outputs.sha }}
         run: |
           cat > notes.md <<EOF
-          Newest FamCart Android app, built automatically from \`master\`.
+          Newest Bagful Android app, built automatically from \`master\`.
 
-          **Already have FamCart?** You don't need this page. The app offers
+          **Already have Bagful?** You don't need this page. The app offers
           the update itself the next time you open it.
 
-          **First install:** download \`FamCart.apk\` on your phone and open it.
+          **First install:** download \`Bagful.apk\` on your phone and open it.
           Updating over an existing install keeps your data.
 
           Version: $VERSION
           Commit: $SHA
           EOF
-          gh release create latest FamCart.apk \
-            --title "FamCart v$VERSION" \
+          gh release create latest Bagful.apk \
+            --title "Bagful v$VERSION" \
             --notes-file notes.md \
             --target "$SHA" \
             --latest

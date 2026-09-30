@@ -14,25 +14,25 @@ import {
 describe('ssoCallbackUrlFromBounceQuery', () => {
   it('hands a nightly sign-in back to the nightly app', () => {
     expect(ssoCallbackUrlFromBounceQuery('?app=nightly&rotating_token_nonce=n7')).toBe(
-      'famcartnightly://sso-callback?app=nightly&rotating_token_nonce=n7',
+      'bagfulnightly://sso-callback?app=nightly&rotating_token_nonce=n7',
     )
   })
 
   it('hands everything else back to the production app', () => {
     expect(ssoCallbackUrlFromBounceQuery('?rotating_token_nonce=n7')).toBe(
-      'famcart://sso-callback?rotating_token_nonce=n7',
+      'bagful://sso-callback?rotating_token_nonce=n7',
     )
   })
 
   it('forwards an empty query as no query at all', () => {
-    expect(ssoCallbackUrlFromBounceQuery('')).toBe('famcart://sso-callback')
+    expect(ssoCallbackUrlFromBounceQuery('')).toBe('bagful://sso-callback')
   })
 
   // Production is the safe fallback: it is the app almost everyone has, and a
   // deep link to a scheme nobody claims goes nowhere at all.
   it('falls back to production for an app it does not recognise', () => {
     expect(ssoCallbackUrlFromBounceQuery('?app=staging')).toBe(
-      'famcart://sso-callback?app=staging',
+      'bagful://sso-callback?app=staging',
     )
     expect(ssoCallbackUrlFromBounceQuery('?app=')).toContain(`${PRODUCTION_SSO_SCHEME}://`)
   })
@@ -41,7 +41,7 @@ describe('ssoCallbackUrlFromBounceQuery', () => {
   // page looks for are the same string, so they cannot drift apart.
   it('recognises the query the nightly build actually sends', () => {
     expect(ssoCallbackUrlFromBounceQuery(NIGHTLY_BOUNCE_QUERY)).toBe(
-      `famcartnightly://sso-callback${NIGHTLY_BOUNCE_QUERY}`,
+      `bagfulnightly://sso-callback${NIGHTLY_BOUNCE_QUERY}`,
     )
   })
 })

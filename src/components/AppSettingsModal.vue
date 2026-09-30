@@ -328,7 +328,7 @@ watch(
       <ModalCloseButton class="about-dialog__close" :aria-label="t('about.close')" @click="aboutOpen = false" />
       <img src="/icons/pwa-192.png" alt="" class="about-logo" />
       <!-- eslint-disable-next-line vue/no-bare-strings-in-template -- brand name, the same in every language -->
-      <h3 id="about-dialog-title" class="about-name">FamCart</h3>
+      <h3 id="about-dialog-title" class="about-name">Bagful</h3>
       <p class="about-version">{{ t('about.versionLine', { version: appVersion }) }}</p>
 
       <!-- The project this build is actually talking to. Only on nightly, and

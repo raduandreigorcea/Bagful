@@ -1,9 +1,9 @@
 // The deep link an OAuth sign-in comes back through, and which app it reaches.
 //
-// Two builds are installed side by side (com.famcart.app and
-// com.famcart.app.nightly), and a custom URL scheme is claimed per app, not per
-// install. If both claimed famcart://, Android would stop the sign-in halfway
-// through to ask which FamCart should receive it, and picking wrong drops you
+// Two builds are installed side by side (com.bagful.app and
+// com.bagful.app.nightly), and a custom URL scheme is claimed per app, not per
+// install. If both claimed bagful://, Android would stop the sign-in halfway
+// through to ask which Bagful should receive it, and picking wrong drops you
 // into the other app's session. So the schemes differ.
 //
 // The awkward part is the middle of the round trip. Clerk refuses a custom
@@ -21,8 +21,8 @@
 
 import { IS_NIGHTLY } from './appChannel'
 
-export const PRODUCTION_SSO_SCHEME = 'famcart'
-const NIGHTLY_SSO_SCHEME = 'famcartnightly'
+export const PRODUCTION_SSO_SCHEME = 'bagful'
+const NIGHTLY_SSO_SCHEME = 'bagfulnightly'
 
 // Appended to the bounce URL by the nightly build. Clerk adds its own
 // parameters after it, so this stays a leading '?' and everything else arrives

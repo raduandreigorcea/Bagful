@@ -8,6 +8,6 @@
      values for them would only invite them to drift from the real application
      id, which gradle already derives from applicationIdSuffix. -->
 <resources>
-    <string name="app_name">FamCart Nightly</string>
-    <string name="title_activity_main">FamCart Nightly</string>
+    <string name="app_name">Bagful Nightly</string>
+    <string name="title_activity_main">Bagful Nightly</string>
 </resources>

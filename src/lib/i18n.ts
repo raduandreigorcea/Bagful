@@ -54,7 +54,7 @@
 // error. lib/pushNotifications' setPushLanguage() is the half that tells
 // OneSignal which of them to deliver.
 //   • android/app/src/main/res/values/strings.xml. Two brand names and two
-//     identifiers, one of which is the famcart:// scheme Clerk's OAuth return
+//     identifiers, one of which is the bagful:// scheme Clerk's OAuth return
 //     leg matches — see CLAUDE.md.
 //   • index.html's <meta name="description">. Static markup served before any
 //     of this has run, for the same reason vite.config.js pins the manifest to

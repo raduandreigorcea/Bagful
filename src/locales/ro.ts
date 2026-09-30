@@ -22,7 +22,7 @@ const ro: Catalog = {
   'setup.language.title': 'Alege-ți [limba]',
   'setup.language.sub': 'O poți schimba oricând din Setările aplicației.',
 
-  'setup.welcome.eyebrow': 'Bun venit la FamCart 🛒',
+  'setup.welcome.eyebrow': 'Bun venit la Bagful 🛒',
   'setup.welcome.title': 'O singură listă pentru [toți] cei care cumpără',
   'setup.welcome.sub':
     'Toată lumea adaugă, toată lumea bifează, iar totul se actualizează pentru toți în clipa în care se întâmplă, ca să nu se uite nimic la magazin.',
@@ -55,7 +55,7 @@ const ro: Catalog = {
   'setup.join.codePlaceholder': 'ex. AB3K7XYZ',
 
   'settings.title': 'Setările aplicației',
-  'settings.subtitle': 'Cum arată și cum se comportă FamCart pe acest dispozitiv',
+  'settings.subtitle': 'Cum arată și cum se comportă Bagful pe acest dispozitiv',
   'settings.close': 'Închide setările aplicației',
   'settings.appearance': 'Aspect',
   'settings.theme.light': 'Luminos',
@@ -70,13 +70,13 @@ const ro: Catalog = {
   'settings.replay.off': 'Oprit',
   'settings.language': 'Limbă',
   'settings.about': 'Despre',
-  'settings.aboutHint': 'FamCart v{version}',
+  'settings.aboutHint': 'Bagful v{version}',
 
   'about.versionLine': 'v{version}',
   'about.close': 'Închide fereastra Despre',
   'about.checkUpdates': 'Caută actualizări',
   'about.checking': 'Se caută…',
-  'about.upToDate': 'FamCart este la zi.',
+  'about.upToDate': 'Bagful este la zi.',
   'about.checkFailed':
     'Nu s-a putut contacta GitHub pentru verificare. Încearcă din nou când ești online.',
   'about.creditLead': 'Date despre produse de la',
@@ -101,7 +101,7 @@ const ro: Catalog = {
     'Codul de invitație trebuie să aibă 8 caractere, doar litere și cifre.',
   'error.noListForCode': 'Nu există nicio listă cu acest cod de invitație.',
   'error.notificationsBlocked':
-    'Notificările sunt blocate pentru FamCart în setările dispozitivului sau ale browserului.',
+    'Notificările sunt blocate pentru Bagful în setările dispozitivului sau ale browserului.',
   'error.notificationsFailed': 'Notificările nu au putut fi activate. Încearcă din nou.',
 
   'list.meta.toBuy': 'De cumpărat',
@@ -171,7 +171,7 @@ const ro: Catalog = {
   'scanner.tryAgain': 'Încearcă din nou',
   'scanner.notInCatalog': 'Nu e în catalog',
   'scanner.lookingUp': 'Se caută',
-  'scanner.denied.title': 'FamCart nu are acces la cameră',
+  'scanner.denied.title': 'Bagful nu are acces la cameră',
   'scanner.denied.detail': 'Permite camera pentru această aplicație, apoi încearcă din nou.',
   'scanner.unavailable.title': 'Acest dispozitiv nu poate scana',
   'scanner.unavailable.detail': 'Adaugă produsul după nume.',
@@ -179,7 +179,7 @@ const ro: Catalog = {
   'scanner.error.detail': 'Poate o folosește altă aplicație.',
   'scanner.timeout.title': 'Camera nu a răspuns',
   'scanner.timeout.detail':
-    'Dacă nimic nu a cerut acces la cameră, verifică permisiunea de cameră a FamCart în setările dispozitivului.',
+    'Dacă nimic nu a cerut acces la cameră, verifică permisiunea de cameră a Bagful în setările dispozitivului.',
 
   'common.save': 'Salvează',
   'common.saved': 'Salvat',
@@ -300,7 +300,7 @@ const ro: Catalog = {
   'common.copy': 'Copiază',
 
   'crash.text':
-    'FamCart a întâmpinat o eroare și a trebuit să se oprească. Lista ta este în siguranță. Ea se află pe server, nu în această pagină.',
+    'Bagful a întâmpinat o eroare și a trebuit să se oprească. Lista ta este în siguranță. Ea se află pe server, nu în această pagină.',
 
   'notify.title': 'Activezi notificările?',
   'notify.message':
@@ -337,7 +337,7 @@ const ro: Catalog = {
   'common.tryAgain': 'Încearcă din nou',
 
   'login.tagline': 'Cumpărături în comun, [proaspete împreună zilnic]',
-  'login.logoAlt': 'Logoul FamCart',
+  'login.logoAlt': 'Logoul Bagful',
   'login.emailLabel': 'Adresă de e-mail',
   'login.emailPlaceholder': 'tu@email.com',
   'login.codeHint': 'Introdu codul de 6 cifre trimis la',
@@ -345,7 +345,7 @@ const ro: Catalog = {
   'login.digitLabel': 'Cifra {i} din {n}',
   'login.or': 'sau',
   'login.alreadyTitle': 'Ești deja conectat',
-  'login.alreadyMessage': 'Acest dispozitiv are deja o sesiune FamCart activă.',
+  'login.alreadyMessage': 'Acest dispozitiv are deja o sesiune Bagful activă.',
   'login.goToList': 'Mergi la lista mea',
   'login.errorTitle': 'Conectarea nu a reușit',
 
@@ -357,17 +357,17 @@ const ro: Catalog = {
 
   'offline.title': 'Fără conexiune',
   'offline.text':
-    'FamCart nu poate ajunge la internet acum. Verifică conexiunea și lista se va încărca de îndată ce revii online.',
+    'Bagful nu poate ajunge la internet acum. Verifică conexiunea și lista se va încărca de îndată ce revii online.',
   'offline.stillOffline':
     'Tot fără conexiune. Verifică Wi-Fi sau datele mobile, apoi încearcă din nou.',
 
   'update.availableTitle': 'Actualizare disponibilă',
   'update.permissionTitle': 'Mai întâi o permisiune',
-  'update.readyToInstall': 'FamCart {version} este gata de instalare.',
+  'update.readyToInstall': 'Bagful {version} este gata de instalare.',
   'update.currentVersion': 'Tu ai {version}.',
   'update.permissionMessage':
-    'Android permite unei aplicații să instaleze actualizări doar după ce îi dai voie. Activează [Permite din această sursă] pentru FamCart, apoi revino și apasă Actualizează.',
-  'update.downloadingMessage': 'Se descarcă FamCart {version}…',
+    'Android permite unei aplicații să instaleze actualizări doar după ce îi dai voie. Activează [Permite din această sursă] pentru Bagful, apoi revino și apasă Actualizează.',
+  'update.downloadingMessage': 'Se descarcă Bagful {version}…',
   'update.installingMessage':
     'De aici preia Android. Urmează pașii de instalare până la capăt. Lista ta rămâne exact cum este.',
   'update.failedMessage':
@@ -410,7 +410,7 @@ const ro: Catalog = {
     'Nu s-a trimis nimic pentru că ești offline. Textul tău e încă aici, așa că încearcă din nou când revii.',
   'report.sendFailure':
     'Nu s-a trimis nimic. Raportul nu a ajuns la noi. Textul tău e încă aici, deci încearcă din nou. Dacă tot nu merge, o extensie de confidențialitate din browser poate să îl blocheze.',
-  'report.diag.version': 'FamCart {version}, {platform}',
+  'report.diag.version': 'Bagful {version}, {platform}',
   'report.diag.pendingEdits': 'Are modificări în așteptare de sincronizare',
   'report.diag.ids': 'ID-urile listei și contului tău',
 
@@ -423,8 +423,8 @@ const ro: Catalog = {
   'error.loadListsFailed': 'Listele tale nu au putut fi încărcate.',
 
   'sso.title': 'Aproape gata',
-  'sso.text': 'Te ducem înapoi în aplicația FamCart…',
-  'sso.open': 'Deschide FamCart',
+  'sso.text': 'Te ducem înapoi în aplicația Bagful…',
+  'sso.open': 'Deschide Bagful',
 
   'setup.hero.avocado': 'Avocado',
   'setup.hero.milk': 'Lapte',
@@ -465,13 +465,13 @@ const ro: Catalog = {
   'item.swipeLabelUncheckQty':
     '{name}, cantitate {n}. Glisează la dreapta pentru a debifa, la stânga pentru a șterge',
 
-  'invite.shareTitle': 'Alătură-te listei {name} pe FamCart',
-  'invite.shareTitleGeneric': 'Alătură-te listei mele pe FamCart',
+  'invite.shareTitle': 'Alătură-te listei {name} pe Bagful',
+  'invite.shareTitleGeneric': 'Alătură-te listei mele pe Bagful',
   'invite.shareBody':
-    'Alătură-te listei „{name}” pe FamCart ca să cumpărăm împreună. Codul tău de invitație este {code}.',
+    'Alătură-te listei „{name}” pe Bagful ca să cumpărăm împreună. Codul tău de invitație este {code}.',
   'invite.shareBodyGeneric':
-    'Alătură-te listei mele pe FamCart ca să cumpărăm împreună. Codul tău de invitație este {code}.',
-  'invite.shareDialogTitle': 'Invitație la FamCart',
+    'Alătură-te listei mele pe Bagful ca să cumpărăm împreună. Codul tău de invitație este {code}.',
+  'invite.shareDialogTitle': 'Invitație la Bagful',
 
   'error.loadListFailed': 'Lista nu a putut fi încărcată. Încearcă din nou.',
   'error.addItemFailed': 'Produsul nu a putut fi adăugat.',

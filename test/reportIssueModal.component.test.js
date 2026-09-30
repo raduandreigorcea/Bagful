@@ -209,7 +209,7 @@ describe('what it tells you it is sending', () => {
     const wrapper = mountReport({ listId: 'h1' })
 
     const attached = wrapper.find('.report-attached').text()
-    expect(attached).toContain('FamCart')
+    expect(attached).toContain('Bagful')
     // Ids are named, never printed.
     expect(attached).not.toContain('h1')
   })

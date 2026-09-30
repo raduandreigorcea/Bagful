@@ -1,7 +1,7 @@
 {
   "name": "famcart",
   "private": true,
-  "version": "0.6.95",
+  "version": "0.6.96",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,7 +22,8 @@
     "catalog:unit": "npm --prefix catalog test",
     "catalog:test": "supabase --workdir catalog db reset && supabase --workdir catalog test db",
     "lint": "eslint .",
-    "bots": "node bots/swarm.mjs"
+    "bots": "node bots/swarm.mjs",
+    "icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^8.1.0",

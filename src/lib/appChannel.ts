@@ -1,6 +1,6 @@
 // Which build this is, and how the app says so on screen.
 //
-// FamCart ships from one codebase to two places: the production app, wired to
+// Bagful ships from one codebase to two places: the production app, wired to
 // the `famcart` Supabase project, and the nightly one, wired to `famcart-dev`.
 // Until this module existed the two were pixel-identical, so a screenshot, a
 // bug report or a phone left on a desk could not tell you which database it

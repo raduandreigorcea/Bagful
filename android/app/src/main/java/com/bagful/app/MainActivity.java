@@ -1,4 +1,4 @@
-package com.famcart.app;
+package com.bagful.app;
 
 import android.graphics.Color;
 import android.os.Build;
@@ -35,7 +35,7 @@ public class MainActivity extends BridgeActivity {
         // theme for AppTheme.NoActionBar. Enabling this before it touched the
         // window's decor while the splash theme was still on, and the window
         // was built with that theme's action bar: a white title strip reading
-        // "FamCart Nightly" over the top of the app.
+        // "Bagful Nightly" over the top of the app.
         //
         // Transparent in both directions; lib/theme.ts picks light or dark icons
         // to match the app's theme through SystemBars.setStyle.

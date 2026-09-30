@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">FamCart</string>
-    <string name="title_activity_main">FamCart</string>
-    <string name="package_name">com.famcart.app</string>
-    <string name="custom_url_scheme">com.famcart.app</string>
+    <string name="app_name">Bagful</string>
+    <string name="title_activity_main">Bagful</string>
+    <string name="package_name">com.bagful.app</string>
+    <string name="custom_url_scheme">com.bagful.app</string>
 </resources>

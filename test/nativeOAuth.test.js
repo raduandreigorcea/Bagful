@@ -188,7 +188,7 @@ describe('startNativeOAuth', () => {
 
     const result = startNativeOAuth(signIn, fakeSignUp(), 'oauth_google')
     await untilBrowserOpened()
-    mocks.listeners.appUrlOpen({ url: 'famcart://something-else' })
+    mocks.listeners.appUrlOpen({ url: 'bagful://something-else' })
     mocks.listeners.appUrlOpen({
       url: `${NATIVE_SSO_CALLBACK_URL}?rotating_token_nonce=nonce-2`,
     })

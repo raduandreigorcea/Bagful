@@ -94,7 +94,7 @@ export function describeSentryEnvelope(body) {
   return body.slice(0, 300)
 }
 
-// Console errors that are not FamCart bugs. Grow this only with a reason.
+// Console errors that are not Bagful bugs. Grow this only with a reason.
 const IGNORED_CONSOLE = [
   /^\[vite\]/,
   /Clerk has been loaded with development keys/,

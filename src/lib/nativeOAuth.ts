@@ -41,7 +41,7 @@ export interface NativeOAuthSignUp {
 // OAuth cannot run inside the WebView — Google rejects embedded browsers
 // outright — so the native app sends the whole provider round-trip through
 // the system browser (a Chrome Custom Tab) and picks the attempt back up
-// when Clerk redirects to the famcart:// deep link.
+// when Clerk redirects to the bagful:// deep link.
 //
 // Resolves with a session id to activate, or null when the user closed the
 // browser without finishing. Anything else (Clerk errors, an attempt that

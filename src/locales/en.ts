@@ -48,7 +48,7 @@ export default {
   'setup.language.title': 'Pick your [language]',
   'setup.language.sub': 'You can change this any time in App Settings.',
 
-  'setup.welcome.eyebrow': 'Welcome to FamCart 🛒',
+  'setup.welcome.eyebrow': 'Welcome to Bagful 🛒',
   'setup.welcome.title': 'One list for [everyone] who shops',
   'setup.welcome.sub':
     'Everyone adds, everyone checks off, and it all updates for everyone the moment it happens, so nothing gets forgotten at the store.',
@@ -84,7 +84,7 @@ export default {
   'setup.join.codePlaceholder': 'e.g. AB3K7XYZ',
 
   'settings.title': 'App Settings',
-  'settings.subtitle': 'How FamCart looks and behaves on this device',
+  'settings.subtitle': 'How Bagful looks and behaves on this device',
   'settings.close': 'Close app settings',
   'settings.appearance': 'Appearance',
   'settings.theme.light': 'Light',
@@ -99,13 +99,13 @@ export default {
   'settings.replay.off': 'Off',
   'settings.language': 'Language',
   'settings.about': 'About',
-  'settings.aboutHint': 'FamCart v{version}',
+  'settings.aboutHint': 'Bagful v{version}',
 
   'about.versionLine': 'v{version}',
   'about.close': 'Close about',
   'about.checkUpdates': 'Check for updates',
   'about.checking': 'Checking…',
-  'about.upToDate': 'FamCart is up to date.',
+  'about.upToDate': 'Bagful is up to date.',
   'about.checkFailed': "Couldn't reach GitHub to check. Try again when you're back online.",
   // The product-data credit, in three fragments because the shop names are
   // links and a link cannot be a {placeholder}. The names are proper nouns and
@@ -136,7 +136,7 @@ export default {
   'error.inviteCodeInvalid': 'Invite code must be 8 characters, letters and numbers only.',
   'error.noListForCode': 'No list found with that invite code.',
   'error.notificationsBlocked':
-    'Notifications are blocked for FamCart in your device or browser settings.',
+    'Notifications are blocked for Bagful in your device or browser settings.',
   'error.notificationsFailed': 'Could not enable notifications. Please try again.',
 
   'list.meta.toBuy': 'To buy',
@@ -201,7 +201,7 @@ export default {
   'scanner.tryAgain': 'Try again',
   'scanner.notInCatalog': 'Not in the catalog',
   'scanner.lookingUp': 'Looking it up',
-  'scanner.denied.title': 'FamCart has no camera access',
+  'scanner.denied.title': 'Bagful has no camera access',
   'scanner.denied.detail': 'Allow the camera for this app, then try again.',
   'scanner.unavailable.title': "This device can't scan",
   'scanner.unavailable.detail': 'Add the item by name instead.',
@@ -209,7 +209,7 @@ export default {
   'scanner.error.detail': 'Another app may be using it.',
   'scanner.timeout.title': 'The camera never answered',
   'scanner.timeout.detail':
-    "If nothing asked for camera access, check FamCart's camera permission in your device settings.",
+    "If nothing asked for camera access, check Bagful's camera permission in your device settings.",
 
   'common.save': 'Save',
   'common.saved': 'Saved',
@@ -328,7 +328,7 @@ export default {
   'common.copy': 'Copy',
 
   'crash.text':
-    'FamCart hit an error and had to stop. Your list is safe. It lives on the server, not in this page.',
+    'Bagful hit an error and had to stop. Your list is safe. It lives on the server, not in this page.',
 
   'notify.title': 'Turn on notifications?',
   'notify.message':
@@ -365,7 +365,7 @@ export default {
   'common.tryAgain': 'Try again',
 
   'login.tagline': 'Shared Groceries, [fresh together daily]',
-  'login.logoAlt': 'FamCart logo',
+  'login.logoAlt': 'Bagful logo',
   'login.emailLabel': 'Email address',
   'login.emailPlaceholder': 'your@email.com',
   'login.codeHint': 'Enter the 6-digit code sent to',
@@ -373,7 +373,7 @@ export default {
   'login.digitLabel': 'Digit {i} of {n}',
   'login.or': 'or',
   'login.alreadyTitle': "You're already signed in",
-  'login.alreadyMessage': 'This device already has an active FamCart session.',
+  'login.alreadyMessage': 'This device already has an active Bagful session.',
   'login.goToList': 'Go to my list',
   'login.errorTitle': 'Could not sign in',
 
@@ -385,16 +385,16 @@ export default {
 
   'offline.title': 'No connection',
   'offline.text':
-    "FamCart can't reach the internet right now. Check your connection and your list will load as soon as you're back online.",
+    "Bagful can't reach the internet right now. Check your connection and your list will load as soon as you're back online.",
   'offline.stillOffline': 'Still no connection. Check your Wi-Fi or mobile data, then try again.',
 
   'update.availableTitle': 'Update available',
   'update.permissionTitle': 'One permission first',
-  'update.readyToInstall': 'FamCart {version} is ready to install.',
+  'update.readyToInstall': 'Bagful {version} is ready to install.',
   'update.currentVersion': "You're on {version}.",
   'update.permissionMessage':
-    'Android only lets an app install updates once you allow it. Turn on [Allow from this source] for FamCart, then come back and press Update.',
-  'update.downloadingMessage': 'Downloading FamCart {version}…',
+    'Android only lets an app install updates once you allow it. Turn on [Allow from this source] for Bagful, then come back and press Update.',
+  'update.downloadingMessage': 'Downloading Bagful {version}…',
   'update.installingMessage':
     'Android is taking over from here. Follow the install prompt to finish. Your list stays exactly as it is.',
   'update.failedMessage':
@@ -438,7 +438,7 @@ export default {
     "Nothing was sent because you're offline. Your text is still here, so try again once you're back.",
   'report.sendFailure':
     "Nothing was sent. The report couldn't reach us. Your text is still here, so try again. If it keeps failing, a browser privacy extension may be blocking it.",
-  'report.diag.version': 'FamCart {version}, {platform}',
+  'report.diag.version': 'Bagful {version}, {platform}',
   'report.diag.pendingEdits': 'Has edits waiting to sync',
   'report.diag.ids': 'Your list and account IDs',
 
@@ -451,8 +451,8 @@ export default {
   'error.loadListsFailed': 'Could not load your lists.',
 
   'sso.title': 'Almost there',
-  'sso.text': 'Taking you back to the FamCart app…',
-  'sso.open': 'Open FamCart',
+  'sso.text': 'Taking you back to the Bagful app…',
+  'sso.open': 'Open Bagful',
 
   'setup.hero.avocado': 'Avocado',
   'setup.hero.milk': 'Milk',
@@ -502,17 +502,17 @@ export default {
   'item.swipeLabelCheckQty': '{name}, quantity {n}. Swipe right to check, left to remove',
   'item.swipeLabelUncheckQty': '{name}, quantity {n}. Swipe right to uncheck, left to remove',
 
-  // The invite is read by somebody who may not use FamCart yet, so it is the
+  // The invite is read by somebody who may not use Bagful yet, so it is the
   // one message here whose reader is not the person who set the language. It
   // goes in the sender's language anyway: that is the language they are
   // writing the surrounding chat message in.
-  'invite.shareTitle': 'Join {name} on FamCart',
-  'invite.shareTitleGeneric': 'Join my list on FamCart',
+  'invite.shareTitle': 'Join {name} on Bagful',
+  'invite.shareTitleGeneric': 'Join my list on Bagful',
   'invite.shareBody':
-    'Join "{name}" on FamCart so we can shop from the same list. Your invite code is {code}.',
+    'Join "{name}" on Bagful so we can shop from the same list. Your invite code is {code}.',
   'invite.shareBodyGeneric':
-    'Join my list on FamCart so we can shop together. Your invite code is {code}.',
-  'invite.shareDialogTitle': 'Invite to FamCart',
+    'Join my list on Bagful so we can shop together. Your invite code is {code}.',
+  'invite.shareDialogTitle': 'Invite to Bagful',
 
   'error.loadListFailed': 'Could not load your list. Please try again.',
   'error.addItemFailed': 'Could not add that item.',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// "There's a new FamCart" — the Android app's only way of saying so.
+// "There's a new Bagful" — the Android app's only way of saying so.
 //
 // Shaped like NotificationPromptModal on purpose: same icon-over-title-over-
 // buttons dialog, because it arrives in the same place (just after the list

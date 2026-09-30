@@ -40,7 +40,7 @@ describe('the message', () => {
     expect(message.text).toContain('"Home"')
     expect(message.text).toContain('ABCD2345')
     expect(message.text).toContain('shop from the same list')
-    expect(message.title).toBe('Join Home on FamCart')
+    expect(message.title).toBe('Join Home on Bagful')
   })
 
   // Plain-text targets (SMS, most chat apps) drop the separate url field, so
@@ -127,7 +127,7 @@ describe('a desktop', () => {
 
     const copied = writeText.mock.calls[0][0]
     expect(copied).toContain('ABCD2345')
-    expect(copied).toContain('FamCart')
+    expect(copied).toContain('Bagful')
   })
 
   // Clipboard access can be refused outright. The caller turns this into

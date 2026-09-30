@@ -82,7 +82,7 @@ export default ts.config(
       //
       // allowlist covers the punctuation and symbols that are the same in every
       // language, so they do not each need a catalog key. Brand names and proper
-      // nouns (FamCart, Open Food Facts, ODbL 1.0) carry a targeted disable
+      // nouns (Bagful, Open Food Facts, ODbL 1.0) carry a targeted disable
       // comment at their few sites instead of being listed here, because
       // listing them would also silence a genuine miss elsewhere.
       'vue/no-bare-strings-in-template': [

@@ -7,7 +7,7 @@
 <template>
   <div class="splash">
     <!-- eslint-disable-next-line vue/no-bare-strings-in-template -- brand name, the same in every language -->
-      <img src="/icons/pwa-192.png" alt="FamCart" class="splash-logo" />
+      <img src="/icons/pwa-192.png" alt="Bagful" class="splash-logo" />
     <span class="splash-spinner"></span>
   </div>
 </template>

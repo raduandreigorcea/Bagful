@@ -242,7 +242,7 @@ export function hasQueuedOfflineMutations(storage: Storage, userId: string): boo
 // accident this file's per-user keying exists to prevent.
 //
 // `userId` scopes it to one account. Without one — a sign-out from a screen that
-// does not know who is signed in — every FamCart queue on the device is cleared,
+// does not know who is signed in — every Bagful queue on the device is cleared,
 // which is the safer end of the trade on a shared browser.
 export function clearOfflineQueue(storage: Storage, userId?: string): void {
   try {

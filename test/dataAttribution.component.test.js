@@ -128,7 +128,7 @@ describe('product data attribution', () => {
 describe('the About section', () => {
   it('names the app and shows its logo', async () => {
     const wrapper = await openAbout()
-    expect(wrapper.text()).toContain('FamCart')
+    expect(wrapper.text()).toContain('Bagful')
     expect(wrapper.find('.about-logo').exists()).toBe(true)
   })
 

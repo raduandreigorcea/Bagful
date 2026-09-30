@@ -44,7 +44,7 @@ function fakeStorage(initial = {}) {
   }
 }
 
-function releaseResponse(name, assets = [{ name: 'FamCart.apk', browser_download_url: 'https://x/FamCart.apk' }]) {
+function releaseResponse(name, assets = [{ name: 'Bagful.apk', browser_download_url: 'https://x/Bagful.apk' }]) {
   return {
     ok: true,
     json: async () => ({ name, assets }),
@@ -68,7 +68,7 @@ describe('compareVersions', () => {
 
   it('treats equal versions as equal, whatever is tacked on the end', () => {
     expect(compareVersions('0.1.23', '0.1.23')).toBe(0)
-    expect(compareVersions('FamCart v0.1.23', '0.1.23')).toBe(0)
+    expect(compareVersions('Bagful v0.1.23', '0.1.23')).toBe(0)
   })
 
   it('sorts an unparseable version below everything', () => {
@@ -78,18 +78,18 @@ describe('compareVersions', () => {
 
 describe('fetchLatestRelease', () => {
   it('reads the version out of the release name and the APK out of the assets', async () => {
-    const result = await fetchLatestRelease(async () => releaseResponse('FamCart v0.1.24'))
-    expect(result).toEqual({ version: '0.1.24', apkUrl: 'https://x/FamCart.apk' })
+    const result = await fetchLatestRelease(async () => releaseResponse('Bagful v0.1.24'))
+    expect(result).toEqual({ version: '0.1.24', apkUrl: 'https://x/Bagful.apk' })
   })
 
   it('gives up rather than guessing when the release carries no version', async () => {
     // If the workflow's release name ever stops containing a version, the right
     // outcome is no prompt — not a comparison against a made-up number.
-    expect(await fetchLatestRelease(async () => releaseResponse('FamCart latest build'))).toBeNull()
+    expect(await fetchLatestRelease(async () => releaseResponse('Bagful latest build'))).toBeNull()
   })
 
   it('gives up when the release has no APK attached', async () => {
-    expect(await fetchLatestRelease(async () => releaseResponse('FamCart v0.1.24', []))).toBeNull()
+    expect(await fetchLatestRelease(async () => releaseResponse('Bagful v0.1.24', []))).toBeNull()
   })
 
   it('is silent about a network failure', async () => {
@@ -107,7 +107,7 @@ describe('fetchLatestRelease', () => {
 })
 
 describe('findUpdate', () => {
-  const fetchLatest = (version) => async () => releaseResponse(`FamCart v${version}`)
+  const fetchLatest = (version) => async () => releaseResponse(`Bagful v${version}`)
 
   it('offers a newer version', async () => {
     const update = await findUpdate({
@@ -275,7 +275,7 @@ describe('a release published below a declined version', () => {
 
   it('is never offered, however long the phone waits', async () => {
     const storage = fakeStorage(declined)
-    const fetchImpl = vi.fn(async () => releaseResponse('FamCart v0.2.1'))
+    const fetchImpl = vi.fn(async () => releaseResponse('Bagful v0.2.1'))
 
     const found = await findUpdate({
       currentVersion: '0.2.0',
@@ -293,11 +293,11 @@ describe('a release published below a declined version', () => {
 
   it('starts working again as soon as a build clears the declined version', async () => {
     const storage = fakeStorage(declined)
-    const fetchImpl = vi.fn(async () => releaseResponse('FamCart v0.3.1'))
+    const fetchImpl = vi.fn(async () => releaseResponse('Bagful v0.3.1'))
 
     const found = await findUpdate({ currentVersion: '0.2.0', storage, fetchImpl })
 
-    expect(found).toEqual({ version: '0.3.1', apkUrl: 'https://x/FamCart.apk' })
+    expect(found).toEqual({ version: '0.3.1', apkUrl: 'https://x/Bagful.apk' })
   })
 })
 
@@ -323,7 +323,7 @@ describe('canSelfUpdate', () => {
 
   it('keeps findUpdate quiet on nightly rather than offering a production APK', async () => {
     channel.nightly = true
-    const fetchImpl = vi.fn(async () => releaseResponse('FamCart v9.9.9'))
+    const fetchImpl = vi.fn(async () => releaseResponse('Bagful v9.9.9'))
 
     const found = await findUpdate({ currentVersion: '0.5.0', storage: fakeStorage(), fetchImpl })
 

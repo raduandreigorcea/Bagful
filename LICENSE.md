@@ -1,4 +1,4 @@
-Required Notice: Copyright Radu Andrei Gorcea (https://github.com/raduandreigorcea/FamCart)
+Required Notice: Copyright Radu Andrei Gorcea (https://github.com/raduandreigorcea/Bagful)
 
 # PolyForm Noncommercial License 1.0.0
 

@@ -9,8 +9,8 @@
 // WHERE "NEWEST" COMES FROM
 //
 // The Android APK workflow publishes every master build to one rolling release
-// tagged `latest`, whose *name* carries the version ("FamCart v0.1.23") and
-// whose asset is FamCart.apk. That release is therefore the only honest answer
+// tagged `latest`, whose *name* carries the version ("Bagful v0.1.23") and
+// whose asset is Bagful.apk. That release is therefore the only honest answer
 // to "is there a newer app": it exists exactly when a downloadable APK exists.
 //
 // Deliberately NOT the version deployed to the web app, which is the other thing
@@ -27,11 +27,11 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
 import { IS_NIGHTLY } from './appChannel'
 
 const RELEASE_API_URL =
-  'https://api.github.com/repos/raduandreigorcea/FamCart/releases/latest'
+  'https://api.github.com/repos/raduandreigorcea/Bagful/releases/latest'
 
 // The releases page, offered as a way out when the in-app install cannot run.
 export const RELEASES_PAGE_URL =
-  'https://github.com/raduandreigorcea/FamCart/releases/latest'
+  'https://github.com/raduandreigorcea/Bagful/releases/latest'
 
 // A version the user said "Later" to. Re-prompting on the next launch for a
 // version already declined is nagging; a *newer* version than the declined one
@@ -73,13 +73,13 @@ export interface AvailableUpdate {
 /** The native half: downloads the APK and hands it to Android's installer. */
 export interface AppInstaller {
   /**
-   * Whether Android will let FamCart install a package right now. Since Android
+   * Whether Android will let Bagful install a package right now. Since Android
    * 8 "install unknown apps" is granted per app rather than device-wide, and it
    * cannot be requested from a dialog — only by sending the user to a settings
    * screen.
    */
   canInstall(): Promise<{ granted: boolean }>
-  /** Opens that settings screen for FamCart. */
+  /** Opens that settings screen for Bagful. */
   openInstallSettings(): Promise<void>
   /**
    * Downloads `url` and launches the system installer for it. Resolves when the

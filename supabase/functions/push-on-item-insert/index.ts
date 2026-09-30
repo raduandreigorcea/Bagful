@@ -94,8 +94,13 @@ async function sendPush(options: {
       include_aliases: { external_id: options.recipientIds },
       // The brand name, which is the same word in all six languages, so this
       // stays a single key while `contents` below does not.
-      headings: { en: 'FamCart' },
+      headings: { en: 'Bagful' },
       contents: options.contents,
+      // The status-bar icon Chrome on Android shows for a web push. It keeps
+      // only the image's shape, so this is the logo's one-colour outline
+      // (scripts/build-icons.mjs). The production URL serves both channels:
+      // the image is the same, and a preview URL would not outlive its deploy.
+      chrome_web_badge: 'https://famcart-app.vercel.app/icons/badge-96.png',
       web_push_topic: tag,
       collapse_id: tag,
       // Webhook retries (and per-row checkout fan-in) resend the same key;

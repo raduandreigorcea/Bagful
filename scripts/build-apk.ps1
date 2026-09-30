@@ -5,14 +5,14 @@
 #
 # Production APKs come from .github/workflows/release-apk.yml and nowhere else.
 # That workflow is the only place holding the production secrets, checks that
-# the version moved, and signs with the key every installed FamCart was signed
+# the version moved, and signs with the key every installed Bagful was signed
 # with. A laptop that can also produce a production APK is a second, unchecked
 # route to the thing people install -- and the mistake it invites is silent: an
 # APK that looks right, is signed right, and quietly carries whatever was in
 # this machine's env files.
 #
-# So this builds the second app instead: FamCart Nightly, application id
-# com.famcart.app.nightly, pointed at famcart-dev. It installs BESIDE the real
+# So this builds the second app instead: Bagful Nightly, application id
+# com.bagful.app.nightly, pointed at famcart-dev. It installs BESIDE the real
 # app rather than over it, so the phone you shop with keeps working while you
 # test on the same device.
 $ErrorActionPreference = 'Stop'
@@ -95,4 +95,4 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $apk = Join-Path $root 'android\app\build\outputs\apk\nightly\release\app-nightly-release.apk'
 Write-Host ''
 Write-Host "Nightly APK ready: $apk"
-Write-Host 'Installs as "FamCart Nightly", alongside the production app.'
+Write-Host 'Installs as "Bagful Nightly", alongside the production app.'

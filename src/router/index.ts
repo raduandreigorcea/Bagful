@@ -32,7 +32,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     // Opened in the phone's system browser, not the app: forwards the OAuth
-    // result to the native app's famcart:// deep link (see nativeOAuth.ts).
+    // result to the native app's bagful:// deep link (see nativeOAuth.ts).
     path: '/sso-native',
     name: 'sso-native',
     component: () => import('../views/SSONativeCallbackView.vue'),

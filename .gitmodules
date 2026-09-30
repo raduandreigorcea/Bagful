@@ -1,6 +1,6 @@
 [submodule "admin"]
 	path = admin
-	url = https://github.com/raduandreigorcea/FamCart-admin.git
+	url = https://github.com/raduandreigorcea/Bagful-admin.git
 [submodule "catalog"]
 	path = catalog
-	url = https://github.com/raduandreigorcea/FamCart-catalog.git
+	url = https://github.com/raduandreigorcea/Bagful-catalog.git

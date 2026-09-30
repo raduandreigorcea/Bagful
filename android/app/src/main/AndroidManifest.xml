@@ -51,7 +51,7 @@
                  (singleTask, so the running instance receives it as an
                  appUrlOpen event instead of a relaunch).
 
-                 The scheme is per flavour (famcart, famcartnightly) because a
+                 The scheme is per flavour (bagful, bagfulnightly) because a
                  URL scheme is claimed per app and both are installable at once;
                  see the productFlavors block in build.gradle for why, and
                  src/lib/ssoScheme.ts for the half that sends the link. -->
@@ -64,7 +64,7 @@
 
         </activity>
 
-        <!-- Tints OneSignal notifications (icon + app name row) FamCart green;
+        <!-- Tints OneSignal notifications (icon + app name row) Bagful green;
              the small icon itself is ic_stat_onesignal_default in drawable-*. -->
         <meta-data
             android:name="com.onesignal.NotificationAccentColor.DEFAULT"
@@ -85,12 +85,12 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Updating the app from inside the app. FamCart is downloaded as an APK
+    <!-- Updating the app from inside the app. Bagful is downloaded as an APK
          rather than installed from a store, so nothing updates it on the user's
          behalf; AppInstallerPlugin fetches the new release and hands it to the
          system installer, which is refused outright without this. Declaring it
          is not consent: since Android 8 the user still has to allow "install
-         unknown apps" for FamCart specifically, and the plugin checks for that
+         unknown apps" for Bagful specifically, and the plugin checks for that
          before it downloads anything. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>

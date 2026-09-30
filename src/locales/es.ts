@@ -20,7 +20,7 @@ const es: Catalog = {
   'setup.language.title': 'Elige tu [idioma]',
   'setup.language.sub': 'Puedes cambiarlo cuando quieras en los Ajustes de la app.',
 
-  'setup.welcome.eyebrow': 'Te damos la bienvenida a FamCart 🛒',
+  'setup.welcome.eyebrow': 'Te damos la bienvenida a Bagful 🛒',
   'setup.welcome.title': 'Una sola lista para [todos] los que hacen la compra',
   'setup.welcome.sub':
     'Todos añaden, todos marcan, y todo se actualiza para todos en el momento en que ocurre, así no se olvida nada en la tienda.',
@@ -53,7 +53,7 @@ const es: Catalog = {
   'setup.join.codePlaceholder': 'p. ej. AB3K7XYZ',
 
   'settings.title': 'Ajustes de la app',
-  'settings.subtitle': 'Cómo se ve y se comporta FamCart en este dispositivo',
+  'settings.subtitle': 'Cómo se ve y se comporta Bagful en este dispositivo',
   'settings.close': 'Cerrar los ajustes de la app',
   'settings.appearance': 'Apariencia',
   'settings.theme.light': 'Claro',
@@ -68,13 +68,13 @@ const es: Catalog = {
   'settings.replay.off': 'Desactivada',
   'settings.language': 'Idioma',
   'settings.about': 'Acerca de',
-  'settings.aboutHint': 'FamCart v{version}',
+  'settings.aboutHint': 'Bagful v{version}',
 
   'about.versionLine': 'v{version}',
   'about.close': 'Cerrar Acerca de',
   'about.checkUpdates': 'Buscar actualizaciones',
   'about.checking': 'Buscando…',
-  'about.upToDate': 'FamCart está actualizado.',
+  'about.upToDate': 'Bagful está actualizado.',
   'about.checkFailed':
     'No se ha podido contactar con GitHub. Inténtalo de nuevo cuando vuelvas a estar en línea.',
   'about.creditLead': 'Datos de productos de',
@@ -99,7 +99,7 @@ const es: Catalog = {
     'El código de invitación debe tener 8 caracteres, solo letras y números.',
   'error.noListForCode': 'No se ha encontrado ninguna lista con ese código de invitación.',
   'error.notificationsBlocked':
-    'Las notificaciones están bloqueadas para FamCart en los ajustes de tu dispositivo o navegador.',
+    'Las notificaciones están bloqueadas para Bagful en los ajustes de tu dispositivo o navegador.',
   'error.notificationsFailed':
     'No se han podido activar las notificaciones. Inténtalo de nuevo.',
 
@@ -166,7 +166,7 @@ const es: Catalog = {
   'scanner.tryAgain': 'Inténtalo de nuevo',
   'scanner.notInCatalog': 'No está en el catálogo',
   'scanner.lookingUp': 'Buscándolo',
-  'scanner.denied.title': 'FamCart no tiene acceso a la cámara',
+  'scanner.denied.title': 'Bagful no tiene acceso a la cámara',
   'scanner.denied.detail': 'Permite la cámara para esta app y vuelve a intentarlo.',
   'scanner.unavailable.title': 'Este dispositivo no puede escanear',
   'scanner.unavailable.detail': 'Añade el artículo por su nombre.',
@@ -174,7 +174,7 @@ const es: Catalog = {
   'scanner.error.detail': 'Puede que otra app la esté usando.',
   'scanner.timeout.title': 'La cámara no ha respondido',
   'scanner.timeout.detail':
-    'Si nada ha pedido acceso a la cámara, revisa el permiso de cámara de FamCart en los ajustes del dispositivo.',
+    'Si nada ha pedido acceso a la cámara, revisa el permiso de cámara de Bagful en los ajustes del dispositivo.',
 
   'common.save': 'Guardar',
   'common.saved': 'Guardado',
@@ -295,7 +295,7 @@ const es: Catalog = {
   'common.copy': 'Copiar',
 
   'crash.text':
-    'FamCart ha encontrado un error y ha tenido que detenerse. Tu lista está a salvo: vive en el servidor, no en esta página.',
+    'Bagful ha encontrado un error y ha tenido que detenerse. Tu lista está a salvo: vive en el servidor, no en esta página.',
 
   'notify.title': '¿Activar las notificaciones?',
   'notify.message':
@@ -332,7 +332,7 @@ const es: Catalog = {
   'common.tryAgain': 'Inténtalo de nuevo',
 
   'login.tagline': 'La compra de todos, [fresca y en común cada día]',
-  'login.logoAlt': 'Logotipo de FamCart',
+  'login.logoAlt': 'Logotipo de Bagful',
   'login.emailLabel': 'Dirección de correo',
   'login.emailPlaceholder': 'tu@email.com',
   'login.codeHint': 'Introduce el código de 6 dígitos enviado a',
@@ -340,7 +340,7 @@ const es: Catalog = {
   'login.digitLabel': 'Dígito {i} de {n}',
   'login.or': 'o',
   'login.alreadyTitle': 'Ya has iniciado sesión',
-  'login.alreadyMessage': 'Este dispositivo ya tiene una sesión de FamCart activa.',
+  'login.alreadyMessage': 'Este dispositivo ya tiene una sesión de Bagful activa.',
   'login.goToList': 'Ir a mi lista',
   'login.errorTitle': 'No se ha podido iniciar sesión',
 
@@ -352,17 +352,17 @@ const es: Catalog = {
 
   'offline.title': 'Sin conexión',
   'offline.text':
-    'FamCart no puede conectarse a internet ahora mismo. Comprueba tu conexión y tu lista se cargará en cuanto vuelvas a estar en línea.',
+    'Bagful no puede conectarse a internet ahora mismo. Comprueba tu conexión y tu lista se cargará en cuanto vuelvas a estar en línea.',
   'offline.stillOffline':
     'Sigue sin conexión. Comprueba el Wi-Fi o los datos móviles y vuelve a intentarlo.',
 
   'update.availableTitle': 'Actualización disponible',
   'update.permissionTitle': 'Primero un permiso',
-  'update.readyToInstall': 'FamCart {version} está lista para instalarse.',
+  'update.readyToInstall': 'Bagful {version} está lista para instalarse.',
   'update.currentVersion': 'Tienes la {version}.',
   'update.permissionMessage':
-    'Android solo deja que una app instale actualizaciones cuando lo permites. Activa [Permitir de esta fuente] para FamCart, vuelve y pulsa Actualizar.',
-  'update.downloadingMessage': 'Descargando FamCart {version}…',
+    'Android solo deja que una app instale actualizaciones cuando lo permites. Activa [Permitir de esta fuente] para Bagful, vuelve y pulsa Actualizar.',
+  'update.downloadingMessage': 'Descargando Bagful {version}…',
   'update.installingMessage':
     'A partir de aquí se encarga Android. Sigue las indicaciones de instalación para terminar. Tu lista se queda tal cual.',
   'update.failedMessage':
@@ -406,7 +406,7 @@ const es: Catalog = {
     'No se ha enviado nada porque estás sin conexión. Tu texto sigue aquí, así que inténtalo de nuevo cuando vuelvas.',
   'report.sendFailure':
     'No se ha enviado nada. El informe no ha llegado. Tu texto sigue aquí, así que inténtalo de nuevo. Si sigue fallando, puede que lo bloquee una extensión de privacidad del navegador.',
-  'report.diag.version': 'FamCart {version}, {platform}',
+  'report.diag.version': 'Bagful {version}, {platform}',
   'report.diag.pendingEdits': 'Tiene cambios pendientes de sincronizar',
   'report.diag.ids': 'Los ID de tu lista y de tu cuenta',
 
@@ -419,8 +419,8 @@ const es: Catalog = {
   'error.loadListsFailed': 'No se han podido cargar tus listas.',
 
   'sso.title': 'Ya casi está',
-  'sso.text': 'Volviendo a la app de FamCart…',
-  'sso.open': 'Abrir FamCart',
+  'sso.text': 'Volviendo a la app de Bagful…',
+  'sso.open': 'Abrir Bagful',
 
   'setup.hero.avocado': 'Aguacate',
   'setup.hero.milk': 'Leche',
@@ -462,13 +462,13 @@ const es: Catalog = {
   'item.swipeLabelUncheckQty':
     '{name}, cantidad {n}. Desliza a la derecha para desmarcar, a la izquierda para eliminar',
 
-  'invite.shareTitle': 'Únete a {name} en FamCart',
-  'invite.shareTitleGeneric': 'Únete a mi lista en FamCart',
+  'invite.shareTitle': 'Únete a {name} en Bagful',
+  'invite.shareTitleGeneric': 'Únete a mi lista en Bagful',
   'invite.shareBody':
-    'Únete a «{name}» en FamCart para hacer la compra desde la misma lista. Tu código de invitación es {code}.',
+    'Únete a «{name}» en Bagful para hacer la compra desde la misma lista. Tu código de invitación es {code}.',
   'invite.shareBodyGeneric':
-    'Únete a mi lista en FamCart para hacer la compra juntos. Tu código de invitación es {code}.',
-  'invite.shareDialogTitle': 'Invitar a FamCart',
+    'Únete a mi lista en Bagful para hacer la compra juntos. Tu código de invitación es {code}.',
+  'invite.shareDialogTitle': 'Invitar a Bagful',
 
   'error.loadListFailed': 'No se ha podido cargar tu lista. Inténtalo de nuevo.',
   'error.addItemFailed': 'No se ha podido añadir ese producto.',
