@@ -129,7 +129,7 @@ export default defineConfig({
     }),
     uploadSourceMaps &&
       sentryVitePlugin({
-        org: 'famcart',
+        org: 'bagful',
         project: 'javascript-vue',
         sourcemaps: { filesToDeleteAfterUpload: 'dist/**/*.map' },
       }),

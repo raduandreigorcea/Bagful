@@ -27,10 +27,10 @@ export type ServiceRequest =
 // uploads source maps under, so they are constants rather than two more secrets.
 // The project is shared by every build, so both app databases read the same
 // issues.
-export const SENTRY_ORG = 'famcart'
+export const SENTRY_ORG = 'bagful'
 export const SENTRY_PROJECT = 'javascript-vue'
 
-// THE EU REGION, NOT sentry.io. The famcart organisation's data lives in
+// THE EU REGION, NOT sentry.io. The bagful organisation's data lives in
 // Sentry's EU region (its DSN ingests at ingest.de.sentry.io, and an org token
 // says region_url https://de.sentry.io). An organisation token carries that
 // region and sentry.io routes it; a personal token does not, and sentry.io then
