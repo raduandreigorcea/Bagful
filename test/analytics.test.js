@@ -5,7 +5,7 @@ const ph = vi.hoisted(() => ({
   startSessionRecording: vi.fn(), stopSessionRecording: vi.fn(),
 }))
 vi.mock('posthog-js', () => ({ default: ph }))
-vi.mock('posthog-js/dist/recorder', () => ({}))
+vi.mock('posthog-js/dist/posthog-recorder', () => ({}))
 
 // A rejecting dynamic import() of 'posthog-js' (startAnalytics's try/catch
 // around the SDK load) is not covered here: vi.mock resolves 'posthog-js' to
@@ -20,7 +20,7 @@ vi.mock('posthog-js/dist/recorder', () => ({}))
 // the try/catch is verified by reading, not by a test.
 
 import {
-  posthogKey, apiHost, scrubUrl, scrubEvent, track, startAnalytics,
+  posthogKey, apiHost, scrubUrl, scrubEvent, scrubRecordedRequest, track, startAnalytics,
   identifyAnalytics, replayEnabled, setReplayEnabled, __resetAnalyticsForTests,
 } from '../src/lib/analytics'
 
@@ -102,6 +102,26 @@ describe('scrubEvent', () => {
   })
 })
 
+describe('scrubRecordedRequest', () => {
+  it('drops the query from a recorded URL and never keeps a body', () => {
+    // search_catalog is a POST whose body carries p_query, the search text.
+    const out = scrubRecordedRequest({
+      name: 'https://x.supabase.co/rest/v1/rpc/search_catalog?select=*',
+      entryType: 'resource', startTime: 1, duration: 2,
+      requestBody: '{"p_query":"lapte"}', responseBody: '[{"name":"Lapte"}]',
+    })
+    expect(out).toEqual({
+      name: 'https://x.supabase.co/rest/v1/rpc/search_catalog',
+      entryType: 'resource', startTime: 1, duration: 2,
+      requestBody: null, responseBody: null,
+    })
+  })
+  it('handles the bare { name } the recorder passes for page URLs', () => {
+    expect(scrubRecordedRequest({ name: 'https://x.app/list-setup?code=ABC#t' }))
+      .toEqual({ name: 'https://x.app/list-setup', requestBody: null, responseBody: null })
+  })
+})
+
 describe('track', () => {
   beforeEach(() => { vi.unstubAllEnvs(); __resetAnalyticsForTests(); vi.clearAllMocks() })
 
@@ -135,7 +155,10 @@ describe('track', () => {
     expect(ph.init).toHaveBeenCalledWith('phc_test', expect.objectContaining({
       persistence: 'memory', mask_all_text: true, disable_session_recording: true,
       mask_all_element_attributes: true, disable_external_dependency_loading: true,
-      api_host: expect.any(String), before_send: scrubEvent,
+      api_host: expect.any(String), before_send: scrubEvent, capture_heatmaps: false,
+      session_recording: expect.objectContaining({
+        maskAllInputs: true, maskAllElementAttributes: true, maskCapturedNetworkRequestFn: scrubRecordedRequest,
+      }),
     }))
     expect(ph.capture.mock.calls).toEqual([
       ['onboarding_completed', undefined],
@@ -212,6 +235,45 @@ describe('track', () => {
     await vi.waitFor(() => expect(ph.startSessionRecording).toHaveBeenCalled())
     setReplayEnabled(storage, 'user_a', false)
     expect(ph.stopSessionRecording).toHaveBeenCalled()
+  })
+
+  it('does not start replay when it is switched off while the recorder loads', async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_APP_CHANNEL', 'production')
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test')
+    await startAnalytics()
+    identifyAnalytics('user_a')
+    const storage = memoryStorage()
+    setReplayEnabled(storage, 'user_a', true)
+    setReplayEnabled(storage, 'user_a', false)
+    await vi.dynamicImportSettled()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(ph.startSessionRecording).not.toHaveBeenCalled()
+  })
+
+  it("stops the previous account's replay when another account signs in", async () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_APP_CHANNEL', 'production')
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test')
+    await startAnalytics()
+    // applyIdentify reads the opt-in from the global localStorage, which the
+    // node environment lacks, so this test supplies one.
+    const storage = memoryStorage()
+    vi.stubGlobal('localStorage', storage)
+    try {
+      setReplayEnabled(storage, 'user_a', true)
+      identifyAnalytics('user_a')
+      await vi.waitFor(() => expect(ph.startSessionRecording).toHaveBeenCalledTimes(1))
+      identifyAnalytics('user_b')
+      expect(ph.stopSessionRecording).toHaveBeenCalled()
+      expect(ph.reset).toHaveBeenCalled()
+      expect(ph.reset.mock.invocationCallOrder[0]).toBeLessThan(ph.identify.mock.invocationCallOrder[1])
+      await vi.dynamicImportSettled()
+      await new Promise((r) => setTimeout(r, 0))
+      expect(ph.startSessionRecording).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

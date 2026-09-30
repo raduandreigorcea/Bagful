@@ -32,7 +32,7 @@
 // two apart; the separate variable is what lets nightly move out later
 // without a code change. The dev server sends nothing.
 
-import type { PostHog } from 'posthog-js'
+import type { PostHog, CapturedNetworkRequest } from 'posthog-js'
 import { Capacitor } from '@capacitor/core'
 import { resolveChannel, type AppChannel } from './appChannel'
 import { userScopedKey } from './perUserStorage'
@@ -102,11 +102,30 @@ export function scrubEvent<T extends {
   return event
 }
 
+// Every URL a replay records goes through here, not through before_send: the
+// rrweb Meta event's href, the $pageview/$url_changed markers the recorder
+// injects, and each network request (the recorder calls this with a bare
+// { name: url } for page URLs). The bodies are dropped outright because
+// recordBody can be switched on from PostHog's project settings with no
+// release, and search_catalog is a POST whose body is the search text. Giving
+// PostHog a function here also replaces its own body scrubber, so nulling them
+// is ours to do. The Authorization header is stripped by the SDK either way.
+export function scrubRecordedRequest(request: CapturedNetworkRequest): CapturedNetworkRequest {
+  return { ...request, name: scrubUrl(request.name) as string, requestBody: null, responseBody: null }
+}
+
 function resolveConfig(): { key: string; channel: AppChannel } {
   const env = import.meta.env
   const channel = resolveChannel({ channel: env.VITE_APP_CHANNEL, supabaseUrl: env.VITE_SUPABASE_URL, dev: env.DEV })
   const key = posthogKey(channel, { prod: env.VITE_POSTHOG_KEY, nightly: env.VITE_POSTHOG_NIGHTLY_KEY, dev: env.DEV })
   return { key, channel }
+}
+
+// False on the dev server, on a build with no key, and on a nightly without
+// its own key: analytics sends nothing there, so a replay switch would be a
+// control that does nothing.
+export function analyticsAvailable(): boolean {
+  return resolveConfig().key !== ''
 }
 
 let client: PostHog | null = null
@@ -118,6 +137,10 @@ let identifiedAs: string | null = null
 // clears every registered property along with the identity, and an event with
 // no channel is invisible to the admin page, which filters on it.
 let superProperties: Record<string, unknown> = {}
+// Whether replay should be running right now. startReplay awaits a chunk
+// load, and a person can tap Off or sign out while it is in flight; this is
+// what it checks afterwards so that a stale start does not begin recording.
+let replayWanted = false
 // A sign-in (or sign-out) made before the SDK has loaded. Clerk routinely
 // resolves who is signed in before the dynamic import of posthog-js settles,
 // and without this the call was simply dropped: identifyAnalytics no-opped on
@@ -163,10 +186,22 @@ export async function startAnalytics(): Promise<void> {
     mask_all_text: true,
     mask_all_element_attributes: true,
     capture_pageview: 'history_change',
+    // Heatmap data is keyed by the raw location.href, query and all, and would
+    // otherwise switch on from a project setting in PostHog's UI.
+    capture_heatmaps: false,
     disable_session_recording: true,
     disable_surveys: true,
     disable_external_dependency_loading: true,
-    session_recording: { maskAllInputs: true, maskTextSelector: '*' },
+    session_recording: {
+      maskAllInputs: true,
+      maskTextSelector: '*',
+      // Text masking does not reach attributes, and ours carry item names
+      // ("Add {name}", a row's "{name}. Swipe right..." aria-label) and member
+      // names in alt/title. Chosen over maskAttributeFn: the flag masks every
+      // attribute, so a new one carrying a name cannot slip past a list.
+      maskAllElementAttributes: true,
+      maskCapturedNetworkRequestFn: scrubRecordedRequest,
+    },
     before_send: scrubEvent,
   })
   superProperties = { channel, app_version: __APP_VERSION__ }
@@ -200,24 +235,39 @@ function applyIdentify(userId: string | null): void {
     // visitor sends -- which is how production's first day of events reached
     // PostHog with no channel and never showed in the admin page.
     if (identifiedAs === null) return
+    replayWanted = false
     client.stopSessionRecording()
     client.reset()
     client.register(superProperties)
     identifiedAs = null
     return
   }
+  // Clerk can switch accounts without a signed-out state in between. Without
+  // this, A's recording kept running under B's identity, and B's events
+  // merged into A's person.
+  if (identifiedAs && identifiedAs !== userId) {
+    client.stopSessionRecording()
+    client.reset()
+    // reset() drops the registered properties too; without channel the new
+    // account's events are invisible to the admin page (see sign-out above).
+    client.register(superProperties)
+  }
   identifiedAs = userId
   client.identify(userId)
   // Guarded: this file's unit tests run in the plain node environment, which
   // has no localStorage global, and sign-in there should not throw.
-  if (typeof localStorage !== 'undefined' && replayEnabled(localStorage, userId)) void startReplay()
+  replayWanted = typeof localStorage !== 'undefined' && replayEnabled(localStorage, userId)
+  if (replayWanted) void startReplay(userId)
+  else client.stopSessionRecording()
 }
 
-async function startReplay(): Promise<void> {
+async function startReplay(userId: string): Promise<void> {
   // Bundled, not fetched: disable_external_dependency_loading keeps PostHog's
-  // CDN out of the page, so the recorder has to come from ours.
-  await import('posthog-js/dist/recorder')
-  client?.startSessionRecording()
+  // CDN out of the page, so the recorder has to come from ours. This entry,
+  // not dist/recorder: that one registers rrweb only, and the driver PostHog
+  // calls to start recording (initSessionRecording) lives here.
+  await import('posthog-js/dist/posthog-recorder')
+  if (replayWanted && identifiedAs === userId) client?.startSessionRecording()
 }
 
 export function replayEnabled(storage: Pick<Storage, 'getItem'>, userId: string): boolean {
@@ -236,7 +286,8 @@ export function setReplayEnabled(storage: Storage, userId: string, on: boolean):
     // Blocked storage: the switch applies to this session and is not remembered.
   }
   if (!client || identifiedAs !== userId) return
-  if (on) void startReplay()
+  replayWanted = on
+  if (on) void startReplay(userId)
   else client.stopSessionRecording()
 }
 
@@ -248,4 +299,5 @@ export function __resetAnalyticsForTests(): void {
   identifiedAs = null
   pendingUserId = undefined
   superProperties = {}
+  replayWanted = false
 }

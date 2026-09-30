@@ -16,6 +16,7 @@ import BarcodeScannerModal from '../src/components/BarcodeScannerModal.vue'
 import CustomProductModal from '../src/components/CustomProductModal.vue'
 import { createFakeDb } from './support/fakeSupabase.js'
 import { __setOnlineForTest } from '../src/lib/connectivity'
+import { track } from '../src/lib/analytics'
 
 const mocks = vi.hoisted(() => ({ db: null, nativeAvailable: false, nativeScan: null, timeZone: undefined }))
 
@@ -25,6 +26,12 @@ const mocks = vi.hoisted(() => ({ db: null, nativeAvailable: false, nativeScan: 
 vi.mock('../src/lib/region', async (importOriginal) => ({
   ...(await importOriginal()),
   deviceTimeZone: () => mocks.timeZone,
+}))
+
+// Spied so the barcode_scanned event can be asserted; everything else real.
+vi.mock('../src/lib/analytics', async (importOriginal) => ({
+  ...(await importOriginal()),
+  track: vi.fn(),
 }))
 
 vi.mock('../src/supabase', () => ({
@@ -248,6 +255,25 @@ describe('scanning a barcode onto the list', () => {
 
     expect(scanner(wrapper).props('unknownCode')).toBe(UNKNOWN)
     expect(insertedRows()).toHaveLength(0)
+  })
+
+  it('counts a real miss for the catalog, but not a lookup that failed offline', async () => {
+    const wrapper = await mountHome()
+    await openScanner(wrapper)
+    vi.mocked(track).mockClear()
+
+    await scan(wrapper, UNKNOWN)
+    expect(track).toHaveBeenCalledWith('barcode_scanned', { found: false })
+
+    // Offline a failed lookup looks like a miss; counting it would make the
+    // catalog's miss rate follow the shops' signal. The miss is still shown.
+    const other = await mountHome()
+    await openScanner(other)
+    vi.mocked(track).mockClear()
+    __setOnlineForTest(false)
+    await scan(other, '4009999999999')
+    expect(track).not.toHaveBeenCalledWith('barcode_scanned', { found: false })
+    expect(scanner(other).props('unknownCode')).toBe('4009999999999')
   })
 
   // The reference catalog answers through an RPC where the app database is a

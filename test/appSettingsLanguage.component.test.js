@@ -36,6 +36,14 @@ vi.mock('../src/lib/pushNotifications', () => ({
   setPushLanguage: vi.fn(async () => undefined),
 }))
 
+// The replay section only renders where analytics has a key, and this run has
+// none. Report it available so the modal has its full set of sections, which
+// is what the .segmented count below is about.
+vi.mock('../src/lib/analytics', async (importOriginal) => ({
+  ...(await importOriginal()),
+  analyticsAvailable: () => true,
+}))
+
 const scopedKey = userScopedKey(LOCALE_PREFIX, 'user-1')
 
 const wrappers = []

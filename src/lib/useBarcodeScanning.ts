@@ -6,6 +6,7 @@ import {
 } from './barcodeScanner'
 import type { ProductSuggestion } from './productSearch'
 import { track } from './analytics'
+import { isCurrentlyOffline } from './connectivity'
 
 // Reading a barcode and deciding what it means.
 //
@@ -141,7 +142,11 @@ export function useBarcodeScanning(options: {
     if (source === 'screen' && !scannerOpen.value) return
     // Here and not in reportMiss, which re-fires for a code already known to
     // miss every time it sits in front of the camera.
-    track('barcode_scanned', { found: !!product })
+    //
+    // Offline, a lookup that failed looks the same as one that found nothing,
+    // and counting it would make the catalog's miss rate track the shops'
+    // signal instead of what the catalog holds. The miss is still shown.
+    if (product || !isCurrentlyOffline()) track('barcode_scanned', { found: !!product })
 
     if (product) {
       // The scan IS the add. It used to fill the form and hand the screen back so
