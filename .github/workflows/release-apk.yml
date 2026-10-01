@@ -139,7 +139,7 @@ jobs:
         run: |
           if [ -z "$KEYSTORE" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
             echo "Missing signing secrets: set ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD under Settings → Secrets and variables → Actions."
-            echo "ANDROID_KEYSTORE_BASE64 is 'base64 -w0 famcart-release.keystore' from the existing keystore -- NOT a new one."
+            echo "ANDROID_KEYSTORE_BASE64 is 'base64 -w0 bagful-release.keystore' from the existing keystore -- NOT a new one."
             echo "Generating a fresh key here would publish an APK that installs for nobody who already has Bagful."
             exit 1
           fi
