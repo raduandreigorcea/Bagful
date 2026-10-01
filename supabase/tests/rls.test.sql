@@ -57,7 +57,7 @@
 -- Tests run inside a transaction that is rolled back, so they leave no data behind.
 
 begin;
-select plan(135);
+select plan(136);
 
 -- ── Seed as the migration/superuser role (bypasses RLS) ──────────────────────
 -- Three lists, because promoting a contributed product to the global catalog
@@ -1374,6 +1374,22 @@ select throws_ok(
   '42501',
   null,
   'an anonymous caller cannot reach the lists table at all'
+);
+
+-- Functions too. `revoke ... from public` leaves the EXECUTE that the platform
+-- grants anon by name (see 002), and search_catalog has no signed-in check of
+-- its own, so it answered anyone holding the anon key.
+reset role;
+select is(
+  (select array_agg(p.proname::text order by p.proname)
+   from pg_proc p
+   join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public'
+     and p.proname in ('create_list', 'join_list_with_code', 'buy_items',
+                       'add_custom_product', 'bump_product_popularity', 'search_catalog')
+     and has_function_privilege('anon', p.oid, 'execute')),
+  null,
+  'an anonymous caller cannot execute the signed-in RPCs'
 );
 
 reset role;

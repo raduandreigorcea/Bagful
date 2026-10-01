@@ -389,6 +389,9 @@ const activeError = computed(() => {
     message: channel.ref().value,
     dismiss: () => {
       channel.ref().value = ''
+      // A boot that failed on a server error never finished, and nothing else
+      // runs it again while the network is fine.
+      if (!hasInitialized.value) void initializeHome()
     },
   }
 })
@@ -582,7 +585,12 @@ function nameUnknownBarcode(code: string) {
 let syncInFlight = false
 let syncAgain = false
 async function handleBackOnline() {
-  if (!hasInitialized.value || !effectiveUserId.value || !listId.value) return
+  if (!hasInitialized.value) {
+    // Boot did not finish, so there is nothing to resync: boot again instead.
+    void initializeHome()
+    return
+  }
+  if (!effectiveUserId.value || !listId.value) return
   if (syncInFlight) { syncAgain = true; return }
   syncInFlight = true
   try {

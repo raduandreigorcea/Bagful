@@ -206,6 +206,7 @@ const ro: Catalog = {
   'account.signingOut': 'Se deconectează',
   'account.confirmSignOutTitle': 'Te deconectezi?',
   'account.confirmSignOutMessage': 'Va trebui să te conectezi din nou ca să îți vezi listele pe acest dispozitiv.',
+  'account.confirmSignOutUnsyncedMessage': 'Unele modificări făcute offline nu au fost trimise încă. Dacă te deconectezi acum, se vor pierde.',
 
   'list.title': 'Setările listei',
   'list.close': 'Închide setările',

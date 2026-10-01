@@ -201,6 +201,7 @@ const es: Catalog = {
   'account.signingOut': 'Cerrando sesión',
   'account.confirmSignOutTitle': '¿Cerrar sesión?',
   'account.confirmSignOutMessage': 'Tendrás que volver a iniciar sesión para ver tus listas en este dispositivo.',
+  'account.confirmSignOutUnsyncedMessage': 'Algunos cambios que hiciste sin conexión aún no se han enviado. Si cierras sesión ahora, se perderán.',
 
   'list.title': 'Ajustes de la lista',
   'list.close': 'Cerrar los ajustes',

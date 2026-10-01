@@ -199,6 +199,7 @@ const it: Catalog = {
   'account.signingOut': 'Uscita in corso',
   'account.confirmSignOutTitle': 'Vuoi uscire?',
   'account.confirmSignOutMessage': 'Dovrai accedere di nuovo per vedere le tue liste su questo dispositivo.',
+  'account.confirmSignOutUnsyncedMessage': 'Alcune modifiche fatte offline non sono ancora state inviate. Se esci ora, andranno perse.',
 
   'list.title': 'Impostazioni della lista',
   'list.close': 'Chiudi le impostazioni',

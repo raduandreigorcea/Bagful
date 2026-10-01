@@ -231,6 +231,7 @@ export default {
   'account.signingOut': 'Signing out',
   'account.confirmSignOutTitle': 'Sign out?',
   'account.confirmSignOutMessage': 'You will need to sign in again to see your lists on this device.',
+  'account.confirmSignOutUnsyncedMessage': "Some changes you made offline haven't been sent yet. Signing out now discards them.",
 
   'list.title': 'List Settings',
   'list.close': 'Close settings',

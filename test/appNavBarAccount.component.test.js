@@ -9,6 +9,7 @@ import { ref } from 'vue'
 import AppNavBar from '../src/components/AppNavBar.vue'
 import AccountActionModal from '../src/components/AccountActionModal.vue'
 import ConfirmModal from '../src/components/ConfirmModal.vue'
+import { clearOfflineQueue, enqueueOfflineMutation } from '../src/lib/offlineQueue'
 
 const clerkUser = vi.hoisted(() => ({ value: null }))
 
@@ -278,5 +279,25 @@ describe('AppNavBar sign out', () => {
     await flushPromises()
     expect(dialog.props('open')).toBe(false)
     expect(identifyUser).not.toHaveBeenCalledWith(null)
+  })
+
+  // Signing out deletes the offline queue, so the question has to say so when
+  // there is something in it.
+  it('warns that unsent changes are lost, only when there are some', async () => {
+    const ask = async () => {
+      const wrapper = mountBar({ listName: 'Home', memberProfiles: profiles, currentUserId: 'u_self' })
+      wrapper.findComponent(AccountActionModal).vm.$emit('sign-out')
+      await flushPromises()
+      return wrapper.findComponent(ConfirmModal).props('message')
+    }
+
+    expect(await ask()).not.toMatch(/sent yet/)
+
+    enqueueOfflineMutation(localStorage, 'u_self', { kind: 'delete', id: 'item-1' })
+    try {
+      expect(await ask()).toMatch(/sent yet/)
+    } finally {
+      clearOfflineQueue(localStorage)
+    }
   })
 })

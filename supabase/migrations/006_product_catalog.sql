@@ -541,7 +541,7 @@ begin
 end;
 $$;
 
-revoke all on function public.add_custom_product(uuid, text, text, text) from public;
+revoke all on function public.add_custom_product(uuid, text, text, text) from public, anon;
 grant execute on function public.add_custom_product(uuid, text, text, text) to authenticated;
 
 -- ─── popularity ──────────────────────────────────────────────────────────────
@@ -593,7 +593,7 @@ begin
 end;
 $$;
 
-revoke all on function public.bump_product_popularity(text, text, uuid) from public;
+revoke all on function public.bump_product_popularity(text, text, uuid) from public, anon;
 grant execute on function public.bump_product_popularity(text, text, uuid) to authenticated;
 
 -- ─── searching the catalog ───────────────────────────────────────────────────
@@ -734,7 +734,7 @@ begin
 end;
 $$;
 
-revoke all on function public.search_catalog(text, uuid, integer) from public;
+revoke all on function public.search_catalog(text, uuid, integer) from public, anon;
 grant execute on function public.search_catalog(text, uuid, integer) to authenticated;
 
 -- ─── bulk import ─────────────────────────────────────────────────────────────

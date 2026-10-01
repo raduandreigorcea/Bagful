@@ -850,7 +850,7 @@ begin
 end;
 $$;
 
-revoke all on function public.create_list(text, text, text, text) from public;
+revoke all on function public.create_list(text, text, text, text) from public, anon;
 grant execute on function public.create_list(text, text, text, text) to authenticated;
 
 -- ─── joining by invite code ──────────────────────────────────────────────────
@@ -978,7 +978,7 @@ begin
 end;
 $$;
 
-revoke all on function public.join_list_with_code(text, text, text) from public;
+revoke all on function public.join_list_with_code(text, text, text) from public, anon;
 grant execute on function public.join_list_with_code(text, text, text) to authenticated;
 
 -- ─── grants ──────────────────────────────────────────────────────────────────

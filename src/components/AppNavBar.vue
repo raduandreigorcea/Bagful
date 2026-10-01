@@ -16,6 +16,7 @@ import { ITEM_LIMIT_DEFAULT } from '../lib/limits'
 import { getUserDisplayName, getUserInitial, getUserPrimaryEmail, initialOf } from '../lib/userIdentity'
 import { useSignOut } from '../lib/useSignOut'
 import { useConfirm } from '../lib/useConfirm'
+import { hasQueuedOfflineMutations } from '../lib/offlineQueue'
 import { shareInvite } from '../lib/inviteShare'
 import { track } from '../lib/analytics'
 import type { ProductSuggestion } from '../lib/productSearch'
@@ -246,9 +247,14 @@ const { signingOut, signOut: handleSignOut } = useSignOut({
 // mid-shop, and signing back in takes an emailed code.
 const { state: signOutConfirm, confirm, resolveWith } = useConfirm()
 async function confirmSignOut() {
+  // Signing out deletes this account's offline queue, so anything still in it
+  // is lost. Said here rather than flushed: a flush outside HomeView's
+  // single-flight guard can replay a write twice.
+  const unsynced =
+    !!props.currentUserId && hasQueuedOfflineMutations(localStorage, props.currentUserId)
   const sure = await confirm({
     title: t('account.confirmSignOutTitle'),
-    message: t('account.confirmSignOutMessage'),
+    message: t(unsynced ? 'account.confirmSignOutUnsyncedMessage' : 'account.confirmSignOutMessage'),
     confirmText: t('account.signOut'),
     danger: true,
   })
