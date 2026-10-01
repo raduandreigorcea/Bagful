@@ -440,7 +440,11 @@ security invoker
 set search_path = public
 as $$
 begin
-  if new.created_by is distinct from old.created_by then
+  -- The one exception: delete_my_account() below hands the list to a member
+  -- before its owner goes. It sets this for its own transaction only (`set
+  -- local`), and a client cannot set it: PostgREST runs nothing but the call.
+  if new.created_by is distinct from old.created_by
+     and coalesce(current_setting('bagful.owner_transfer', true), '') <> 'on' then
     raise exception 'List owner cannot be changed.'
       using errcode = 'P0001';
   end if;
@@ -981,10 +985,135 @@ $$;
 revoke all on function public.join_list_with_code(text, text, text) from public, anon;
 grant execute on function public.join_list_with_code(text, text, text) to authenticated;
 
+-- ─── deleting your account ───────────────────────────────────────────────────
+-- Google Play requires that deleting an account deletes its data, and Clerk
+-- deleting the user tells this database nothing. So the app calls this first and
+-- deletes the Clerk user after it succeeds (src/components/AccountProfileModal.vue).
+--
+-- Who may take over the list I own: its other members, flagged when they already
+-- own one, because lists_one_per_owner (009) would refuse them. The client
+-- cannot work that flag out itself: RLS hides lists it is not on.
+create or replace function public.account_transfer_candidates()
+returns table (user_id text, display_name text, image_url text, owns_list boolean)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select m.user_id, p.display_name, p.image_url,
+         exists (
+           select 1 from public.lists o
+           where o.created_by = m.user_id and o.deleted_at is null
+         )
+  from public.lists l
+  join public.list_members m on m.list_id = l.id
+  join public.profiles p on p.user_id = m.user_id
+  where l.created_by = requesting_user_id()
+    and l.deleted_at is null
+    and m.user_id <> requesting_user_id()
+  order by m.joined_at;
+$$;
+
+revoke all on function public.account_transfer_candidates() from public, anon;
+grant execute on function public.account_transfer_candidates() to authenticated;
+
+-- Everything the caller left behind, in one transaction.
+--
+-- The list I own goes to p_new_owner when one is named, and is deleted for
+-- everyone otherwise (its items, history and memberships cascade). Elsewhere my
+-- items stay, because the others still need the milk: their authors resolve from
+-- the roster, so once I am off it they show as the "Member" fallback. History
+-- keeps its own copy of my name and photo, so that copy is cleared.
+-- product_catalog.contributed_by is left alone: promotion counts distinct
+-- contributors, and once Clerk forgets the id it points at nobody.
+create or replace function public.delete_my_account(p_new_owner text default null)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user text := requesting_user_id();
+  v_list_id uuid;
+begin
+  if v_user is null then
+    raise exception 'Not signed in.' using errcode = 'P0001';
+  end if;
+
+  select id into v_list_id
+  from public.lists
+  where created_by = v_user and deleted_at is null;
+
+  if v_list_id is not null and p_new_owner is not null then
+    if p_new_owner = v_user or not exists (
+      select 1 from public.list_members
+      where list_id = v_list_id and user_id = p_new_owner
+    ) then
+      raise exception 'The new owner must be a member of the list.'
+        using detail = 'new_owner_not_member';
+    end if;
+
+    if exists (
+      select 1 from public.lists
+      where created_by = p_new_owner and deleted_at is null
+    ) then
+      raise exception 'The new owner already owns a list.'
+        using detail = 'new_owner_owns_list';
+    end if;
+
+    -- While I am still the owner, so the role guard lets it through.
+    update public.list_members set role = 'moderator'
+    where list_id = v_list_id and user_id = p_new_owner;
+
+    set local bagful.owner_transfer = 'on';
+    update public.lists set created_by = p_new_owner where id = v_list_id;
+    set local bagful.owner_transfer = 'off';
+  end if;
+
+  -- The list nobody took over, and any soft-deleted ones still in my name.
+  delete from public.lists where created_by = v_user;
+
+  delete from public.list_members where user_id = v_user;
+
+  update public.purchase_history
+  set added_by = null, added_by_name = null, added_by_image_url = null
+  where added_by = v_user;
+
+  update public.purchase_history set purchased_by = 'deleted'
+  where purchased_by = v_user;
+
+  -- security_events and rate_limit_counters are left alone on purpose. This is
+  -- callable on its own, without the client then deleting the Clerk user, so
+  -- the same id can carry on: deleting them would let anyone reset their
+  -- invite-guessing throttle and erase the admin_user_banned row about them.
+  -- They hold a bare Clerk id, which points at nobody once Clerk deletes the
+  -- user, and log_security_event() trims the log at 90 days.
+
+  -- A ban lives on the profile, so a banned account keeps the row, stripped of
+  -- its name and photo. Deleting it would lift the ban: create_list and
+  -- join_list_with_code would find no banned_at and insert a clean profile.
+  if exists (
+    select 1 from public.profiles where user_id = v_user and banned_at is not null
+  ) then
+    update public.profiles
+    set display_name = 'Member', image_url = null, updated_at = now()
+    where user_id = v_user;
+  else
+    delete from public.profiles where user_id = v_user;
+  end if;
+
+  -- Inserted directly: log_security_event() would stamp my id as the actor.
+  insert into public.security_events (kind, actor) values ('account_deleted', null);
+end;
+$$;
+
+revoke all on function public.delete_my_account(text) from public, anon;
+grant execute on function public.delete_my_account(text) to authenticated;
+
 -- ─── grants ──────────────────────────────────────────────────────────────────
 -- RLS above decides which rows; these decide that the role may reach the tables
 -- at all. Note profiles gets no DELETE: a profile is the FK target for every
--- membership, and there is no product flow that removes one.
+-- membership, and the one flow that removes one is delete_my_account() above.
 -- Revoke first, then grant, so what these three tables allow is exactly what the
 -- next three lines say rather than that plus whatever the platform left behind.
 -- See the note below for what was left behind and why it mattered.
@@ -992,7 +1121,15 @@ revoke all on public.lists, public.list_members, public.profiles
   from anon, authenticated, service_role;
 
 grant select, insert, update, delete on public.lists, public.list_members to authenticated;
-grant select, insert, update on public.profiles to authenticated;
+-- Column by column, because the update policy can only check whose row it is.
+-- With a table-wide grant, a banned account could PATCH its own banned_at back
+-- to null. These four are exactly what refreshOwnProfile() (src/lib/profile.ts)
+-- upserts; user_id is in the update list because PostgREST's upsert sets every
+-- column it was sent, and the policy still pins it to the caller.
+grant select on public.profiles to authenticated;
+grant insert (user_id, display_name, image_url, updated_at),
+      update (user_id, display_name, image_url, updated_at)
+  on public.profiles to authenticated;
 
 -- service_role reads for ops and triage, and because
 -- supabase/functions/push-on-item-insert resolves recipients from list_members

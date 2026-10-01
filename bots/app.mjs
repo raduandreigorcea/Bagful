@@ -147,8 +147,11 @@ export async function ensureEnglish(bot) {
 
 export async function readList(page) {
   // A folded "In cart" takes its rows out of the page, not just out of view,
-  // and a stray tap can fold it. Unfold before counting.
-  const folded = page.locator('ul.item-list button[aria-expanded="false"]')
+  // and a stray tap can fold it. Unfold before counting. By its class: every
+  // unticked row's quantity button carries aria-expanded too, so the bare
+  // attribute matched those first and opened a quantity instead, leaving the
+  // cart folded and its rows reported as lost.
+  const folded = page.locator('ul.item-list button.cart-toggle[aria-expanded="false"]')
   if (await folded.count()) {
     await folded.first().click({ timeout: 2_000 }).catch(() => {})
     await page.waitForTimeout(300)

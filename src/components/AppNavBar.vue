@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue'
 import { setStatusBarOnBrand } from '../lib/theme'
-import { useClerk, useUser } from '@clerk/vue'
+import { useUser } from '@clerk/vue'
 import AccountActionModal from './AccountActionModal.vue'
 import ConfirmModal from './ConfirmModal.vue'
 import AppIcon from './AppIcon.vue'
@@ -50,6 +50,9 @@ function prefetch(load: () => Promise<unknown>) {
 // boot), warmed when the account menu that leads to it opens.
 const loadAppSettingsModal = () => import('./AppSettingsModal.vue')
 const AppSettingsModal = defineAsyncComponent(loadAppSettingsModal)
+// Our profile screen, in place of Clerk's: see the note at its top.
+const loadAccountProfileModal = () => import('./AccountProfileModal.vue')
+const AccountProfileModal = defineAsyncComponent(loadAccountProfileModal)
 import { t, tn } from '../lib/i18n'
 import { IS_NIGHTLY } from '../lib/appChannel'
 
@@ -130,7 +133,6 @@ onBeforeUnmount(() => {
   if (props.layout === 'bar') setStatusBarOnBrand(false)
 })
 
-const clerk = useClerk()
 const { user } = useUser()
 
 const accountMenuOpen = ref(false)
@@ -170,6 +172,9 @@ const historyEverOpened = ref(false)
 const reportOpen = ref(false)
 const reportEverOpened = ref(false)
 
+const profileOpen = ref(false)
+const profileEverOpened = ref(false)
+
 function openAppSettings() {
   accountMenuOpen.value = false
   appSettingsEverOpened.value = true
@@ -183,12 +188,14 @@ function openHistory() {
 
 function openAccountMenu() {
   prefetch(loadAppSettingsModal)
+  prefetch(loadAccountProfileModal)
   accountMenuOpen.value = true
 }
 
 function openAccountSettings() {
   accountMenuOpen.value = false
-  clerk.value?.openUserProfile()
+  profileEverOpened.value = true
+  profileOpen.value = true
 }
 
 function openReportIssue() {
@@ -662,6 +669,12 @@ const orderedActiveMembers = computed(() =>
     :list-id="listId"
     :user-id="currentUserId"
     @close="reportOpen = false"
+  />
+
+  <AccountProfileModal
+    v-if="profileEverOpened"
+    :open="profileOpen"
+    @close="profileOpen = false"
   />
 
   <AppSettingsModal
