@@ -58,6 +58,35 @@ describe('fetchWithRetry', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 
+  it('removes the listener it adds to the caller\'s signal once each attempt ends', async () => {
+    fetch
+      .mockRejectedValueOnce(networkError())
+      .mockResolvedValueOnce('response')
+    const signal = new AbortController().signal
+    const add = vi.spyOn(signal, 'addEventListener')
+    const remove = vi.spyOn(signal, 'removeEventListener')
+
+    await fetchWithRetry('https://x/rest', { signal })
+
+    expect(add).toHaveBeenCalledTimes(2)
+    expect(remove).toHaveBeenCalledTimes(2)
+  })
+
+  // The listener only hears an abort that happens later, so a signal aborted
+  // before the call reached fetch through a controller that never was.
+  it('honours a signal that was aborted before the call', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    fetch.mockImplementation((_url, options) =>
+      options.signal.aborted
+        ? Promise.reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+        : Promise.resolve('response'),
+    )
+
+    await expect(fetchWithRetry('https://x/rest', { signal: controller.signal })).rejects.toThrow('aborted')
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
   // Found by the bot swarm: a read that never got an answer left the app on
   // its loading screen for good, because nothing gave up on it. A request that
   // hangs until the server rejects it once it is abandoned, the way fetch does.

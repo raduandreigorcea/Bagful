@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
 import type { ListMemberProfile } from './listRealtime'
 import { captureException } from './errorReporting'
 import { clampItemLimit, ITEM_LIMIT_DEFAULT } from './limits'
@@ -26,7 +26,7 @@ interface MembershipRow {
 }
 
 export function useList(options: {
-  db: SupabaseClient
+  db: AppClient
   /** The Clerk id; memberships are read for this user only. */
   userId: Ref<string | null | undefined>
 }) {
@@ -52,6 +52,7 @@ export function useList(options: {
     // Which list this answer will be ABOUT, read before the round trip and
     // checked against the live one after it. See the note on the guard below.
     const forList = listId.value
+    if (!forList) return
     const [{ data: list, error: listErr }, { data: members, error: membersErr }] = await Promise.all([
       db.from('lists').select('name, invite_code, created_by, max_items_per_member, emoji').eq('id', forList).single(),
       // Name/avatar live in profiles now; embed them so the roster keeps the same
@@ -70,7 +71,7 @@ export function useList(options: {
     // Nor is the list row coming back empty (PGRST116, from .single()): that is
     // what a removed member, or anyone with a list open when it was deleted,
     // reads next, and the members channel already moves them off it. Reporting
-    // it filed a Sentry issue per removal (found by the bot swarm). The roster
+    // it would file a Sentry issue per removal. The roster
     // read beside it has no .single() and still reports as before.
     for (const err of [listErr, membersErr]) {
       if (!err || isOfflineError(err)) continue
@@ -114,15 +115,16 @@ export function useList(options: {
   // Every list the user belongs to, with names for the account dialog's list.
   // Only refreshes the roster; the active list is chosen by the caller.
   async function loadLists() {
+    // Signed out mid-session: an error, so callers keep what they have rather
+    // than read an empty answer as "belongs to no list" and send you to setup.
+    if (!userId.value) return { error: new Error('No signed-in user') }
     const { data, error } = await db
       .from('list_members')
       .select('list_id, lists(name, emoji)')
       .eq('user_id', userId.value)
     if (error) return { error }
     // A list row renders an emoji tile, a name and a marker, so that is all it
-    // carries, and the embed brings all of it back in this one query. It used to
-    // fetch every list's full roster here to draw composite member avatars;
-    // those are gone, and so is the extra round trip.
+    // carries, and the embed brings all of it back in this one query.
     const list = ((data ?? []) as unknown as MembershipRow[]).map((row) => ({
       id: row.list_id,
       name: row.lists?.name ?? '',

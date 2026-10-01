@@ -40,11 +40,11 @@
 --
 -- WHAT IS DELIBERATELY NOT RENAMED
 --
--- * Nothing in localStorage. The keys 'famcart-household-snapshot' and
---   'famcart-active-household' are stored on phones that are already out there,
---   and the values inside them may carry householdId / household_id (or the
---   older familyId / family_id). src/lib/listCache.ts and the offline queue read
---   every shape; see the notes there.
+-- * Nothing in localStorage: this migration cannot reach phones. The client
+--   renames the old snapshot and active-list keys itself (src/lib/legacyStorage),
+--   and the values inside may carry householdId / household_id (or the older
+--   familyId / family_id), which src/lib/listCache.ts and the offline queue
+--   read in every shape; see the notes there.
 -- * The product aisle called `household` (cleaning supplies, paper towels).
 --   It is a category of product, not this entity, and it lives in the app and
 --   the catalog, not in this schema.

@@ -93,6 +93,8 @@ export type PushLocale = 'en' | 'ro' | 'de' | 'es' | 'fr' | 'it'
 export const PUSH_LOCALES: PushLocale[] = ['en', 'ro', 'de', 'es', 'fr', 'it']
 
 interface PushCopy {
+  /** Who did it, when their profile has no name. */
+  someone: string
   /** "{who} added {item}" */
   added: (who: string, item: string) => string
   /** "{who} bought {list}" */
@@ -105,18 +107,21 @@ interface PushCopy {
 
 const COPY: Record<PushLocale, PushCopy> = {
   en: {
+    someone: 'Someone',
     added: (who, item) => `${who} added ${item}`,
     bought: (who, list) => `${who} bought ${list}`,
     pair: (a, b) => `${a} and ${b}`,
     andMore: (a, b, rest) => `${a}, ${b} and ${rest} more`,
   },
   ro: {
+    someone: 'Cineva',
     added: (who, item) => `${who} a adăugat ${item}`,
     bought: (who, list) => `${who} a cumpărat ${list}`,
     pair: (a, b) => `${a} și ${b}`,
     andMore: (a, b, rest) => `${a}, ${b} și încă ${rest}`,
   },
   de: {
+    someone: 'Jemand',
     added: (who, item) => `${who} hat ${item} hinzugefügt`,
     bought: (who, list) => `${who} hat ${list} gekauft`,
     pair: (a, b) => `${a} und ${b}`,
@@ -125,12 +130,14 @@ const COPY: Record<PushLocale, PushCopy> = {
       rest === 1 ? `${a}, ${b} und 1 weiteres` : `${a}, ${b} und ${rest} weitere`,
   },
   es: {
+    someone: 'Alguien',
     added: (who, item) => `${who} añadió ${item}`,
     bought: (who, list) => `${who} compró ${list}`,
     pair: (a, b) => `${a} y ${b}`,
     andMore: (a, b, rest) => `${a}, ${b} y ${rest} más`,
   },
   fr: {
+    someone: "Quelqu'un",
     added: (who, item) => `${who} a ajouté ${item}`,
     bought: (who, list) => `${who} a acheté ${list}`,
     pair: (a, b) => `${a} et ${b}`,
@@ -138,6 +145,7 @@ const COPY: Record<PushLocale, PushCopy> = {
       rest === 1 ? `${a}, ${b} et 1 autre` : `${a}, ${b} et ${rest} autres`,
   },
   it: {
+    someone: 'Qualcuno',
     added: (who, item) => `${who} ha aggiunto ${item}`,
     bought: (who, list) => `${who} ha comprato ${list}`,
     pair: (a, b) => `${a} e ${b}`,
@@ -173,18 +181,20 @@ export function summariseCheckout(labels: string[], locale: PushLocale = 'en'): 
 }
 
 /** "Radu added Milk ×2" */
-export function itemAddedBody(who: string, item: ItemRecord, locale: PushLocale = 'en'): string {
-  return copyFor(locale).added(who, itemLabel(item.name, item.quantity))
+export function itemAddedBody(who: string | null, item: ItemRecord, locale: PushLocale = 'en'): string {
+  const copy = copyFor(locale)
+  return copy.added(who || copy.someone, itemLabel(item.name, item.quantity))
 }
 
 /** "Radu bought Bread, Milk and 4 more" */
 export function checkoutBody(
-  who: string,
+  who: string | null,
   items: PurchasedItem[],
   locale: PushLocale = 'en',
 ): string {
   const labels = items.map((i) => itemLabel(i.name, i.quantity))
-  return copyFor(locale).bought(who, summariseCheckout(labels, locale))
+  const copy = copyFor(locale)
+  return copy.bought(who || copy.someone, summariseCheckout(labels, locale))
 }
 
 /**

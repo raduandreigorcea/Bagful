@@ -18,12 +18,9 @@ import ShopBadges from './ShopBadges.vue'
 // likewise owned by the parent (it queries the product catalog); this component
 // only renders it and reports the pick.
 //
-// There is no quantity here any more. A stepper used to sit at the head of this
-// row, which asked how many before anything had said of what, reset itself after
-// every add, and spent the width that made the row need one button for two jobs.
-// It is on the list row now, where the product it counts exists and can still be
-// corrected. Adding is one tap; adding the same thing twice sums, as it always
-// has.
+// There is no quantity here: it is set on the list row, where the product it
+// counts exists and can still be corrected. Adding is one tap; adding the same
+// thing twice sums.
 const name = defineModel('name', { type: String, default: '' })
 // Whether the search is open as a sheet.
 //
@@ -226,7 +223,7 @@ function onAddCustomClick(event: MouseEvent) {
 // common case — the same bread as last week — is one tap and no typing. Once
 // there is a query it is the matches' screen, and these step aside.
 // On the desktop column too: an empty field there is the same "what do we
-// usually get" moment as the phone sheet, and it used to show nothing at all.
+// usually get" moment as the phone sheet.
 const showingRecents = computed(
   () => (present.value || inputFocused.value) && !name.value.trim() && props.recents.length > 0,
 )
@@ -306,7 +303,7 @@ const optionCount = computed(() => rows.value.length + (props.canAddCustom ? 1 :
 
 // "Add 'oat milk'" goes FIRST unless something on screen already is exactly
 // that. Somebody who typed a whole name and sees no row carrying it wants that
-// name, and it used to sit under twelve near misses at the bottom of the list.
+// name, not a place under a dozen near misses at the bottom of the list.
 // When a row does match exactly, that row is the better answer (it has a maker,
 // and it ranks) and the typed version drops to the end.
 const hatchFirst = computed(() => {
@@ -436,11 +433,11 @@ function onFocus() {
 // A DELIBERATE dismissal: the back button, Escape, or handing the screen over to
 // the scanner. Not blur, and not a tap on the surface behind the sheet.
 //
-// Both of those used to land here, and on a phone that made the search screen
-// feel like it was waiting for an excuse to leave. Anything not focusable took
-// the keyboard down and the whole screen with it — the shop-filter chips, the
-// gap under a short results list, a scroll that started on the padding — and
-// whatever had been typed went with it. A sheet raised on purpose should be
+// On a phone, dismissing on those makes the search screen feel like it is
+// waiting for an excuse to leave: anything not focusable would take the
+// keyboard down and the whole screen with it (the shop-filter chips, the gap
+// under a short results list, a scroll that started on the padding), and
+// whatever had been typed with it. A sheet raised on purpose should be
 // dismissed on purpose.
 function close() {
   inputFocused.value = false
@@ -515,7 +512,7 @@ if (typeof document !== 'undefined') document.addEventListener('keydown', onSlas
 
 // Escape closes the search from anywhere in it, not only from the search box:
 // after a tap on a shop chip the box no longer has focus, and a keyboard had
-// no way out of the whole-screen sheet (found by the bot swarm). Guarded by the
+// no way out of the whole-screen sheet. Guarded by the
 // layer stack like AppModal's, so one press closes only what is on top.
 function onEscape(event: KeyboardEvent) {
   if (event.key !== 'Escape' || !isTopModal(layer)) return
@@ -552,9 +549,9 @@ onBeforeUnmount(() => {
     <Transition name="add-cover">
       <!-- mousedown, not click, for the same reason the options use it: the tap
            must not steal focus before we decide what to do with it. -->
-      <!-- The surface the sheet sits on, and nothing more. It used to dismiss
-           on mousedown, which on a phone is a full-screen target sitting under
-           a search you raised on purpose. touchmove is still swallowed so the
+      <!-- The surface the sheet sits on, and nothing more. It does not dismiss
+           on mousedown: on a phone that is a full-screen target sitting under
+           a search you raised on purpose. touchmove is swallowed so the
            list behind cannot be scrolled through it. -->
       <div v-if="present" class="add-cover" @touchmove.prevent></div>
     </Transition>
@@ -1118,11 +1115,11 @@ onBeforeUnmount(() => {
   right: 0;
   margin-top: 0.35rem;
   z-index: 20;
-  /* The dropdown's surface is the WHOLE panel, not just the list. It used to be
-     on .suggestions, which left everything above the list -- the shop
-     chips and their divider -- floating on the page with no card under it. On
-     the light page nobody noticed; over the page blur the chips' near-white
-     border-bottom read as a stray white line above the results. On the panel,
+  /* The dropdown's surface is the WHOLE panel, not just the list. On
+     .suggestions it would leave everything above the list -- the shop
+     chips and their divider -- floating on the page with no card under it,
+     and over the page blur the chips' near-white border-bottom would read as
+     a stray white line above the results. On the panel,
      that border is what it was meant to be, a divider inside the card.
 
      No overflow: hidden to round the corners off: the tap counters are

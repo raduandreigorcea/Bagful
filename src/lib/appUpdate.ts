@@ -84,7 +84,7 @@ export function startAppUpdates(): void {
 
   // The reload waits for the page to be hidden. The update check runs as the app
   // comes back to the foreground, so the takeover usually lands while someone is
-  // mid-search, and reloading then threw away what they were typing. The old
+  // mid-search, and reloading then would throw away what they were typing. The old
   // page keeps working meanwhile; a lazy chunk it no longer finds reloads it
   // through vite:preloadError in main.ts, which is the same reload, only sooner.
   navigator.serviceWorker.addEventListener('controllerchange', () => {

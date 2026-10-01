@@ -9,17 +9,13 @@ import { t } from '../lib/i18n'
 // as a bottom sheet on a phone. Owns the teleport, the overlay, the transition,
 // dismissal, and where the panel lands. Knows nothing about what is in it.
 //
-// Extracted from the list switcher and the list filter, which had grown the
-// same twenty lines each. Both are callers again -- the switcher was removed for
-// a while and came back as the bottom bar's fourth slot -- and what lives here
-// is the sheet/popover behaviour, not anything about filtering or switching. The
-// panel chrome and the row styling live here too (see the :slotted rules below),
-// so a menu added later looks like the two that already exist instead of
-// approximating them.
+// Its one caller today is ListSortMenu; what lives here is the sheet/popover
+// behaviour, not anything about sorting. The panel chrome and the row styling
+// live here too (see the :slotted rules below), so a menu added later looks
+// like the one that exists instead of approximating it.
 //
-// Teleported to <body> because both callers sit inside a container that clips
-// or stacks: the topbar has overflow:hidden to ellipsize the list name, and
-// the list header sits under the add form's dropdown.
+// Teleported to <body> because the list header it hangs off sits under the add
+// form's dropdown, and a menu inside it would be clipped or stacked under that.
 const open = defineModel({ type: Boolean, default: false })
 
 const props = defineProps({
@@ -33,12 +29,9 @@ const props = defineProps({
   // title, and a line saying what the thing is. Drop `heading` and there is no
   // header at all.
   heading: { type: String, default: '' },
-  // Raw SVG markup (an `import ... from '../assets/x.svg?raw'`), not a path.
-  // The icon's NAME, resolved by AppIcon, rather than its markup. It used to
-  // be the markup itself, which made every caller import a `?raw` asset in
-  // order to pass a string this component then v-html'd -- v-html on a prop,
-  // which is the one shape that is genuinely unsafe if a caller ever passes
-  // something it did not author.
+  // The icon's NAME, resolved by AppIcon, rather than its markup: markup would
+  // mean v-html on a prop, the one shape that is genuinely unsafe if a caller
+  // ever passes something it did not author.
   iconName: { type: String, default: '' },
   hint: { type: String, default: '' },
   // Whether the header carries a way out.

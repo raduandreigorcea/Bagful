@@ -13,9 +13,7 @@ import { t, tn } from '../lib/i18n'
 // Whose list this is. Opened from the list name at the top of the list,
 // which is where people look to ask that question.
 //
-// It gathers what used to be spread over three doors -- a list slot and a
-// "Switch" slot in the bottom bar, and "Manage list" and "Invite" in the
-// account dialog -- into the one place a list is: who is in it, how to get
+// It is the one place a list is: who is in it, how to get
 // somebody else in, and which list you are looking at. The deep settings
 // (name, emoji, roles, leaving) are one row away, in ListSettingsModal,
 // because they are occasional and administrative and this sheet is neither.

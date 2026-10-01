@@ -11,8 +11,7 @@ const props = defineProps({
 })
 
 // How many faces the stack draws before it starts counting instead. A constant
-// rather than the prop it used to be: no caller ever set it, so the "option" was
-// a default with a configuration story attached to it.
+// rather than a prop: no caller needs to set it.
 const MAX_VISIBLE = 4
 
 // Collapsing to "+1" hides one avatar to show a "+1" bubble in its place — it

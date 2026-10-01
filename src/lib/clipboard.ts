@@ -40,9 +40,8 @@ export interface CopyFeedback {
  * The above, plus the transient "Copied" state a button shows afterwards.
  *
  * The timer is restarted rather than stacked, so holding the button down reads
- * as one continuous confirmation, and it is cleared on unmount — a dialog closed
- * mid-hold used to leave a callback running against a component that no longer
- * existed.
+ * as one continuous confirmation, and it is cleared on unmount, so a dialog
+ * closed mid-hold leaves no callback running against it.
  */
 export function useCopyFeedback(holdMs = 2000): CopyFeedback {
   const copied = ref(false)

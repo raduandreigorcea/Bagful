@@ -97,10 +97,9 @@ const app = createApp(App)
 // gitignored) and loaded after the app is idle rather than as part of the
 // initial download: the SDK is about a third of the JavaScript here.
 //
-// A local `npm run dev` DOES report, which this comment used to deny. Vite
-// loads .env in every mode, so the DSN is there in dev too, and three dev-server
-// errors sat in the production issue stream before anyone read the URL tag on
-// them. They are told apart by the environment tag now. See lib/errorReporting.
+// A local `npm run dev` DOES report: Vite loads .env in every mode, so the DSN
+// is there in dev too. Its errors are told apart from production's by the
+// environment tag. See lib/errorReporting.
 //
 // Once it resolves, reporting is live (or there is no DSN and never will be),
 // so the stand-in handlers installed at the top hand over. Without this they

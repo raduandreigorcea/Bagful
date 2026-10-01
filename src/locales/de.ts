@@ -201,6 +201,7 @@ const de: Catalog = {
   'account.signingOut': 'Wird abgemeldet',
   'account.confirmSignOutTitle': 'Abmelden?',
   'account.confirmSignOutMessage': 'Du musst dich erneut anmelden, um deine Listen auf diesem Gerät zu sehen.',
+  'account.confirmSignOutUnsyncedMessage': 'Einige Änderungen, die du offline gemacht hast, wurden noch nicht gesendet. Wenn du dich jetzt abmeldest, gehen sie verloren.',
 
   'list.title': 'Listeneinstellungen',
   'list.close': 'Einstellungen schließen',

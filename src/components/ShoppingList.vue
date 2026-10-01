@@ -309,15 +309,13 @@ function finishCheckout(ids: string[]) {
 
 onBeforeUnmount(() => {
   // Flushed BEFORE the timers are cleared, not after. Unmounting mid-drain (a
-  // route change, a list switch tearing the list down) used to drop the
-  // checkout on the floor: the timer died with the component and the rows
-  // stayed checked in the database, having told the user they were bought. The
-  // confirmation already happened, so it is flushed here.
+  // route change, a list switch tearing the list down) would otherwise drop the
+  // checkout: the timer dies with the component and the rows stay checked in
+  // the database, having told the user they were bought. The confirmation
+  // already happened, so it is flushed here.
   //
-  // But finishCheckout arms the success timer on its way out, so running it
-  // after the clears left that fresh timer to outlive the component. It only
-  // touches two refs of an instance nobody is rendering, which is why nothing
-  // ever showed — the ordering is the whole fix.
+  // And before, not after, because finishCheckout arms the success timer on its
+  // way out: run after the clears, that fresh timer would outlive the component.
   if (pendingCheckout) finishCheckout(pendingCheckout)
   if (drainTimer) clearTimeout(drainTimer)
   if (successTimer) clearTimeout(successTimer)

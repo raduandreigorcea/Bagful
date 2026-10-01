@@ -28,8 +28,24 @@ export default defineConfig({
     // treats DEV as nightly and vitest sets it -- which would quietly flip the
     // version string, the update check and the OAuth scheme under every test
     // that never mentions channels. Cases that want nightly mock IS_NIGHTLY.
+    //
+    // And every live service is blanked. Vite loads .env in test mode too, so on
+    // a machine with one the suite reached the real catalog project from any
+    // test that did not mock ../src/supabase (the aborted fetches printed at the
+    // end of a run), while CI, which has no .env, did not. Blank here, the suite
+    // runs the same everywhere and never talks to anything real.
     env: {
       VITE_APP_CHANNEL: 'production',
+      VITE_SUPABASE_URL: '',
+      VITE_SUPABASE_ANON_KEY: '',
+      VITE_CATALOG_SUPABASE_URL: '',
+      VITE_CATALOG_SUPABASE_ANON_KEY: '',
+      VITE_CLERK_PUBLISHABLE_KEY: '',
+      VITE_SENTRY_DSN: '',
+      VITE_ONESIGNAL_APP_ID: '',
+      VITE_ONESIGNAL_NIGHTLY_APP_ID: '',
+      VITE_POSTHOG_KEY: '',
+      VITE_POSTHOG_NIGHTLY_KEY: '',
     },
     environment: 'node',
     include: ['test/**/*.{test,spec}.{js,ts}'],

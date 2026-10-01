@@ -50,10 +50,19 @@ const SECRETS: Record<Service, string[]> = {
   posthog: ['POSTHOG_PERSONAL_API_KEY'],
 }
 
-export const CORS_HEADERS = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
-  'access-control-allow-methods': 'POST, OPTIONS',
+// The dashboard is a local tool (admin/, `npm run dev` on port 5174), so only
+// its dev server may read these answers from a browser. Not the gate, which is
+// is_admin(): a request from anywhere else still needs an admin's token.
+export const ADMIN_ORIGINS = ['http://localhost:5174', 'http://127.0.0.1:5174']
+
+/** CORS headers for a request from `origin`, allowing it only if it is the dashboard's. */
+export function corsHeaders(origin: string | null): Record<string, string> {
+  return {
+    'access-control-allow-origin': origin && ADMIN_ORIGINS.includes(origin) ? origin : ADMIN_ORIGINS[0]!,
+    vary: 'origin',
+    'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
+    'access-control-allow-methods': 'POST, OPTIONS',
+  }
 }
 
 // A Clerk user id. Checked because it is spliced into a URL path.

@@ -309,51 +309,51 @@ grant execute on function public.security_digest(integer) to service_role;
 -- editor, as the service role.
 do $$
 begin
-  if not exists (select 1 from pg_roles where rolname = 'famcart_security_auditor') then
+  if not exists (select 1 from pg_roles where rolname = 'bagful_security_auditor') then
     -- LOGIN with no password: under scram-sha-256 a passwordless role cannot
     -- authenticate, so this is inert until the password is set out of band. That
     -- is deliberate — a credential does not belong in a file that lives in git.
     -- Set it once, from the Supabase SQL editor:
     --
-    --   alter role famcart_security_auditor with password '<generated>';
+    --   alter role bagful_security_auditor with password '<generated>';
     --
     -- then put the connection string in the GitHub repository secret
     -- SECURITY_DIGEST_DB_URL (Settings → Secrets and variables → Actions).
     --
     -- NOINHERIT so it never picks up privileges from some future grant of
     -- another role to it; anything it may do, it may do explicitly.
-    create role famcart_security_auditor with login noinherit;
+    create role bagful_security_auditor with login noinherit;
   end if;
 end;
 $$;
 
 -- Two concurrent connections is one more than a daily poller needs, and a cheap
 -- ceiling on what a leaked credential can occupy.
-alter role famcart_security_auditor connection limit 2;
+alter role bagful_security_auditor connection limit 2;
 
 -- The digest scans at most 90 days of a small table. A statement running longer
 -- than this is not the digest.
-alter role famcart_security_auditor set statement_timeout = '30s';
+alter role bagful_security_auditor set statement_timeout = '30s';
 
 -- Nothing this role does should ever write, including implicitly.
-alter role famcart_security_auditor set default_transaction_read_only = on;
+alter role bagful_security_auditor set default_transaction_read_only = on;
 
 -- current_database() rather than a literal: 'postgres' on hosted Supabase and on
 -- the local CLI stack today, but the grant should not be the thing that breaks
 -- if that ever differs.
 do $$
 begin
-  execute format('grant connect on database %I to famcart_security_auditor', current_database());
+  execute format('grant connect on database %I to bagful_security_auditor', current_database());
 end;
 $$;
 
-grant usage on schema public to famcart_security_auditor;
+grant usage on schema public to bagful_security_auditor;
 
 -- The one capability. Note what is absent: no SELECT on any table, no execute on
 -- any other function. Postgres grants EXECUTE to PUBLIC by default, so the
 -- functions that matter are explicitly revoked from public in their own files —
 -- this role inherits that lockdown rather than needing its own revokes.
-grant execute on function public.security_digest(integer) to famcart_security_auditor;
+grant execute on function public.security_digest(integer) to bagful_security_auditor;
 
 -- A role comment is a shared-object comment, and the `postgres` role that runs
 -- migrations on hosted Supabase is not a superuser — so this can fail where
@@ -361,13 +361,13 @@ grant execute on function public.security_digest(integer) to famcart_security_au
 -- pg_cron sweep: a label is not worth failing a migration over.
 do $$
 begin
-  execute 'comment on role famcart_security_auditor is '
+  execute 'comment on role bagful_security_auditor is '
     || quote_literal(
          'Read-only poller for security_digest(). No table privileges; cannot '
          || 'read security_events directly (RLS) nor write anything. Credential '
          || 'lives in the GitHub secret SECURITY_DIGEST_DB_URL.'
        );
 exception when others then
-  raise warning 'could not comment on famcart_security_auditor (%); role is otherwise configured.', sqlerrm;
+  raise warning 'could not comment on bagful_security_auditor (%); role is otherwise configured.', sqlerrm;
 end;
 $$;

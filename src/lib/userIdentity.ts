@@ -25,7 +25,7 @@ export interface ProfileFields {
 // img.clerk.com URL. So this is not a restriction on what users may have, it is
 // a statement of where the app's own avatars actually live.
 //
-// Why it is not simply "any https URL", which is what it used to be: a member
+// Why it is not simply "any https URL": a member
 // can write their own profiles row, and every co-member's browser fetches
 // whatever is in it. An arbitrary https host is therefore a beacon — it hands
 // the person who chose it the IP address, device and viewing time of everyone
@@ -80,7 +80,7 @@ export function getUserPrimaryEmail(user: UserLike | null | undefined): string {
 // exact string: it is a value the database stores, and a German user's profile
 // row must not read "Mitglied" where every query and every other member's app
 // expects "Member".
-export const MEMBER_FALLBACK_NAME = 'Member'
+const MEMBER_FALLBACK_NAME = 'Member'
 
 // The display side of the same idea, and the only place the two part company.
 // A member with no name is described in the reader's language rather than in

@@ -37,17 +37,10 @@ export function forgetUser(storage: Storage): void {
 
 // Everything this device remembers about a signed-in user, dropped together.
 //
-// Sign-out used to spell this out at the call site, and got three of the four:
-// the remembered user, the snapshot and the offline queue were cleared, and the
-// active-list pointer was not. That particular omission was harmless — the
-// pointer is stored with the account it belongs to and rejected on read by
-// anyone else — but "harmless" was luck rather than design, and the list only
-// exists in one function whose name does not say it is a list.
-//
-// So it is a list, here, next to the thing that writes the first entry. The
-// point is not the four calls; it is that adding a fifth key has an obvious
-// place to be added, instead of depending on whoever adds it remembering that
-// signing out is a thing that exists.
+// One list, here, next to the thing that writes the first entry, rather than
+// spelled out at the sign-out call site. The point is not the four calls; it is
+// that adding a fifth key has an obvious place to be added, instead of
+// depending on whoever adds it remembering that signing out exists.
 //
 // `userId` scopes what can be scoped. Without one — a sign-out from a screen
 // that never learned who was signed in — the queue and the snapshot each clear

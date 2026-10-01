@@ -17,10 +17,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 // at `catalog/` (raduandreigorcea/Bagful-catalog). The separation is real
 // rather than a naming convention: its own Supabase project in its own
 // organisation, its own migrations, its own pgTAP suite and its own release
-// cadence. It has no edge function of any kind, which is worth saying because
-// it used to: `discover` queried Open Food Facts live on the keystroke path,
-// and both it and the src/lib/catalogDiscovery.ts that called it went with the
-// catalog rebuild.
+// cadence. It has no edge function of any kind.
 //
 // So what this file depends on is an API rather than a schema. Four RPCs:
 //
@@ -83,6 +80,7 @@ export async function fetchWithRetry(
   const retriable = method === 'GET' || method === 'HEAD'
   for (let attempt = 0; ; attempt++) {
     let timer: ReturnType<typeof setTimeout> | undefined
+    let forwardAbort: (() => void) | undefined
     let attemptOptions = options
     if (retriable) {
       const controller = new AbortController()
@@ -90,9 +88,15 @@ export async function fetchWithRetry(
         () => controller.abort(new DOMException('No answer from the server', 'TimeoutError')),
         READ_TIMEOUT_MS,
       )
-      options.signal?.addEventListener('abort', () => controller.abort(options.signal!.reason), {
-        once: true,
-      })
+      // Forwards the caller's abort, including one that happened before this
+      // call, which a listener alone would never hear. Removed in the finally
+      // below, or a long-lived signal collects one per attempt.
+      const signal = options.signal
+      if (signal) {
+        forwardAbort = () => controller.abort(signal.reason)
+        if (signal.aborted) forwardAbort()
+        else signal.addEventListener('abort', forwardAbort, { once: true })
+      }
       attemptOptions = { ...options, signal: controller.signal }
     }
     try {
@@ -106,14 +110,15 @@ export async function fetchWithRetry(
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]))
     } finally {
       clearTimeout(timer)
+      if (forwardAbort) options.signal?.removeEventListener('abort', forwardAbort)
     }
   }
 }
 
 // A request whose token PostgREST refused on time grounds (PGRST303: "JWT
 // expired", "JWT not yet valid", "JWT issued at future") is sent once more with
-// a token minted fresh, skipping Clerk's cache. Sentry showed these clustered
-// right after the phone wakes: Clerk judges its cached token's age from the
+// a token minted fresh, skipping Clerk's cache. These cluster right after the
+// phone wakes: Clerk judges its cached token's age from the
 // token's `iat` against the device clock, so a phone clock running behind, or a
 // WebView whose timers froze in the background, hands out a token the server
 // already considers dead. The wait covers the other direction, a token that is
@@ -233,9 +238,7 @@ export function getCatalogSupabase(): CatalogClient | null {
 // How the client learns to mint tokens. Kept separate from getSupabase because
 // the two have different requirements: this needs Clerk's useAuth() and so a
 // component context, while the client is wanted from places that have none —
-// the router guard in particular, which used to hand-roll its own fetch with
-// its own apikey/Authorization headers (and no fetchWithRetry) purely to work
-// around that.
+// the router guard in particular.
 export function setSupabaseTokenResolver(resolve: TokenResolver): void {
   getTokenFn = resolve
 }

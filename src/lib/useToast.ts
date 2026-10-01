@@ -32,7 +32,7 @@ export interface Toast extends ToastOptions {
   id: number
 }
 
-export const TOAST_DURATION_MS = 5000
+const TOAST_DURATION_MS = 5000
 export const MAX_VISIBLE_TOASTS = 3
 
 const toasts = ref<Toast[]>([])

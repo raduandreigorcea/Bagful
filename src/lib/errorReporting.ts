@@ -1,15 +1,15 @@
 // Error reporting, kept out of the initial download.
 //
-// @sentry/vue is ~218 KB — about a third of the app's JavaScript — and it was
-// imported at module scope in main.ts, so every cold start paid for it before
-// the first item could be rendered. On a grocery list opened on a phone in a
+// @sentry/vue is ~218 KB — about a third of the app's JavaScript — and imported
+// at module scope in main.ts, every cold start would pay for it before the
+// first item could be rendered. On a grocery list opened on a phone in a
 // shop, that is the wrong thing to spend a connection on.
 //
 // So the SDK is loaded after the app is up and idle, and everything that wants
 // to report an error talks to this module instead of importing Sentry directly.
 // Reports raised before it lands are buffered and flushed on arrival.
 //
-// The cost, stated plainly: the initial pageload transaction is no longer
+// The cost, stated plainly: the initial pageload transaction is not
 // traced, because tracing has to be installed before the load it measures. At a
 // 10% trace sample rate that is a small loss against a third of the bundle, but
 // it is a loss rather than a free win.

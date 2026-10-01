@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
 import { deriveProfileFields, type UserLike } from './userIdentity'
 
 // Write the caller's own profiles row (name + Clerk avatar), the single source
@@ -7,15 +7,10 @@ import { deriveProfileFields, type UserLike } from './userIdentity'
 // Internal to this file, and the only caller is refreshOwnProfile below — which
 // is the write everything should be going through, because it is the one that
 // skips a write that would change nothing. Exported, this was the way to make
-// the unconditional write by accident.
-//
-// It used to say it was also called on the create-list path, "the FK target
-// must exist before the membership insert". That is still true of the row and no
-// longer true of this function: both setup paths hand the fields to an RPC that
-// upserts the profile and inserts the membership in one server-side step, so
-// there is no client-side window where the FK target is missing.
+// the unconditional write by accident. (The setup paths do not call it: their
+// RPCs upsert the profile and insert the membership in one server-side step.)
 async function upsertOwnProfile(
-  db: SupabaseClient,
+  db: AppClient,
   userId: string,
   user: UserLike | null | undefined,
 ) {
@@ -43,7 +38,7 @@ const writtenKey = (userId: string) => `bagful.profileWritten.${userId}`
 // passed since it. The record is kept only after the database accepted the
 // write, so a failure (offline, banned) is retried on the next boot as before.
 export async function refreshOwnProfile(
-  db: SupabaseClient,
+  db: AppClient,
   userId: string,
   user: UserLike | null | undefined,
   storage: Storage,

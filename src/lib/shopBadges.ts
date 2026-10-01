@@ -180,11 +180,9 @@ function readShopCache(): ShopEntry[] {
 
 // For tests: forget what was learned this session.
 //
-// It used to say "and a list switch", which was never true and would have
-// been wrong if it were. The shop list comes from catalog_retailers and belongs
-// to nobody -- it is the same handful of rows whichever list you are in --
-// so a switch has nothing to forget here, unlike the suggestions and the filters
-// that resetForList does clear.
+// Not called on a list switch: the shop list comes from catalog_retailers and
+// belongs to nobody -- the same handful of rows whichever list you are in --
+// unlike the suggestions and the filters that resetForList does clear.
 export function resetShopList(): void {
   shopRows = null
 }
@@ -195,16 +193,14 @@ interface ShopRow {
   retailers?: unknown
 }
 
-export function shopsEnabled(): boolean {
+function shopsEnabled(): boolean {
   return getCatalogSupabase() !== null
 }
 
 // ─── remembering the answer ──────────────────────────────────────────────────
-// The badges used to arrive a beat after the rows, and the reason was never the
-// logos -- those are inlined in the bundle. It was this lookup: the list paints
-// from the list snapshot cache with no network at all, and then had to wait
-// for a round trip to a SECOND database before it could say where anything came
-// from.
+// The list paints from the snapshot cache with no network at all, while this
+// lookup is a round trip to a SECOND database, so uncached the badges would
+// arrive a beat after the rows.
 //
 // So the answer is cached the same way the list is. On a warm start the badges
 // paint with the rows, and the fetch below still runs and replaces them, which
@@ -216,8 +212,8 @@ export function shopsEnabled(): boolean {
 // the same names already sitting in the snapshot cache next to it.
 //
 // That comparison only holds because of clearCachedShops below: the snapshot
-// cache is also DROPPED when its account signs out, and for a while this was
-// not, so the names outlived the session on a shared device.
+// cache is also DROPPED when its account signs out; without it the names
+// would outlive the session on a shared device.
 const CACHE_KEY = 'bagful.shop-badges.v1'
 // Enough for a big list several times over. A cap at all is what stops a cache
 // that is only ever added to from growing until a browser refuses to write it.

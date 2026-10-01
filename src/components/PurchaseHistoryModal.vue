@@ -25,8 +25,7 @@ const props = defineProps({
 })
 
 // History is for two things people actually ask it: "did we buy X?" (the
-// search) and "put that back on the list" (Add again). It used to be read-only,
-// so the answer to the second was to go and type it.
+// search) and "put that back on the list" (Add again).
 const emit = defineEmits<{ close: []; 'add-again': [product: ProductSuggestion] }>()
 
 const query = ref('')
@@ -43,7 +42,7 @@ function addAgain(entry: CheckoutEntry) {
 }
 
 // The whole trip back on the list: "the same as last Saturday" is the common
-// case for groceries, and it used to be one tap per item. Items this visit has
+// case for groceries, and one tap per item is too many. Items this visit has
 // already put back are skipped, so pressing it after a few single adds does not
 // double them up.
 function addTripAgain(items: CheckoutEntry[]) {
@@ -141,9 +140,9 @@ function buyerInitial(userId: string | null | undefined) {
   return initialOf(buyerName(userId))
 }
 
-// Both of these follow the APP's language now, not the device's. They used to
-// pass `undefined`/`[]`, which meant a Romanian phone reading the app in
-// English got English labels above device-formatted dates.
+// Both of these follow the APP's language, not the device's, so a Romanian
+// phone reading the app in English does not get English labels above
+// device-formatted dates.
 function checkoutTime(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''

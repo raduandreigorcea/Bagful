@@ -1,5 +1,5 @@
 import { onBeforeUnmount, ref, type Ref } from 'vue'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
 import {
   countActiveItemsByMember,
   findActiveItemByName,
@@ -90,7 +90,7 @@ export interface ShoppingListActions {
 }
 
 export function useShoppingListActions(options: {
-  db: SupabaseClient
+  db: AppClient
   items: Ref<ShoppingItemRow[]>
   listId: Ref<string | null>
   /** The Clerk id, or the remembered one while Clerk is still loading offline. */
@@ -267,6 +267,7 @@ export function useShoppingListActions(options: {
     // Which list these rows will be ABOUT, read before the round trip and
     // checked against the live one after it. See the guard below.
     const forList = listId.value
+    if (!forList) return
 
     const [uncheckedRes, checkedRes] = await Promise.all([
       db
@@ -358,14 +359,11 @@ export function useShoppingListActions(options: {
     // cannot contain it — and replacing the list wholesale would take the user's
     // row off the screen while it sat waiting to be sent.
     //
-    // This used to be masked: a flush stops on a transient failure, and until the
-    // list gained a rate ceiling (004_shopping_list.sql) "transient" meant a dead
-    // network, which made the fetch above fail too, so loadItems returned early
-    // and left the cached list alone. A throttled replay is the first transient
-    // failure that happens while the network is perfectly fine, so the refetch
-    // succeeds and the row vanishes into a queue that retries up to an hour
-    // later. Re-merging is what makes a throttled add behave like an offline one:
-    // it stays on screen and syncs when it can.
+    // A flush stops on a transient failure, and a throttled replay (the rate
+    // ceiling in 004_shopping_list.sql) is transient while the network is fine:
+    // the refetch succeeds, and without this the row would vanish into a queue
+    // that retries up to an hour later. Re-merging makes a throttled add behave
+    // like an offline one: it stays on screen and syncs when it can.
     //
     // Only inserts: an update or delete refers to a row the server already has,
     // so the fetched copy is the right thing to show until the queue drains.
@@ -414,6 +412,7 @@ export function useShoppingListActions(options: {
   ): Promise<ShoppingItemRow | null> {
     const local = findActiveItemByName(items.value, name, options)
     if (local) return local
+    if (!listId.value) return null
 
     const { data } = await db
       .from('shopping_list_items')
@@ -482,7 +481,8 @@ export function useShoppingListActions(options: {
     product: AddedProduct | null = null,
   ): Promise<void> {
     const name = (product?.name ?? draftName.value).trim()
-    if (!name) return
+    const list = listId.value
+    if (!name || !list) return
     if (name.length > ITEM_NAME_MAX_LENGTH) {
       addError.value = t('error.itemNameTooLong', { max: ITEM_NAME_MAX_LENGTH })
       return
@@ -516,12 +516,10 @@ export function useShoppingListActions(options: {
       if (picked) recordProductAdd(picked)
 
       // Through the same coalescing writer the row's own stepper uses, rather
-      // than a write per tap. Tapping a product twenty times used to put twenty
-      // UPDATEs on the wire, each carrying the absolute quantity it had computed
-      // at tap time and none of them ordered against the others -- so the row
-      // ended up on whichever number happened to land last, which is why the
-      // count came back lower than the taps. Now it is one UPDATE carrying the
-      // number the user actually stopped on.
+      // than a write per tap. Per-tap UPDATEs each carry the absolute quantity
+      // computed at tap time and are not ordered against each other, so the row
+      // would settle on whichever landed last, lower than the taps. One UPDATE
+      // carries the number the user actually stopped on.
       //
       // The rollback target is the quantity before the first tap of the burst,
       // which scheduleQuantityWrite keeps for exactly this.
@@ -546,7 +544,7 @@ export function useShoppingListActions(options: {
     const id = crypto.randomUUID()
     const row = {
       id,
-      list_id: listId.value,
+      list_id: list,
       name,
       maker,
       quantity,
@@ -730,7 +728,6 @@ export function useShoppingListActions(options: {
         // has already deleted back on this screen, and there is no error to
         // show. Re-read the list instead, once the writes above have ended
         // (while they are open, loadItems keeps the local guess for both rows).
-        // Found by bots/swarm.mjs.
         if ((error as { details?: string }).details === 'merge_items_not_found') {
           changedElsewhere = true
           return
@@ -873,8 +870,8 @@ export function useShoppingListActions(options: {
 
     // Offline (or a WebView that lies about connectivity): queue the checkout
     // itself, replayed through buy_items once back online, so it still lands in
-    // purchase history. It used to queue plain deletes, and a checkout made in a
-    // shop with no signal (the usual place for one) vanished from history.
+    // purchase history. Plain deletes would lose it from history, and a shop
+    // with no signal is the usual place for a checkout.
     if (isOffline()) {
       enqueueOfflineMutation(localStorage, userId.value, {
         kind: 'checkout',
@@ -1116,7 +1113,7 @@ export function useShoppingListActions(options: {
       // Someone else may have deleted the row while it was held back: their
       // realtime DELETE found nothing on screen to remove, so the restore just
       // brought back a row the server no longer has, on this screen only, for
-      // good. One re-read settles it either way. (Found by bots/swarm.mjs.)
+      // good. One re-read settles it either way.
       void loadItems()
     }
 
@@ -1128,9 +1125,8 @@ export function useShoppingListActions(options: {
   }
 
   // A quantity change spends its debounce as a number on screen that the server
-  // has not been told about. Every other composable here clears its timers on
-  // the way out; this one did not, so a view torn down inside that window left
-  // the write to fire from a component that no longer exists — or, if the whole
+  // has not been told about. A view torn down inside that window would leave
+  // the write to fire from a component that no longer exists, or, if the whole
   // page was going, not to fire at all.
   //
   // Flushed rather than cancelled: the tap already happened and the user has

@@ -1,15 +1,14 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
-import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
-import { sortItemsForDisplay, type ShoppingItem } from './shoppingList'
+import type { RealtimeChannel } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
+import type { Tables } from '../types/database'
+import { sortItemsForDisplay } from './shoppingList'
 import { captureException } from './errorReporting'
-import { isCurrentlyOffline, onReconnect } from './connectivity'
+import { isCurrentlyOffline } from './connectivity'
 
-// A shopping_list_items row as held in view state: the pure-helper shape plus
-// the DB columns the realtime handlers touch.
-export interface ShoppingItemRow extends ShoppingItem {
-  created_at: string
-  [key: string]: unknown
-}
+// A shopping_list_items row as held in view state: exactly the generated row,
+// so a renamed or retyped column fails the typecheck here too.
+export type ShoppingItemRow = Tables<'shopping_list_items'>
 
 export interface ListMemberProfile {
   user_id: string
@@ -19,7 +18,7 @@ export interface ListMemberProfile {
 }
 
 export interface UseListRealtimeOptions {
-  db: SupabaseClient
+  db: AppClient
   listId: Ref<string | null>
   hasInitialized: Ref<boolean>
   items: Ref<ShoppingItemRow[]>
@@ -53,10 +52,10 @@ export function useListRealtime({
   hasPendingWrite,
 }: UseListRealtimeOptions) {
   const realtimeHealthy = ref(false)
-  // Healthy means ALL three channels are up, not any one of them. It used to be
-  // set by whichever acknowledgement came last, so a dead list channel beside a
-  // live members channel read as healthy, and the watchdog below, which only
-  // acts on an unhealthy socket, never came to fetch what it was missing.
+  // Healthy means ALL three channels are up, not any one of them. Set by
+  // whichever acknowledgement came last, a dead list channel beside a live
+  // members channel would read as healthy, and the watchdog below, which only
+  // acts on an unhealthy socket, would never come to fetch what it was missing.
   const CHANNEL_COUNT = 3
   const subscribedChannels = new Set<string>()
   const reconnectInProgress = ref(false)
@@ -72,11 +71,11 @@ export function useListRealtime({
 
   // ─── Pulling fresh state back, once ──────────────────────────────────────────
   // Everything here reads the same two things — the item list and the list
-  // header — and three separate paths used to ask for them independently, none
-  // able to see the others: the visibility handler, the reconnect it schedules,
-  // and each channel's own SUBSCRIBED callback. Coming back to the app ran all
-  // of them, so one foreground cost fourteen queries where four answer the
-  // question. On a phone, foregrounding is most of what happens to an app.
+  // header — and three paths ask for them, none able to see the others: the
+  // visibility handler, the reconnect it schedules, and each channel's own
+  // SUBSCRIBED callback. Coming back to the app fires all of them, which
+  // uncoalesced is fourteen queries where four answer the question. On a phone,
+  // foregrounding is most of what happens to an app.
   //
   // A trailing window rather than a lock, because the asks are naturally
   // simultaneous: three subscribe acknowledgements land within milliseconds of
@@ -133,7 +132,7 @@ export function useListRealtime({
     }
   }
 
-  function handleVisibilityOrOnline() {
+  function handleVisibilityChange() {
     if (!hasInitialized.value) return
 
     if (document.visibilityState === 'visible') {
@@ -143,7 +142,7 @@ export function useListRealtime({
       }
     } else {
       // Backgrounded: drop the socket rather than hold a connection nobody is
-      // looking at. handleVisibilityOrOnline reconnects on the way back.
+      // looking at. handleVisibilityChange reconnects on the way back.
       if (db && db.realtime) {
         db.realtime.disconnect()
       }
@@ -152,12 +151,11 @@ export function useListRealtime({
   }
 
   // Every reconnect path is gated on this, so the connectivity signal it reads
-  // decides whether realtime can recover at all. It used to be navigator.onLine,
-  // which lib/connectivity exists precisely because of: inside the Android
-  // WebView that flag is unreliable and its online/offline events can fail to
-  // fire. A WebView wrongly reporting offline therefore pinned this to false and
-  // took the watchdog and the user-activity handler down with it — leaving the
-  // socket dead on the one platform the Capacitor status was added to serve.
+  // decides whether realtime can recover at all. Not navigator.onLine, which
+  // lib/connectivity exists precisely because of: inside the Android WebView
+  // that flag is unreliable and its online/offline events can fail to fire. A
+  // WebView wrongly reporting offline would pin this to false and take the
+  // watchdog and the user-activity handler down with it.
   function shouldKeepRealtimeActive() {
     return hasInitialized.value
       && !!listId.value
@@ -338,8 +336,8 @@ export function useListRealtime({
               items.value = sortItemsForDisplay(items.value)
             } else {
               // Through the refresh window like every other re-read here, not a
-              // direct loadItems: a burst of these used to start one fetch each,
-              // and they settled in completion order, older over newer.
+              // direct loadItems: a burst of these would start one fetch each,
+              // settling in completion order, older over newer.
               requestRefresh({ items: true })
             }
           },
@@ -452,20 +450,17 @@ export function useListRealtime({
     }
   }
 
-  // Unregisters the connectivity subscription below.
-  let stopReconnect: (() => void) | null = null
-
   onMounted(() => {
     // On `document`, which is where the event is actually dispatched. It bubbles
     // to window, so the old binding worked — but HomeView listens on document
     // for the same signal, and two spellings of one API is a pause for whoever
     // reads them next.
-    document.addEventListener('visibilitychange', handleVisibilityOrOnline)
-    // Not window's 'online' event: in a WebView it can simply never fire, which
-    // left this the dead half of the recovery path. lib/connectivity fires its
-    // handlers off the Capacitor status (with the window events as its own web
-    // fallback), so subscribing here covers both platforms through one signal.
-    stopReconnect = onReconnect(handleVisibilityOrOnline)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    // Coming back online is not handled here. HomeView owns that edge
+    // (handleBackOnline): it flushes the offline queue, reloads and calls
+    // setupRealtimeSubscriptions, whose subscribe reconnects the socket.
+    // Answering the same edge here too fetched everything twice and rebuilt
+    // the channels twice on every reconnect.
     window.addEventListener('pointerdown', handleUserActivity)
     window.addEventListener('keydown', handleUserActivity)
     window.addEventListener('touchstart', handleUserActivity, { passive: true })
@@ -475,11 +470,7 @@ export function useListRealtime({
   onBeforeUnmount(() => {
     cleanupRealtimeSubscriptions()
     cleanupReconnectResources()
-    document.removeEventListener('visibilitychange', handleVisibilityOrOnline)
-    if (stopReconnect) {
-      stopReconnect()
-      stopReconnect = null
-    }
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.removeEventListener('pointerdown', handleUserActivity)
     window.removeEventListener('keydown', handleUserActivity)
     window.removeEventListener('touchstart', handleUserActivity)

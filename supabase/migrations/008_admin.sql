@@ -7,7 +7,7 @@
 -- security_events is scoped to nobody at all (RLS on, zero policies). That is
 -- the correct posture for an app where the only reader is a member, and it means
 -- there is no query a client can issue that answers "how many lists are
--- there". The FamCart-admin dashboard needs exactly those answers.
+-- there". The Bagful-admin dashboard needs exactly those answers.
 --
 -- Three ways to give it them, and only the third is acceptable:
 --
@@ -1740,7 +1740,7 @@ grant execute on function public.admin_list_admins() to authenticated;
 
 -- ─── what search succeeded at, and what it missed ────────────────────────────
 -- Both of these belong to the Search Analytics section, and both need saying
--- plainly: NEITHER IS A SEARCH LOG. FamCart records no searches at all --
+-- plainly: NEITHER IS A SEARCH LOG. Bagful records no searches at all --
 -- search_catalog() is a stable function that selects rows and writes nothing, so
 -- no query string, result count or timing exists in any of the three databases.
 --

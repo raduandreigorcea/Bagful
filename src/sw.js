@@ -1,5 +1,5 @@
 // Custom service worker (vite-plugin-pwa injectManifest mode). Owns the
-// app-shell precache that generateSW used to emit. Push is NOT handled here:
+// app-shell precache. Push is NOT handled here:
 // OneSignal registers its own worker under /onesignal/ (see
 // public/onesignal/OneSignalSDKWorker.js), and push events, notification
 // display, and clicks all live on that registration.

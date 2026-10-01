@@ -85,9 +85,8 @@ async function renameList() {
   if (!props.isOwner) return
   const nextName = renameValue.value.trim()
   if (!props.listId || savingName.value) return
-  // An empty field is a mistake, not an instruction, and it used to be answered
-  // with nothing at all: Save sent no write, raised no dialog, and left the
-  // button looking as though it had worked. It is refused the same way the
+  // An empty field is a mistake, not an instruction, and a Save that silently
+  // did nothing would look as though it had worked. It is refused the same way the
   // ceiling below it is, because both are the same thing to whoever pressed the
   // button -- a name this list cannot have.
   if (!nextName) {

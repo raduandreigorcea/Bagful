@@ -5,13 +5,8 @@ import AppModal from './AppModal.vue'
 import AppIcon from './AppIcon.vue'
 import { t } from '../lib/i18n'
 
-// One mark per tone, all three from the icon set rather than drawn inline.
-//
-// info.svg for warning is a near-identical silhouette to the exclamation it
-// replaces -- both are a circle around a bar and a dot, and the only difference
-// is which is on top. The tick loses the ring it used to draw around itself,
-// which the danger triangle never had: the wrap behind it is already a 52px
-// disc, so every tone was carrying one circle except the one that drew two.
+// One mark per tone, all three from the icon set rather than drawn inline, and
+// none with a ring of its own: the wrap behind each is already a 52px disc.
 const TONE_ICONS: Record<string, string> = {
   danger: 'triangle-alert',
   success: 'check',

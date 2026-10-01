@@ -43,7 +43,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/OfflineView.vue'),
   },
   {
-    // Any address the app does not know, which used to render a blank page: an
+    // Any address the app does not know, rather than a blank page: an
     // old bookmark (/family-setup or /household-setup, from before the rename to
     // lists), a typo,
     // a link from a build that had a route this one does not. Home is right for
@@ -86,11 +86,11 @@ function waitForClerkLoad(isClerkLoaded: () => boolean): Promise<void> {
 // than to strand them, and a member who slips through only sees a page that can do
 // no harm.
 //
-// This used to hand-build the PostgREST URL and attach its own apikey and
-// Authorization headers, because useSupabase() needs a component context the
-// guard does not have. It now goes through the same client as everything else,
-// which means it also gets fetchWithRetry — the guard runs on cold start, which
-// is exactly when the first request tends to go out on a dead socket.
+// Through the same client as everything else (installing its own token
+// resolver, since useSupabase() needs a component context the guard does not
+// have), which means it also gets fetchWithRetry — the guard runs on cold
+// start, which is exactly when the first request tends to go out on a dead
+// socket.
 async function fetchMembershipCount(
   getToken: ReturnType<typeof useAuth>['getToken'],
   userId: ReturnType<typeof useAuth>['userId'],

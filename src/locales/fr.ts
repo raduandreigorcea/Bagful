@@ -199,6 +199,7 @@ const fr: Catalog = {
   'account.signingOut': 'Déconnexion',
   'account.confirmSignOutTitle': 'Se déconnecter ?',
   'account.confirmSignOutMessage': 'Vous devrez vous reconnecter pour voir vos listes sur cet appareil.',
+  'account.confirmSignOutUnsyncedMessage': 'Certaines modifications faites hors ligne n’ont pas encore été envoyées. Si vous vous déconnectez maintenant, elles seront perdues.',
 
   'list.title': 'Réglages de la liste',
   'list.close': 'Fermer les réglages',

@@ -90,9 +90,8 @@ export function countActiveItemsByMember(items: ShoppingItem[], userId: string):
 // returns equal-timestamp rows in an arbitrary order.
 //
 // `checked` is deliberately not part of the order. A row you tick keeps the spot
-// you found it in: ticking something used to sort it out from under your finger
-// and into a section at the bottom, which made a list you were working down
-// reshuffle itself under you.
+// you found it in: sorting it into a section at the bottom would move it out
+// from under your finger and reshuffle a list you are working down.
 export function sortItemsForDisplay<
   T extends ShoppingItem & { created_at?: unknown; checked_at?: unknown },
 >(items: T[]): T[] {

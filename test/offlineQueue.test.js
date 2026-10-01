@@ -347,6 +347,68 @@ describe('flushOfflineQueue', () => {
     expect(hasQueuedOfflineMutations(storage, USER)).toBe(false)
   })
 
+  // The insert has already left, so cancelling it out of the queue cannot
+  // recall it: the row landed with nothing left to delete it, and came back on
+  // the next refetch.
+  it('still deletes a row whose insert was on the wire when it was deleted', async () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, insertMutation('a'))
+
+    const db = createFakeDb()
+    db.handlers['shopping_list_items.insert'] = () => {
+      enqueueOfflineMutation(storage, USER, { kind: 'delete', id: 'a' })
+      return { data: null, error: null }
+    }
+    db.handlers['shopping_list_items.delete'] = () => ({ data: null, error: null })
+
+    const result = await flushOfflineQueue(storage, USER, db)
+
+    expect(result).toEqual({ flushed: 2, failed: 0, interrupted: false })
+    expect(db.calls.filter((q) => q.op === 'delete').map((q) => q.filters.id)).toEqual(['a'])
+    expect(hasQueuedOfflineMutations(storage, USER)).toBe(false)
+  })
+
+  // Same window: folding the patch into an insert that has already been sent
+  // changes a row nobody will send again, so the change was lost.
+  it('still sends an update made while the row insert was on the wire', async () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, insertMutation('a'))
+
+    const db = createFakeDb()
+    db.handlers['shopping_list_items.insert'] = () => {
+      enqueueOfflineMutation(storage, USER, { kind: 'update', id: 'a', patch: { quantity: 3 } })
+      return { data: null, error: null }
+    }
+    db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+
+    const result = await flushOfflineQueue(storage, USER, db)
+
+    expect(result).toEqual({ flushed: 2, failed: 0, interrupted: false })
+    expect(db.calls.filter((q) => q.op === 'update').map((q) => q.payload)).toEqual([{ quantity: 3 }])
+  })
+
+  it('still sends an update made while an earlier update of the row was on the wire', async () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, { kind: 'update', id: 'srv-1', patch: { quantity: 2 } })
+
+    const db = createFakeDb()
+    let tapped = false
+    db.handlers['shopping_list_items.update'] = () => {
+      if (!tapped) {
+        tapped = true
+        enqueueOfflineMutation(storage, USER, { kind: 'update', id: 'srv-1', patch: { quantity: 3 } })
+      }
+      return { data: null, error: null }
+    }
+
+    await flushOfflineQueue(storage, USER, db)
+
+    expect(db.calls.filter((q) => q.op === 'update').map((q) => q.payload)).toEqual([
+      { quantity: 2 },
+      { quantity: 3 },
+    ])
+  })
+
   // Same window, on the path that stops early. The transient branch used to
   // persist its own snapshot too, so it dropped a concurrent write just as the
   // acknowledged path did.

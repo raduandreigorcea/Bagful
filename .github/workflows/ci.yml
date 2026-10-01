@@ -28,8 +28,8 @@ jobs:
       # migration, which is the whole reason it can catch a drift at all.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # Bagful-catalog is private, which the workflow token cannot read, so it is
-      # fetched on its own with a read-only deploy key (secret CATALOG_DEPLOY_KEY,
-      # deploy key "FamCart CI (read-only)" on that repo), at the exact commit this
+      # fetched on its own with a read-only deploy key on that repo (its private
+      # half is the secret CATALOG_DEPLOY_KEY), at the exact commit this
       # repo pins for it. admin/ is private too and nothing here needs it.
       - name: Find the pinned catalog commit
         id: catalog
@@ -97,8 +97,8 @@ jobs:
       # without it there is no config.toml for --workdir to point at.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # Bagful-catalog is private, which the workflow token cannot read, so it is
-      # fetched on its own with a read-only deploy key (secret CATALOG_DEPLOY_KEY,
-      # deploy key "FamCart CI (read-only)" on that repo), at the exact commit this
+      # fetched on its own with a read-only deploy key on that repo (its private
+      # half is the secret CATALOG_DEPLOY_KEY), at the exact commit this
       # repo pins for it. admin/ is private too and nothing here needs it.
       - name: Find the pinned catalog commit
         id: catalog

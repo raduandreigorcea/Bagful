@@ -15,7 +15,7 @@ function fakeStorage(entries) {
   }
 }
 
-describe('carrying settings over from the FamCart names', () => {
+describe('carrying settings over from old key names', () => {
   it('moves every famcart key to its bagful name', () => {
     const storage = fakeStorage({
       'famcart-theme': 'dark',
@@ -29,6 +29,22 @@ describe('carrying settings over from the FamCart names', () => {
       'bagful-locale:user-1': 'ro',
       'bagful.shops.v2': '[]',
       bagful_tour_seen_v4: '1',
+    })
+  })
+
+  it('moves the household cache keys to their list names, from either old prefix', () => {
+    const storage = fakeStorage({
+      'bagful-household-snapshot:user-1': 'snap-1',
+      'bagful-active-household:user-1': 'fam-1',
+      'famcart-household-snapshot:user-2': 'snap-2',
+      'famcart-active-household:user-2': 'fam-2',
+    })
+    migrateLegacyKeys(storage)
+    expect(storage.dump()).toEqual({
+      'bagful-list-snapshot:user-1': 'snap-1',
+      'bagful-active-list:user-1': 'fam-1',
+      'bagful-list-snapshot:user-2': 'snap-2',
+      'bagful-active-list:user-2': 'fam-2',
     })
   })
 

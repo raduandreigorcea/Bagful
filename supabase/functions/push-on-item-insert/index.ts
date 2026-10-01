@@ -60,14 +60,15 @@ async function fetchMembers(listId: string) {
     .eq('list_id', listId)
 }
 
-// The actor's display name from their profile row; 'Someone' if it is missing.
-async function fetchDisplayName(userId: string): Promise<string> {
+// The actor's display name from their profile row, or null if it is missing;
+// the message then says "Someone" in each language (see ../_shared/push.ts).
+async function fetchDisplayName(userId: string): Promise<string | null> {
   const { data } = await supabase
     .from('profiles')
     .select('display_name')
     .eq('user_id', userId)
     .maybeSingle()
-  return data?.display_name || 'Someone'
+  return data?.display_name || null
 }
 
 async function sendPush(options: {

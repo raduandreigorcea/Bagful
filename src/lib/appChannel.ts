@@ -80,11 +80,10 @@ export function sentryEnvironment(mode: string, channel: AppChannel): string {
 /**
  * Stamp the channel on the root element.
  *
- * Nightly used to repaint the brand tokens and the browser chrome indigo from
- * here. It was dropped on 2026-09-16: a nightly build that looks different from
- * production made every design judgement on nightly a judgement about a screen
+ * Nightly repaints nothing: a nightly build that looks different from
+ * production makes every design judgement on nightly a judgement about a screen
  * production never draws. The NIGHTLY badge in the desktop header and the
- * `-nightly` version are how a nightly build announces itself now. The
+ * `-nightly` version are how a nightly build announces itself. The
  * attribute stays, for devtools and for anything that has to tell the two apart
  * from CSS.
  */

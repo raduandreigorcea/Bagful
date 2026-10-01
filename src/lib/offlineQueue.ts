@@ -1,4 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppClient } from '../supabase'
+import type { TablesInsert, TablesUpdate } from '../types/database'
 import { findActiveItemByName, type ShoppingItem } from './shoppingList'
 import { captureException } from './errorReporting'
 import { clearUserScopedKeys, userScopedKey } from './perUserStorage'
@@ -13,12 +14,12 @@ import { sumQuantities } from './limits'
 // like, the queue restores what still has to reach the server.
 
 export type OfflineMutation =
-  | { kind: 'insert'; id: string; row: Record<string, unknown> }
-  | { kind: 'update'; id: string; patch: Record<string, unknown> }
+  | { kind: 'insert'; id: string; row: TablesInsert<'shopping_list_items'> }
+  | { kind: 'update'; id: string; patch: TablesUpdate<'shopping_list_items'> }
   | { kind: 'delete'; id: string }
   // A checkout made offline, replayed through buy_items so it still reaches
-  // purchase history (and the list's push) instead of being queued as bare
-  // deletes, which it used to be. `id` names the checkout, not a row, so the
+  // purchase history (and the list's push), which bare deletes would miss.
+  // `id` names the checkout, not a row, so the
   // per-row coalescing below never touches it. Safe to replay late or twice:
   // buy_items moves only rows that are still ticked and in the caller's
   // list, so a row already bought, or unticked since by someone else, is
@@ -47,7 +48,7 @@ interface StoredQueue {
 // typing them as the real client keeps the `any` out: SupabaseClient['from'] carries PostgREST's own
 // builder types, so a typo in a filter or a patch is caught rather than waved
 // through. Structural rather than the whole client so tests can hand in a fake.
-type Db = Pick<SupabaseClient, 'from' | 'rpc'>
+type Db = Pick<AppClient, 'from' | 'rpc'>
 
 // One queue per account, rather than one queue with an account stamped on it.
 //
@@ -120,7 +121,14 @@ export function loadOfflineQueue(storage: Storage, userId: string): OfflineMutat
     if (!Array.isArray(stored.mutations)) return []
     return stored.mutations.map((mutation) =>
       mutation.kind === 'insert'
-        ? { ...mutation, row: renameLegacyRowKeys(mutation.row) }
+        ? {
+            ...mutation,
+            // Read back from storage, so the shape is whatever an older build
+            // wrote; renameLegacyRowKeys is what makes it today's row again.
+            row: renameLegacyRowKeys(
+              mutation.row as Record<string, unknown>,
+            ) as TablesInsert<'shopping_list_items'>,
+          }
         : mutation,
     )
   } catch {
@@ -158,18 +166,31 @@ function saveOfflineQueue(storage: Storage, userId: string, queued: OfflineMutat
   }
 }
 
+// The mutation flushOfflineQueue has sent and not yet heard back about. It can
+// no longer be changed or cancelled, so nothing may coalesce into it: a patch
+// folded into it is never sent, and cancelling it does not stop the row landing.
+let onWire: { userId: string; kind: OfflineMutation['kind']; id: string } | null = null
+
 // Append a mutation, coalescing against what is already queued so the replay
 // sends the fewest requests and never touches rows the server has never seen:
 // - update after a queued insert folds the patch into the insert row
 // - update after a queued update merges the patches (fields are absolute values)
 // - delete of a queued insert cancels the insert (and its updates) entirely
 // - delete otherwise supersedes any queued updates for that row
+// None of this applies to the mutation on the wire; see onWire.
 export function enqueueOfflineMutation(
   storage: Storage,
   userId: string,
   mutation: OfflineMutation,
 ): void {
-  const mutations = loadOfflineQueue(storage, userId)
+  const loaded = loadOfflineQueue(storage, userId)
+  const wire = onWire?.userId === userId ? onWire : null
+  const isOnWire = (m: OfflineMutation) => !!wire && m.kind === wire.kind && m.id === wire.id
+  // Only what has not been sent yet can be coalesced into or cancelled.
+  const mutations = loaded.filter((m) => !isOnWire(m))
+  const inFlight = loaded.filter(isOnWire)
+  const save = (queued: OfflineMutation[]) =>
+    saveOfflineQueue(storage, userId, [...inFlight, ...queued])
 
   if (mutation.kind === 'update') {
     const insert = mutations.find(
@@ -178,7 +199,7 @@ export function enqueueOfflineMutation(
     )
     if (insert) {
       insert.row = { ...insert.row, ...mutation.patch }
-      saveOfflineQueue(storage, userId, mutations)
+      save(mutations)
       return
     }
     const update = mutations.find(
@@ -187,7 +208,7 @@ export function enqueueOfflineMutation(
     )
     if (update) {
       update.patch = { ...update.patch, ...mutation.patch }
-      saveOfflineQueue(storage, userId, mutations)
+      save(mutations)
       return
     }
   }
@@ -195,18 +216,20 @@ export function enqueueOfflineMutation(
   if (mutation.kind === 'delete') {
     const hadQueuedInsert = mutations.some((m) => m.kind === 'insert' && m.id === mutation.id)
     const kept = mutations.filter((m) => m.id !== mutation.id)
-    // The row only ever existed locally — nothing to delete on the server.
+    // The row only ever existed locally — nothing to delete on the server. An
+    // insert already on the wire does not count: it is not in `mutations`, and
+    // the row it creates still needs this delete.
     if (hadQueuedInsert) {
-      saveOfflineQueue(storage, userId, kept)
+      save(kept)
       return
     }
     kept.push(mutation)
-    saveOfflineQueue(storage, userId, kept)
+    save(kept)
     return
   }
 
   mutations.push(mutation)
-  saveOfflineQueue(storage, userId, mutations)
+  save(mutations)
 }
 
 // Keep the queue inside its ceiling, dropping from the front when it is over.
@@ -304,18 +327,16 @@ export function isRateLimitedError(error: unknown): boolean {
 // It lives beside isRateLimitedError because it is the same KIND of thing: a
 // server rejection that is a rule doing its job, not a fault, told apart from a
 // real failure by sniffing a raised exception's text. Sniffing is fragile, which
-// is the argument for having exactly one copy of it rather than the two
-// hand-written ones this replaces.
+// is the argument for having exactly one copy of it.
 //
-// `details` is read as well as `message`, which neither copy did: PostgREST
+// `details` is read as well as `message`: PostgREST
 // surfaces a raised exception's DETAIL there, and the field it lands in has
 // moved between versions — the same reason isRateLimitedError above checks both.
 // A cap misread as a fault shows a generic error where the friendly popup
 // belongs, and reports the trigger to Sentry.
 //
-// Only the machine token, which the trigger raises as its DETAIL. It also used
-// to match the words `limit of` in the human message, the trigger's older
-// wording, which any other error saying "limit of" would have matched too.
+// Only the machine token, which the trigger raises as its DETAIL, never the
+// human message: words like "limit of" turn up in other errors too.
 export function isItemLimitError(error: unknown): boolean {
   if (!error) return false
   const { message, details } = error as { message?: string; details?: string }
@@ -404,10 +425,9 @@ async function applyMutation(
 // Whether two queued mutations are the same intent, for the purpose of striking
 // one off after it has been sent.
 //
-// Kind and id, not deep equality. A coalesce landing during the request can
-// rewrite the row of a queued insert in place (see enqueueOfflineMutation), and
-// a mutation that no longer deep-equals the one we sent is still the one we
-// sent — refusing to recognise it would leave it at the head forever.
+// Kind and id, not deep equality: identity is all a strike-off needs, and the
+// stored copy is a fresh parse of storage, never the same object as the one
+// sent.
 function isSameMutation(a: OfflineMutation, b: OfflineMutation): boolean {
   return a.kind === b.kind && a.id === b.id
 }
@@ -420,16 +440,11 @@ function isSameMutation(a: OfflineMutation, b: OfflineMutation): boolean {
 // STORAGE IS RE-READ AROUND EVERY REQUEST, and that is the whole shape of this
 // loop rather than a detail of it.
 //
-// This used to load the queue once and write that array back after each
-// mutation. Every one of those writes therefore restored a snapshot taken
-// before the loop started — so anything enqueueOfflineMutation had written
-// during the preceding `await` was overwritten and gone, with the optimistic
-// row still on screen and nothing said. The window is not theoretical: a flush
-// runs on reconnect, on focus and on every watchdog tick, and costs a round
-// trip per mutation. If the connection drops inside one, the user's next tap
-// takes the offline path, lands in storage, and was erased by the next
-// iteration. Silent loss of a user's writes, in the module written to prevent
-// exactly that.
+// Carrying one array across the loop would write back, after each mutation, a
+// snapshot taken before it started, erasing whatever enqueueOfflineMutation
+// wrote during the preceding `await` while its row stays on screen. The window
+// is real: a flush runs on reconnect, on focus and on every watchdog tick, and
+// a tap made after the connection drops mid-flush lands in storage right then.
 //
 // So the queue in storage is the authority throughout, and this only ever
 // strikes off the one mutation it has just settled.
@@ -447,7 +462,14 @@ export async function flushOfflineQueue(
     if (!queued.length) return result
 
     const sent = queued[0]!
-    const { ok, transient } = await applyMutation(db, sent)
+    onWire = { userId, kind: sent.kind, id: sent.id }
+    let outcome
+    try {
+      outcome = await applyMutation(db, sent)
+    } finally {
+      onWire = null
+    }
+    const { ok, transient } = outcome
 
     // The window closed. Whatever is in storage now is what the next decision
     // has to be made against.
@@ -469,10 +491,11 @@ export async function flushOfflineQueue(
     // Strike off what was just settled, and only that. Anything enqueued while
     // it was on the wire sits behind it and survives untouched.
     //
-    // The head can fail to match: a delete arriving for a row whose insert was
-    // in flight cancels that insert out of the queue entirely, so there is
-    // nothing left to remove. Leaving the queue alone is right there, and the
-    // loop still makes progress because the next pass reads a different head.
+    // The head can fail to match, e.g. the queue was cleared by a sign-out
+    // while this was on the wire. Leaving the queue alone is right there, and
+    // the loop still makes progress because the next pass reads a different
+    // head. (A delete or update for the row on the wire queues behind it
+    // rather than rewriting it; see onWire.)
     if (current.length && isSameMutation(current[0]!, sent)) {
       saveOfflineQueue(storage, userId, current.slice(1))
     }

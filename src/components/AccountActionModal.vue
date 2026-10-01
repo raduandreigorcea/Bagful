@@ -67,11 +67,9 @@ const resolvedDisplayName = computed(() => props.displayName || t('account.fallb
         </div>
 
         <div class="account-dialog__body">
-          <!-- Who you are AND the way to change it, in one control. This used to
-               be a passive card sitting on top of a "Profile" row hinted "Name,
-               photo, password" -- but the card was already showing the name and
-               the photo, so the row underneath was a second, wordier copy of
-               what the user was looking at. Tapping your own face to edit it
+          <!-- Who you are AND the way to change it, in one control, rather
+               than a card with a separate "Profile" row under it repeating the
+               name and photo the card already shows. Tapping your own face to edit it
                costs a row less and needs no label to explain it; the chevron
                says it leads somewhere and the accessible name says where. -->
           <button

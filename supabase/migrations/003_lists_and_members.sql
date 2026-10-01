@@ -63,17 +63,17 @@ alter table public.profiles add constraint profiles_image_url_scheme
 -- Deleting a profile row does not stick. The app upserts display_name and
 -- image_url on every boot to keep them fresh (see the note above
 -- join_list_with_code), so the row returns the moment that person opens
--- FamCart -- and their Clerk account, which this database cannot touch, is
+-- Bagful -- and their Clerk account, which this database cannot touch, is
 -- what let them in. A delete here removes a row, not a person.
 --
 -- So the row stays and the upsert refuses to revive it. The person can still
--- sign into Clerk; FamCart turns them away. See the banned_at guard in the two
+-- sign into Clerk; Bagful turns them away. See the banned_at guard in the two
 -- profile upserts below.
 alter table public.profiles
   add column if not exists banned_at timestamptz;
 
 comment on column public.profiles.banned_at is
-  'When an admin barred this account from the app. Null means allowed. The profile upserts raise when it is set, so the person can still sign into Clerk but FamCart refuses them.';
+  'When an admin barred this account from the app. Null means allowed. The profile upserts raise when it is set, so the person can still sign into Clerk but Bagful refuses them.';
 
 alter table public.profiles enable row level security;
 
@@ -850,7 +850,7 @@ begin
 end;
 $$;
 
-revoke all on function public.create_list(text, text, text, text) from public;
+revoke all on function public.create_list(text, text, text, text) from public, anon;
 grant execute on function public.create_list(text, text, text, text) to authenticated;
 
 -- ─── joining by invite code ──────────────────────────────────────────────────
@@ -978,7 +978,7 @@ begin
 end;
 $$;
 
-revoke all on function public.join_list_with_code(text, text, text) from public;
+revoke all on function public.join_list_with_code(text, text, text) from public, anon;
 grant execute on function public.join_list_with_code(text, text, text) to authenticated;
 
 -- ─── grants ──────────────────────────────────────────────────────────────────

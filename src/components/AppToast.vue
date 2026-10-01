@@ -11,9 +11,9 @@ import { pauseToast, resumeToast, triggerToastAction, useToast } from '../lib/us
 // whole job of a toast for someone who cannot see it.
 //
 // Paused by the pointer MOVING over it, not entering it: a toast that slides in
-// under a mouse left resting there fires pointerenter too, and that paused it
-// for as long as the mouse stayed put, holding back the delete its Undo was
-// guarding (found by the bot swarm). pauseToast is idempotent, so the stream
+// under a mouse left resting there fires pointerenter too, which would pause it
+// for as long as the mouse stayed put, holding back the delete its Undo is
+// guarding. pauseToast is idempotent, so the stream
 // of moves costs nothing after the first.
 const { toasts } = useToast()
 </script>

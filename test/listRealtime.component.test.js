@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { defineComponent, ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { useListRealtime } from '../src/lib/listRealtime'
+import { __setOnlineForTest } from '../src/lib/connectivity'
 
 // Fake realtime client: channels record their postgres_changes listeners so
 // tests can fire payloads at them directly.
@@ -219,6 +220,27 @@ describe('refresh coalescing', () => {
 
     expect(loadListHeader).toHaveBeenCalledTimes(1)
     expect(loadItems).not.toHaveBeenCalled()
+
+    wrapper.unmount()
+  })
+
+  it('leaves coming back online to the view, which syncs it once', async () => {
+    const { db, loadItems, loadListHeader, wrapper } = await mountRealtime()
+    await settle()
+    loadItems.mockClear()
+    loadListHeader.mockClear()
+    const channelsBefore = db.channels.length
+
+    // HomeView's reconnect handler flushes the queue, reloads and resubscribes.
+    // Answering the same edge here as well fetched the list twice and rebuilt
+    // the channels twice for every reconnect.
+    __setOnlineForTest(false)
+    __setOnlineForTest(true)
+    await settle()
+
+    expect(loadItems).not.toHaveBeenCalled()
+    expect(loadListHeader).not.toHaveBeenCalled()
+    expect(db.channels).toHaveLength(channelsBefore)
 
     wrapper.unmount()
   })

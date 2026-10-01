@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────
--- Duplicate / stray-row audit for FamCart.
+-- Duplicate / stray-row audit for Bagful.
 --
 -- Every statement here is a read-only SELECT: safe to run against production,
 -- nothing is written or deleted. Paste a section into the Supabase SQL editor

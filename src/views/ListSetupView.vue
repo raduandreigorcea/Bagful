@@ -174,12 +174,11 @@ async function createList() {
     // the membership references), the list and the membership are one
     // transaction, so a rejected membership takes the list row back with it.
     //
-    // This used to be three client writes with a compensating delete if the last
-    // one failed. When that delete failed too — it is a network call like any
-    // other — the leftover list permanently occupied the account's one
-    // ownership slot (lists_one_per_owner) while being invisible to every
-    // list in the app, which are all built from list_members. There was no
-    // way back from it without SQL.
+    // Not three client writes with a compensating delete: when that delete
+    // failed too (it is a network call like any other), the leftover list would
+    // occupy the account's one ownership slot (lists_one_per_owner) while being
+    // invisible to every list view, which are all built from list_members, with
+    // no way back without SQL.
     const { data: list, error: createErr } = await db
       .rpc('create_list', {
         p_name: nextListName,
