@@ -1,13 +1,13 @@
 // @vitest-environment happy-dom
 //
-// The identity card is the way to the Clerk profile. It used to be a passive
+// The identity card is the way to the profile screen. It used to be a passive
 // block of name and email sitting above a "Profile" row hinted "Name, photo,
 // password" — two elements for one idea, since the card was already showing the
 // name and the photo the row offered to change. The row is gone and the card
 // carries the action.
 //
 // Worth pinning because the merge moved an emit onto an element that had never
-// been a control: nothing else in the app reaches openUserProfile(), so if the
+// been a control: nothing else in the app opens AccountProfileModal, so if the
 // card stops emitting, editing your profile becomes unreachable rather than
 // merely awkward.
 import { describe, it, expect } from 'vitest'
@@ -45,7 +45,7 @@ describe('AccountActionModal identity card', () => {
   // "Radu radu@example.com, button" and never says where it goes.
   it('names the action for screen readers, not the person', () => {
     expect(card(mountModal()).attributes('aria-label')).toBe(
-      'Edit your profile: name, photo, password',
+      'Edit your profile: name, photo, delete account',
     )
   })
 

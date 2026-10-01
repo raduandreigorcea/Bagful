@@ -153,6 +153,8 @@ async function checkAgreement(seconds = 5) {
 async function backOnline(b) {
   await b.context.setOffline(false)
   b.offlineUntil = 0
+  // Kicked while offline: its 10s to notice start now, not at the kick.
+  if (b.kicked) b.kickedAt = Date.now()
   note(`bot${b.n} back online`)
 }
 
@@ -240,7 +242,9 @@ async function race() {
 // A kicked bot's own app must notice within 10s, without a reload. Then it
 // comes back in with whatever the invite code is by now.
 async function rejoin(b) {
-  if (Date.now() - b.kickedAt < 10_000) return
+  // An offline phone cannot hear it was removed, and cannot load the page to
+  // join again. backOnline() restarts the 10s once it is reachable.
+  if (b.offlineUntil || Date.now() - b.kickedAt < 10_000) return
   if (await addButton(b.page).isVisible()) {
     await finding(`bot${b.n} was removed from the list ${Math.round((Date.now() - b.kickedAt) / 1000)}s ago and its screen still shows the list`)
   }

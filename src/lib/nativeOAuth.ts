@@ -100,6 +100,31 @@ export async function startNativeOAuth(
   )
 }
 
+// The slice of Clerk's User that linking a provider touches. Pass the raw
+// instance (toRaw), for the private-field reason above.
+export interface NativeOAuthUser {
+  createExternalAccount(params: { strategy: string; redirectUrl: string }): Promise<{
+    verification: { externalVerificationRedirectURL: URL | null } | null
+  }>
+  reload(): Promise<unknown>
+}
+
+// Linking a provider to the signed-in user (AccountProfileModal) is the same
+// browser round trip as signing in, through the same bounce page. The
+// verification finishes on Clerk's side before it redirects, so coming back is
+// only a matter of reloading the user. Resolves false when the browser was
+// closed first.
+export async function linkNativeOAuth(user: NativeOAuthUser, strategy: string): Promise<boolean> {
+  const account = await user.createExternalAccount({ strategy, redirectUrl: NATIVE_SSO_BOUNCE_URL })
+  const verificationUrl = account.verification?.externalVerificationRedirectURL
+  if (!verificationUrl) {
+    throw new Error('Clerk returned no verification URL for linking.')
+  }
+  const callbackUrl = await openBrowserAndAwaitCallback(verificationUrl.toString())
+  await user.reload()
+  return callbackUrl !== null
+}
+
 // Opens the Custom Tab and waits for whichever comes first: the deep-link
 // callback (success) or the tab being dismissed (null). Listeners are always
 // detached afterwards so an abandoned flow cannot hijack a later one.

@@ -341,6 +341,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_transfer_candidates: {
+        Args: never
+        Returns: {
+          display_name: string
+          image_url: string
+          owns_list: boolean
+          user_id: string
+        }[]
+      }
       active_list_ids: { Args: never; Returns: string[] }
       add_custom_product: {
         Args: {
@@ -655,6 +664,7 @@ export type Database = {
           name: string
         }[]
       }
+      delete_my_account: { Args: { p_new_owner?: string }; Returns: undefined }
       import_catalog_products: {
         Args: {
           p_dry_run?: boolean
