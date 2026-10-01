@@ -45,8 +45,8 @@ jobs:
           ref: master
       # The test step reads the catalog's market list (test/catalog/).
       # Bagful-catalog is private, which the workflow token cannot read, so it is
-      # fetched on its own with a read-only deploy key (secret CATALOG_DEPLOY_KEY,
-      # deploy key "FamCart CI (read-only)" on that repo), at the exact commit this
+      # fetched on its own with a read-only deploy key on that repo (its private
+      # half is the secret CATALOG_DEPLOY_KEY), at the exact commit this
       # repo pins for it. admin/ is private too and nothing here needs it.
       - name: Find the pinned catalog commit
         id: catalog
@@ -296,8 +296,8 @@ jobs:
       # whatever its maintainer points that tag at next.
       #
       # The version goes in the NAME (--title), not just the body, because the
-      # name is all the releases list shows -- "FamCart - latest build" told you
-      # a build existed but never which one. The tag stays `latest` regardless:
+      # name is all the releases list shows, and "latest build" alone says a
+      # build exists but never which one. The tag stays `latest` regardless:
       # it is the rolling download URL and must not move with the version.
       #
       # The name is also read by the app itself: src/lib/nativeUpdate.ts pulls

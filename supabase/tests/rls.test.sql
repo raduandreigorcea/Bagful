@@ -1,4 +1,4 @@
--- RLS / security-invariant tests for FamCart.
+-- RLS / security-invariant tests for Bagful.
 --
 -- Run with the Supabase CLI against the local stack (it applies migrations first):
 --   supabase test db
@@ -1621,7 +1621,7 @@ reset role;
 --
 -- The reason banned_at exists rather than a deleted_at on profiles: the app
 -- upserts display_name and image_url on every boot, so a deleted profile row
--- returns the moment that person opens FamCart. Their Clerk account is a
+-- returns the moment that person opens Bagful. Their Clerk account is a
 -- separate system this database cannot reach. Flagging the row is only half of
 -- it; refusing the upsert is the half that works.
 --

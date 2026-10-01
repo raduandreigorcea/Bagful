@@ -55,7 +55,7 @@ jobs:
       - name: Query security_digest()
         id: query
         env:
-          # Connection string for the famcart_security_auditor role created in
+          # Connection string for the bagful_security_auditor role created in
           # supabase/migrations/002_security_audit.sql. That role can
           # execute exactly one function and holds no table privileges, so this
           # secret is not a database credential in the usual sense — it cannot
@@ -63,13 +63,13 @@ jobs:
           #
           # SETTING IT UP (once):
           #   1. In the Supabase SQL editor, give the role a password:
-          #        alter role famcart_security_auditor with password '<generated>';
+          #        alter role bagful_security_auditor with password '<generated>';
           #   2. Take the *Session pooler* connection string from
           #      Project Settings → Database. Not the direct connection: direct
           #      is IPv6-only on current projects and GitHub runners are
           #      IPv4-only, so a direct URL fails here with "network unreachable".
           #   3. In that string, replace the username `postgres.<project-ref>`
-          #      with `famcart_security_auditor.<project-ref>` — Supavisor takes
+          #      with `bagful_security_auditor.<project-ref>` — Supavisor takes
           #      the role name before the dot — and the password with the one
           #      from step 1.
           #   4. Save it as the repository secret SECURITY_DIGEST_DB_URL
