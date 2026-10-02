@@ -81,6 +81,10 @@ export function createFakeDb() {
         query.wantSingle = 'maybe'
         return query
       },
+      abortSignal(signal) {
+        query.signal = signal
+        return query
+      },
       // Awaiting the builder executes it, like the real client.
       then(onFulfilled, onRejected) {
         return Promise.resolve(dispatch(query)).then(onFulfilled, onRejected)
@@ -96,6 +100,10 @@ export function createFakeDb() {
       table: 'rpc',
       op: fn,
       params,
+      abortSignal(signal) {
+        query.signal = signal
+        return query
+      },
       then(onFulfilled, onRejected) {
         return Promise.resolve(dispatch(query)).then(onFulfilled, onRejected)
       },

@@ -7,12 +7,13 @@ import type { PropType } from 'vue'
 defineProps({
   // primary → filled green · secondary → subtle grey · danger → filled red ·
   // warning → amber · ghost → text-only
+  // Typed rather than validated, so a misspelt variant fails the typecheck
+  // instead of warning at runtime in development only.
   variant: {
-    type: String,
+    type: String as PropType<'primary' | 'secondary' | 'danger' | 'warning' | 'ghost'>,
     default: 'primary',
-    validator: (v: string) => ['primary', 'secondary', 'danger', 'warning', 'ghost'].includes(v),
   },
-  size: { type: String, default: 'md', validator: (v: string) => ['sm', 'md'].includes(v) },
+  size: { type: String as PropType<'sm' | 'md'>, default: 'md' },
   // Fills the available width — flex:1 inside a button row, 100% otherwise.
   block: { type: Boolean, default: false },
   // Narrowed so it lands on <button type> without a cast.

@@ -208,7 +208,7 @@ describe('switching list while a load for the previous one is still in flight', 
 describe('switching list with a quantity tap still waiting to be sent', () => {
   it('sends the tap for the list being left', async () => {
     const wrapper = await bootHome()
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
     const shoppingList = wrapper.findComponent({ name: 'ShoppingList' })
     const row = shoppingList.props('items')[0]
 
@@ -217,8 +217,7 @@ describe('switching list with a quantity tap still waiting to be sent', () => {
     wrapper.findComponent(AppNavBar).vm.$emit('switch-list', 'fam-2')
     await flushPromises()
 
-    const update = mocks.db.calls.find((q) => q.op === 'update')
-    expect(update?.filters.id).toBe('item-fam-1')
-    expect(update?.payload).toEqual({ quantity: 4 })
+    const update = mocks.db.calls.find((q) => q.op === 'add_item_quantity')
+    expect(update?.params).toEqual({ p_id: 'item-fam-1', p_delta: 3 })
   })
 })

@@ -87,15 +87,29 @@ async function mountHome() {
   // These tests are about the notifications prompt, which follows the one-time
   // onboarding tour. Mark the tour seen so it doesn't intercept the first run.
   markTourSeen(localStorage)
-  const wrapper = mount(HomeView, { shallow: true })
+  const wrapper = mount(HomeView, {
+    shallow: true,
+    // NotificationPromptModal is a lazy component in HomeView. A shallow stub of one loses
+    // its props, so the loader and the modal itself are rendered for real.
+    global: { stubs: { AsyncComponentWrapper: false, NotificationPromptModal: false } },
+  })
   mountedWrappers.push(wrapper)
   await flushPromises()
+  await flushPromises()
+  // The modal is a lazy component (see HomeView): let its chunk arrive.
+  await vi.dynamicImportSettled()
   await flushPromises()
   return wrapper
 }
 
 function prompt(wrapper) {
   return wrapper.findComponent(NotificationPromptModal)
+}
+
+// Not mounted until it first opens (see HomeView), so absent means closed.
+function promptOpen(wrapper) {
+  const modal = prompt(wrapper)
+  return modal.exists() && modal.props('open')
 }
 
 function notificationErrorMessage(wrapper) {
@@ -131,7 +145,7 @@ describe('first-login notification prompt', () => {
   it('stays silent in desktop browsers, leaving the decision for a phone', async () => {
     mocks.isDesktop = true
     const wrapper = await mountHome()
-    expect(prompt(wrapper).props('open')).toBe(false)
+    expect(promptOpen(wrapper)).toBe(false)
     // Unset preference: the same account is still greeted on a mobile device.
     expect(getNotificationPreference(localStorage, 'user-1')).toBe(null)
   })
@@ -139,12 +153,12 @@ describe('first-login notification prompt', () => {
   it('stays silent when the user already decided', async () => {
     setNotificationPreference(localStorage, 'user-1', 'off')
     const wrapper = await mountHome()
-    expect(prompt(wrapper).props('open')).toBe(false)
+    expect(promptOpen(wrapper)).toBe(false)
 
     localStorage.clear()
     setNotificationPreference(localStorage, 'user-1', 'on')
     const second = await mountHome()
-    expect(prompt(second).props('open')).toBe(false)
+    expect(promptOpen(second)).toBe(false)
   })
 
   it('accepting saves "on" and subscribes the signed-in user', async () => {
@@ -152,7 +166,7 @@ describe('first-login notification prompt', () => {
     prompt(wrapper).vm.$emit('accept')
     await flushPromises()
 
-    expect(prompt(wrapper).props('open')).toBe(false)
+    expect(promptOpen(wrapper)).toBe(false)
     expect(getNotificationPreference(localStorage, 'user-1')).toBe('on')
     expect(mocks.enablePush).toHaveBeenCalledWith('user-1')
     expect(notificationErrorMessage(wrapper)).toBe('')
@@ -183,7 +197,7 @@ describe('first-login notification prompt', () => {
     prompt(wrapper).vm.$emit('decline')
     await flushPromises()
 
-    expect(prompt(wrapper).props('open')).toBe(false)
+    expect(promptOpen(wrapper)).toBe(false)
     expect(getNotificationPreference(localStorage, 'user-1')).toBe('off')
     expect(mocks.enablePush).not.toHaveBeenCalled()
   })

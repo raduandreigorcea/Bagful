@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import { closeModal, isTopModal, openModal } from '../lib/modalStack'
 
 // The dialog shell: overlay, dismissal, scroll lock, and focus. Knows nothing
@@ -51,11 +51,7 @@ const props = defineProps({
   // panel from 600px) from style.css, so a new dialog does not copy the overlay
   // and media queries yet again. The caller wraps its content in `.app-sheet`.
   // 'custom' is everything that predates it and styles its own overlay.
-  variant: {
-    type: String,
-    default: 'custom',
-    validator: (v: string) => ['custom', 'sheet'].includes(v),
-  },
+  variant: { type: String as PropType<'custom' | 'sheet'>, default: 'custom' },
 })
 
 // `appear` is what makes a dialog animate the FIRST time it opens.

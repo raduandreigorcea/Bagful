@@ -369,6 +369,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      add_item_quantity: {
+        Args: { p_delta: number; p_id: string }
+        Returns: number
+      }
       admin_activity_series: {
         Args: { p_bucket?: string; p_since?: string }
         Returns: {

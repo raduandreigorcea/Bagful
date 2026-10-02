@@ -48,11 +48,7 @@ const props = defineProps({
   // a fourth route for the case where the other three are not discoverable.
   closable: { type: Boolean, default: false },
   // Which edge of the trigger the panel lines up with on a wide screen.
-  align: {
-    type: String,
-    default: 'left',
-    validator: (value: string) => ['left', 'right'].includes(value),
-  },
+  align: { type: String as PropType<'left' | 'right'>, default: 'left' },
   // Panel width on a wide screen. The sheet is always full width.
   width: { type: String, default: '264px' },
 })

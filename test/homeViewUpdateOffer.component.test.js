@@ -82,10 +82,18 @@ async function mountHome() {
   mocks.db.handlers['shopping_list_items.select'] = () => ({ data: [], error: null })
   mocks.db.handlers['purchase_history.select'] = () => ({ data: [], error: null })
 
-  const wrapper = mount(HomeView, { shallow: true })
+  const wrapper = mount(HomeView, {
+    shallow: true,
+    // UpdateAvailableModal is a lazy component in HomeView. A shallow stub of one loses
+    // its props, so the loader and the modal itself are rendered for real.
+    global: { stubs: { AsyncComponentWrapper: false, UpdateAvailableModal: false } },
+  })
   mountedWrappers.push(wrapper)
   await flushPromises()
   await flushPromises()
+  await flushPromises()
+  // The modal is a lazy component (see HomeView): let its chunk arrive.
+  await vi.dynamicImportSettled()
   await flushPromises()
   return wrapper
 }

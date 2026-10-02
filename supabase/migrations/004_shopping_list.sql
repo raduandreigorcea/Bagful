@@ -392,3 +392,46 @@ $$;
 
 revoke all on function public.merge_items(uuid, uuid) from public, anon;
 grant execute on function public.merge_items(uuid, uuid) to authenticated;
+
+-- ─── changing a quantity by an amount ───────────────────────────────────────
+-- The app used to write a quantity as the total it had worked out from its own
+-- copy of the row ("milk = 2"). Two members bumping the same row at once, or a
+-- phone replaying an offline bump hours later, then wrote over each other and
+-- one change was lost without anyone being told. This takes the change instead
+-- ("milk + 1") and applies it to whatever the row holds now, in one statement.
+--
+-- SECURITY INVOKER, like merge_items: the caller's update policy decides it.
+-- Held to the quantity bound (1..999) rather than refused at it, the way
+-- merge_items and sumQuantities hold a sum. Returns the new quantity, or null
+-- when the row is gone or hidden -- a change to a row someone deleted has
+-- nothing left to change, which the app treats as done.
+--
+-- A replay that times out after it landed is sent again and counts twice. That
+-- is accepted: an extra item is visible and one tap to fix, where the lost
+-- change this replaced was invisible.
+create or replace function public.add_item_quantity(p_id uuid, p_delta integer)
+returns integer
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_quantity integer;
+begin
+  if p_delta is null or p_delta not between -999 and 999 then
+    raise exception 'Quantity change out of range.'
+      using errcode = 'P0001',
+            detail = 'quantity_delta_out_of_range';
+  end if;
+
+  update public.shopping_list_items
+     set quantity = least(999, greatest(1, quantity + p_delta))
+   where id = p_id
+  returning quantity into v_quantity;
+
+  return v_quantity;
+end;
+$$;
+
+revoke all on function public.add_item_quantity(uuid, integer) from public, anon;
+grant execute on function public.add_item_quantity(uuid, integer) to authenticated;

@@ -590,7 +590,7 @@ describe('addItem', () => {
   it('bumps the quantity of an existing active item with the same name instead of inserting', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     await submitAdd(wrapper, '  milk ')
 
@@ -599,9 +599,8 @@ describe('addItem', () => {
     expect(items[0].quantity).toBe(2)
 
     await settleQuantity()
-    const update = mocks.db.calls.find((q) => q.op === 'update')
-    expect(update.payload).toEqual({ quantity: 2 })
-    expect(update.filters.id).toBe('item-1')
+    const update = mocks.db.calls.find((q) => q.op === 'add_item_quantity')
+    expect(update.params).toEqual({ p_id: 'item-1', p_delta: 1 })
     expect(mocks.db.calls.some((q) => q.op === 'insert')).toBe(false)
   })
 
@@ -615,7 +614,7 @@ describe('addItem', () => {
   it('lands every one of twenty taps on the same product', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     for (let i = 0; i < 19; i++) await submitAdd(wrapper, 'Milk')
 
@@ -623,10 +622,10 @@ describe('addItem', () => {
 
     await settleQuantity()
 
-    // One UPDATE, carrying the number the user actually stopped on.
-    const updates = mocks.db.calls.filter((q) => q.op === 'update')
+    // One write, carrying the whole burst: 1 -> 20.
+    const updates = mocks.db.calls.filter((q) => q.op === 'add_item_quantity')
     expect(updates).toHaveLength(1)
-    expect(updates[0].payload).toEqual({ quantity: 20 })
+    expect(updates[0].params).toEqual({ p_id: 'item-1', p_delta: 19 })
   })
 
   // The second tap finds the row that the first tap only just pushed locally.
@@ -643,7 +642,7 @@ describe('addItem', () => {
             error: null,
           })
       })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     await submitAdd(wrapper, 'Milk')
     // Two more while the insert is still on the wire.
@@ -652,15 +651,15 @@ describe('addItem', () => {
     await settleQuantity()
 
     // Nothing sent yet: the row does not exist server-side to be updated.
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
 
     landInsert()
     await flushPromises()
     await flushPromises()
 
-    const updates = mocks.db.calls.filter((q) => q.op === 'update')
+    const updates = mocks.db.calls.filter((q) => q.op === 'add_item_quantity')
     expect(updates).toHaveLength(1)
-    expect(updates[0].payload).toEqual({ quantity: 3 })
+    expect(updates[0].params.p_delta).toBe(2)
     expect(listedItems(wrapper)[0].quantity).toBe(3)
   })
 
@@ -670,7 +669,7 @@ describe('addItem', () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
     const wrapper = await mountHome({ items: [existing] })
     let finishUpdate
-    mocks.db.handlers['shopping_list_items.update'] = () =>
+    mocks.db.handlers['rpc.add_item_quantity'] = () =>
       new Promise((resolve) => {
         finishUpdate = () => resolve({ data: null, error: null })
       })
@@ -693,13 +692,13 @@ describe('addItem', () => {
   it('guards the row from the tap, not from when the write leaves', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     await submitAdd(wrapper, 'Milk')
 
     // Nothing on the wire yet, and already protected — this is the window the
     // guard used to leave open.
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
     expect(wrapper.vm.pendingItemWrites.has('item-1')).toBe(true)
 
     await settleQuantity()
@@ -712,7 +711,7 @@ describe('addItem', () => {
   it('releases the guard after a long burst rather than pinning it', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     for (let i = 0; i < 20; i++) await submitAdd(wrapper, 'Milk')
     expect(wrapper.vm.pendingItemWrites.has('item-1')).toBe(true)
@@ -741,7 +740,7 @@ describe('addItem', () => {
     })
     // The reconciliation fetch finds the row the concurrent add created.
     mocks.db.handlers['shopping_list_items.select'] = () => ({ data: [serverRow], error: null })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     await submitAdd(wrapper, 'Milk')
 
@@ -749,8 +748,8 @@ describe('addItem', () => {
     expect(items).toHaveLength(1)
     expect(items[0].id).toBe('srv-1')
     expect(items[0].quantity).toBe(3)
-    const update = mocks.db.calls.find((q) => q.op === 'update')
-    expect(update.filters.id).toBe('srv-1')
+    const update = mocks.db.calls.find((q) => q.op === 'add_item_quantity')
+    expect(update.params).toEqual({ p_id: 'srv-1', p_delta: 1 })
   })
 
   // The fold above is a write like any other, and it was the one path that did
@@ -767,7 +766,7 @@ describe('addItem', () => {
     })
     mocks.db.handlers['shopping_list_items.select'] = () => ({ data: [serverRow], error: null })
     let finishUpdate
-    mocks.db.handlers['shopping_list_items.update'] = () =>
+    mocks.db.handlers['rpc.add_item_quantity'] = () =>
       new Promise((resolve) => {
         finishUpdate = () => resolve({ data: null, error: null })
       })
@@ -988,7 +987,8 @@ describe('toggleItem', () => {
 
     expect(listedItems(wrapper).map((i) => [i.id, i.quantity])).toEqual([['item-b', 5]])
     expect(loadOfflineQueue(localStorage, 'user-1')).toEqual([
-      { kind: 'update', id: 'item-b', patch: { quantity: 5 } },
+      // The source's 2, added to whatever item-b holds when it replays.
+      { kind: 'quantity', id: 'item-b', delta: 2 },
       { kind: 'delete', id: 'item-a' },
     ])
   })
@@ -1199,7 +1199,7 @@ describe('setItemQuantity', () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 2 })
     const wrapper = await mountHome({ items: [existing] })
     let resolveUpdate
-    mocks.db.handlers['shopping_list_items.update'] = () =>
+    mocks.db.handlers['rpc.add_item_quantity'] = () =>
       new Promise((resolve) => {
         resolveUpdate = () => resolve({ data: null, error: null })
       })
@@ -1209,21 +1209,35 @@ describe('setItemQuantity', () => {
 
     // Already moved, before anything has been sent at all.
     expect(listedItems(wrapper)[0].quantity).toBe(5)
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
 
     await settleQuantity()
     resolveUpdate()
     await flushPromises()
 
-    const update = mocks.db.calls.find((q) => q.op === 'update')
-    expect(update.payload).toEqual({ quantity: 5 })
-    expect(update.filters.id).toBe('item-1')
+    // The change, 2 -> 5, not the number it ended on.
+    const write = mocks.db.calls.find((q) => q.op === 'add_item_quantity')
+    expect(write.params).toEqual({ p_id: 'item-1', p_delta: 3 })
+  })
+
+  // The bug this shape exists for: a member bumping the same row meanwhile used
+  // to be overwritten by this phone's total. The server adds the change to what
+  // it holds and answers with the sum, and that is what the row shows.
+  it('keeps a change another member made meanwhile', async () => {
+    const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 2 })
+    const wrapper = await mountHome({ items: [existing] })
+    // Someone else added 3 on their phone; this one adds 1 on top.
+    mocks.db.handlers['rpc.add_item_quantity'] = (q) => ({ data: 5 + q.params.p_delta, error: null })
+
+    await setQuantity(wrapper, listedItems(wrapper)[0], 3)
+
+    expect(listedItems(wrapper)[0].quantity).toBe(6)
   })
 
   it('puts the old number back when the write fails', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 3 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({
       data: null,
       error: { message: 'boom' },
     })
@@ -1241,8 +1255,10 @@ describe('setItemQuantity', () => {
     await setQuantity(wrapper, listedItems(wrapper)[0], 4)
 
     expect(listedItems(wrapper)[0].quantity).toBe(4)
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
-    expect(loadOfflineQueue(localStorage, 'user-1')).toHaveLength(1)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
+    expect(loadOfflineQueue(localStorage, 'user-1')).toEqual([
+      { kind: 'quantity', id: 'item-1', delta: 2 },
+    ])
   })
 
   it('writes nothing when the number did not actually change', async () => {
@@ -1251,7 +1267,7 @@ describe('setItemQuantity', () => {
 
     await setQuantity(wrapper, listedItems(wrapper)[0], 2)
 
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
   })
 
   // The reason the debounce exists. Writing per tap put four UPDATEs on the wire
@@ -1262,26 +1278,26 @@ describe('setItemQuantity', () => {
   it('collapses a burst of taps into one write carrying the final number', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     const row = listedItems(wrapper)[0]
     for (const n of [2, 3, 4, 5]) await tapQuantity(wrapper, row, n)
 
     // The number tracked every tap; the wire stayed quiet.
     expect(listedItems(wrapper)[0].quantity).toBe(5)
-    expect(mocks.db.calls.filter((q) => q.op === 'update')).toHaveLength(0)
+    expect(mocks.db.calls.filter((q) => q.op === 'add_item_quantity')).toHaveLength(0)
 
     await settleQuantity()
 
-    const updates = mocks.db.calls.filter((q) => q.op === 'update')
+    const updates = mocks.db.calls.filter((q) => q.op === 'add_item_quantity')
     expect(updates).toHaveLength(1)
-    expect(updates[0].payload).toEqual({ quantity: 5 })
+    expect(updates[0].params).toEqual({ p_id: 'item-1', p_delta: 4 })
   })
 
   it('says nothing at all when a burst ends where it started', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 3 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     const row = listedItems(wrapper)[0]
     await tapQuantity(wrapper, row, 4)
@@ -1289,7 +1305,7 @@ describe('setItemQuantity', () => {
     await settleQuantity()
 
     expect(listedItems(wrapper)[0].quantity).toBe(3)
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
   })
 
   // Rolling back one step would leave the row on a number nobody chose: the tap
@@ -1297,7 +1313,7 @@ describe('setItemQuantity', () => {
   it('rolls a failed burst back to where the burst began', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 2 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({
       data: null,
       error: { message: 'boom' },
     })
@@ -1314,18 +1330,18 @@ describe('setItemQuantity', () => {
   it('sends a waiting change before a refetch can read past it', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 2 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     await tapQuantity(wrapper, listedItems(wrapper)[0], 7)
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
 
     // Whatever triggers a reload — reconnect, focus, the realtime watchdog.
     goOnline()
     await flushPromises()
 
-    const updates = mocks.db.calls.filter((q) => q.op === 'update')
+    const updates = mocks.db.calls.filter((q) => q.op === 'add_item_quantity')
     expect(updates).toHaveLength(1)
-    expect(updates[0].payload).toEqual({ quantity: 7 })
+    expect(updates[0].params).toEqual({ p_id: 'item-1', p_delta: 5 })
   })
 
   // The row refuses to open its stepper on a checked item, but a change can still
@@ -1334,12 +1350,12 @@ describe('setItemQuantity', () => {
   it('refuses to change a checked item', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 2, checked: true })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     await setQuantity(wrapper, listedItems(wrapper)[0], 5)
 
     expect(listedItems(wrapper)[0].quantity).toBe(2)
-    expect(mocks.db.calls.some((q) => q.op === 'update')).toBe(false)
+    expect(mocks.db.calls.some((q) => q.op === 'add_item_quantity')).toBe(false)
   })
 
   // 004_shopping_list.sql only enforces >= 1; the ceiling is the app's, so it has
@@ -1347,7 +1363,7 @@ describe('setItemQuantity', () => {
   it('clamps to the allowed range', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 2 })
     const wrapper = await mountHome({ items: [existing] })
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
 
     await setQuantity(wrapper, listedItems(wrapper)[0], 0)
     expect(listedItems(wrapper)[0].quantity).toBe(1)

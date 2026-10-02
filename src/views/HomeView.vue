@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, provide, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, provide, watch, defineAsyncComponent, type Ref } from 'vue'
 import { useAuth, useUser } from '@clerk/vue'
 import { useRouter } from 'vue-router'
 import { useSupabase } from '../supabase'
@@ -8,12 +8,9 @@ import AppSplash from '../components/AppSplash.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import CustomProductModal from '../components/CustomProductModal.vue'
 import ErrorModal from '../components/ErrorModal.vue'
-import NotificationPromptModal from '../components/NotificationPromptModal.vue'
 import ShoppingList from '../components/ShoppingList.vue'
 import AddItemForm from '../components/AddItemForm.vue'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
-import OnboardingTour from '../components/OnboardingTour.vue'
-import UpdateAvailableModal from '../components/UpdateAvailableModal.vue'
 import { useListRealtime } from '../lib/listRealtime'
 import { useProductSuggestions } from '../lib/productSuggestions'
 import { deviceTimeZone, resolveRegion } from '../lib/region'
@@ -50,6 +47,24 @@ import { useShopMap } from '../lib/shopBadges'
 import { sumActiveQuantities, sumCheckedQuantities } from '../lib/shoppingList'
 import { showToast } from '../lib/useToast'
 import type { ListSort } from '../lib/listSections'
+
+// Shown once in an account's life, or not at all, so kept out of the list's
+// first download, like AppNavBar's modals. Each is mounted on its first open
+// and kept after, so its closing animation still plays.
+const OnboardingTour = defineAsyncComponent(() => import('../components/OnboardingTour.vue'))
+const NotificationPromptModal = defineAsyncComponent(
+  () => import('../components/NotificationPromptModal.vue'),
+)
+const UpdateAvailableModal = defineAsyncComponent(
+  () => import('../components/UpdateAvailableModal.vue'),
+)
+function openedOnce(open: Ref<boolean>): Ref<boolean> {
+  const opened = ref(open.value)
+  watch(open, (value) => {
+    if (value) opened.value = true
+  })
+  return opened
+}
 
 const { userId, isLoaded } = useAuth()
 const { user } = useUser()
@@ -193,6 +208,9 @@ const {
 } = useUpdatePrompt({ currentVersion: appVersion })
 // Settings → About runs the same check on demand; see updateCheckKey.
 provide(updateCheckKey, checkForUpdateNow)
+const tourMounted = openedOnce(onboardingTourOpen)
+const notificationPromptMounted = openedOnce(notificationPromptOpen)
+const updateMounted = openedOnce(updateOpen)
 const hasInitialized = ref(false)
 // True while switchList is tearing down the old list and loading the new one.
 // Drives the skeleton (instead of the "no items" empty state) so a switch never
@@ -957,18 +975,21 @@ async function reconcileActiveList() {
     />
 
     <OnboardingTour
+      v-if="tourMounted"
       :open="onboardingTourOpen"
       :invite-code="listInviteCode"
       @close="closeOnboardingTour"
     />
 
     <NotificationPromptModal
+      v-if="notificationPromptMounted"
       :open="notificationPromptOpen"
       @accept="acceptNotifications"
       @decline="declineNotifications"
     />
 
     <UpdateAvailableModal
+      v-if="updateMounted"
       :open="updateOpen"
       :phase="updatePhase"
       :version="updateVersion"

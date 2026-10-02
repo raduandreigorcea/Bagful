@@ -457,17 +457,19 @@ export function useShoppingListActions(options: {
     // so, since the quantity keys the row's transition.
     beginItemWrite(target.id)
     try {
-      const { error } = await db
-        .from('shopping_list_items')
-        .update({ quantity: target.quantity })
-        .eq('id', target.id)
+      // Added to what the server holds, not written as this phone's total: a
+      // member bumping the same row at the same moment still counts.
+      const { data, error } = await db.rpc('add_item_quantity', {
+        p_id: target.id,
+        p_delta: quantity,
+      })
       if (error) {
-        if (deferIfOffline(error, { kind: 'update', id: target.id, patch: { quantity: target.quantity } }))
-          return true
+        if (deferIfOffline(error, { kind: 'quantity', id: target.id, delta: quantity })) return true
         target.quantity = previousQty
         addError.value = userMessage(error, t('error.updateItemFailed'))
         return false
       }
+      adoptServerQuantity(target, data)
       return true
     } finally {
       endItemWrite(target.id)
@@ -685,9 +687,9 @@ export function useShoppingListActions(options: {
       // Queue both halves of the merge; if `source` was itself added offline, the
       // queue coalesces the pair away entirely.
       enqueueOfflineMutation(localStorage, userId.value, {
-        kind: 'update',
+        kind: 'quantity',
         id: target.id,
-        patch: { quantity: target.quantity },
+        delta: addedQty,
       })
       enqueueOfflineMutation(localStorage, userId.value, { kind: 'delete', id: source.id })
       return
@@ -711,13 +713,14 @@ export function useShoppingListActions(options: {
       })
       if (error) {
         // Never reached the server, or its reply did not: queue both halves and
-        // keep the merged state. The quantity is absolute and the delete
-        // idempotent, so replaying a merge that did land changes nothing.
+        // keep the merged state. Replaying a merge that did land counts the
+        // source's quantity twice -- the one double count add_item_quantity
+        // (004_shopping_list.sql) accepts in exchange for never losing a change.
         if (isOfflineError(error)) {
           enqueueOfflineMutation(localStorage, userId.value, {
-            kind: 'update',
+            kind: 'quantity',
             id: target.id,
-            patch: { quantity: target.quantity },
+            delta: addedQty,
           })
           enqueueOfflineMutation(localStorage, userId.value, { kind: 'delete', id: source.id })
           return
@@ -1006,15 +1009,17 @@ export function useShoppingListActions(options: {
     before: number,
     onError?: () => void,
   ): Promise<void> {
-    const target = Number(item.quantity) || 1
+    // Sent as the change the burst made, not the number it ended on, so a
+    // member changing the same row meanwhile is added to rather than overwritten.
+    const delta = (Number(item.quantity) || 1) - before
     // Up and back down again inside the window: the row never changed, so there
     // is nothing to tell the server.
-    if (target === before) return
+    if (!delta) return
 
-    const patch = { quantity: target }
+    const mutation = { kind: 'quantity', id: item.id, delta } as const
 
     if (isOffline()) {
-      enqueueOfflineMutation(localStorage, userId.value, { kind: 'update', id: item.id, patch })
+      enqueueOfflineMutation(localStorage, userId.value, mutation)
       return
     }
 
@@ -1022,13 +1027,11 @@ export function useShoppingListActions(options: {
     // not paint the server's pre-write quantity back over it.
     beginItemWrite(item.id)
     try {
-      const { error } = await db
-        .from('shopping_list_items')
-        .update(patch)
-        .eq('id', item.id)
+      const { data, error } = await db.rpc('add_item_quantity', { p_id: item.id, p_delta: delta })
 
-      if (error) {
-        if (deferIfOffline(error, { kind: 'update', id: item.id, patch })) return
+      if (!error) adoptServerQuantity(item, data)
+      else {
+        if (deferIfOffline(error, mutation)) return
         item.quantity = before // rollback, to where the burst started
         onError?.()
         loadError.value = userMessage(error, t('error.updateItemFailed'))
@@ -1036,6 +1039,13 @@ export function useShoppingListActions(options: {
     } finally {
       endItemWrite(item.id)
     }
+  }
+
+  // The server's total after a change, which includes what other members did.
+  // Not while a newer burst of taps is waiting: its change is measured from the
+  // number on screen, and the next answer brings the total anyway.
+  function adoptServerQuantity(item: ShoppingItemRow, quantity: number | null): void {
+    if (typeof quantity === 'number' && !quantityWrites.has(item.id)) item.quantity = quantity
   }
 
   async function setItemQuantity(item: ShoppingItemRow, next: number): Promise<void> {

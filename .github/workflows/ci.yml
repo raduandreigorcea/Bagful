@@ -136,3 +136,93 @@ jobs:
         run: |
           supabase --workdir catalog gen types typescript --local --schema public > /tmp/catalog.ts
           diff -u src/types/catalog.ts /tmp/catalog.ts || { echo "::error::src/types/catalog.ts is stale: run npm run types"; exit 1; }
+
+  # ─── Deploy, on master only, once everything above is green ──────────────────
+  # Database first, then edge functions, then the web app, so new code never
+  # goes live against a schema that lacks what it calls.
+  #
+  # Vercel used to deploy on its own the moment master moved, racing this: the
+  # app could be live before its migration was. vercel.json now turns that off
+  # for master ("git.deploymentEnabled") and the last step below asks Vercel for
+  # the deploy through a deploy hook. Previews still deploy on their own.
+  #
+  # The APK (release-apk.yml) is not chained to this. It builds for several
+  # minutes and a migration takes about one, and nobody runs a release until
+  # they install it, so in practice it always lands after.
+  #
+  # Only Bagful-prod. Bagful-dev gets a migration by hand while it is written.
+  deploy:
+    name: Deploy to production
+    needs: [test, rls-tests, catalog-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    # Queued, never cancelled: a push cancelled between repair and push would
+    # leave a migration marked reverted in production's history.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      PROJECT_REF: qwpyiperbjaeykrvilhf
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+      BEFORE: ${{ github.event.before }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The whole history, to diff against whatever master was before this push.
+          fetch-depth: 0
+      - name: Check the deploy secrets
+        run: |
+          missing=""
+          for name in SUPABASE_ACCESS_TOKEN VERCEL_DEPLOY_HOOK; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing deploy secrets:$missing"
+            exit 1
+          fi
+          git cat-file -e "$BEFORE^{commit}" || { echo "::error::Cannot see the previous master ($BEFORE), so cannot tell what changed"; exit 1; }
+      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+        with:
+          version: 2.109.1
+      # 001-009 are restatements production already records as applied, so an
+      # EDITED one is skipped by a plain push. Each edited file is marked reverted
+      # first, then pushed with --include-all (see /shipping-a-migration). A new
+      # file needs neither. If the push fails, the history is put back.
+      - name: Apply changed migrations
+        run: |
+          edited=$(git diff --name-only --diff-filter=M "$BEFORE" "$GITHUB_SHA" -- 'supabase/migrations/*.sql')
+          added=$(git diff --name-only --diff-filter=AR "$BEFORE" "$GITHUB_SHA" -- 'supabase/migrations/*.sql')
+          if [ -z "$edited$added" ]; then echo "No migration changed."; exit 0; fi
+          # No database password: with only the access token, the CLI signs in
+          # through a temporary login role it creates for the session.
+          supabase link --project-ref "$PROJECT_REF"
+          versions=""
+          for file in $edited; do
+            version=$(basename "$file"); version=${version%%_*}
+            supabase migration repair --status reverted "$version" --linked --yes
+            versions="$versions $version"
+          done
+          if ! supabase db push --include-all --linked --yes; then
+            for version in $versions; do
+              supabase migration repair --status applied "$version" --linked --yes
+            done
+            exit 1
+          fi
+      # A change under _shared reaches every function, so it deploys them all.
+      # Each one's verify_jwt comes from supabase/config.toml.
+      - name: Deploy changed edge functions
+        run: |
+          changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" -- supabase/functions)
+          if [ -z "$changed" ]; then echo "No edge function changed."; exit 0; fi
+          if grep -q '^supabase/functions/_shared/' <<<"$changed"; then
+            names=$(find supabase/functions -mindepth 1 -maxdepth 1 -type d ! -name _shared -printf '%f\n')
+          else
+            names=$(sed -n 's#^supabase/functions/\([^/]*\)/.*#\1#p' <<<"$changed" | sort -u)
+          fi
+          for name in $names; do
+            [ -d "supabase/functions/$name" ] || continue # deleted in this push
+            supabase functions deploy "$name" --project-ref "$PROJECT_REF" --use-api
+          done
+      - name: Deploy the web app
+        run: curl -fsS -X POST "$VERCEL_DEPLOY_HOOK" > /dev/null
