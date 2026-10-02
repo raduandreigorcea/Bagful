@@ -1294,6 +1294,62 @@ describe('setItemQuantity', () => {
     expect(updates[0].params).toEqual({ p_id: 'item-1', p_delta: 4 })
   })
 
+  // Spamming +: a burst is on the wire when the next one starts. The first
+  // write finishing used to drop the row's guard while the second still waited
+  // out its debounce, so the first write's realtime echo ("4") was taken as
+  // news over the 6 on screen, and the second burst then measured its change
+  // from that 4 and lost taps.
+  it('keeps the row guarded while a later burst is still waiting', async () => {
+    const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
+    const wrapper = await mountHome({ items: [existing] })
+    const answers = []
+    mocks.db.handlers['rpc.add_item_quantity'] = (q) =>
+      new Promise((resolve) => answers.push(() => resolve({ data: null, error: null, q })))
+
+    const row = listedItems(wrapper)[0]
+    for (const n of [2, 3, 4]) await tapQuantity(wrapper, row, n)
+    await settleQuantity() // the first burst goes out and waits for its answer
+    for (const n of [5, 6]) await tapQuantity(wrapper, row, n)
+
+    answers.shift()() // the first write lands
+    await flushPromises()
+
+    // The second burst has not been sent, so the row must still ignore echoes.
+    expect(wrapper.vm.pendingItemWrites.has('item-1')).toBe(true)
+
+    await settleQuantity()
+    answers.shift()()
+    await flushPromises()
+    const sent = mocks.db.calls.filter((q) => q.op === 'add_item_quantity').map((q) => q.params.p_delta)
+    expect(sent).toEqual([3, 2])
+    expect(wrapper.vm.pendingItemWrites.has('item-1')).toBe(false)
+  })
+
+  // The same race one step later: the second burst has been SENT by the time
+  // the first one's answer arrives. That answer is the server's total as of the
+  // first write, older than the number on screen, so it must not be shown.
+  it('does not show the total from an older write while a later one is on the wire', async () => {
+    const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 1 })
+    const wrapper = await mountHome({ items: [existing] })
+    const answers = []
+    mocks.db.handlers['rpc.add_item_quantity'] = (q) =>
+      new Promise((resolve) => answers.push((total) => resolve({ data: total, error: null, q })))
+
+    const row = listedItems(wrapper)[0]
+    for (const n of [2, 3, 4]) await tapQuantity(wrapper, row, n)
+    await settleQuantity()
+    for (const n of [5, 6]) await tapQuantity(wrapper, row, n)
+    await settleQuantity() // the second burst is on the wire too
+
+    answers.shift()(4)
+    await flushPromises()
+    expect(listedItems(wrapper)[0].quantity).toBe(6)
+
+    answers.shift()(6)
+    await flushPromises()
+    expect(listedItems(wrapper)[0].quantity).toBe(6)
+  })
+
   it('says nothing at all when a burst ends where it started', async () => {
     const existing = makeItem({ id: 'item-1', name: 'Milk', quantity: 3 })
     const wrapper = await mountHome({ items: [existing] })

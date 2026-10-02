@@ -532,12 +532,17 @@ function settle() {
            means nothing to press, so a tap that lands on it would otherwise do
            nothing at the one spot on the row where a thumb rests. Not a second
            button: the toggle above is the one a keyboard and a screen reader
-           reach, and this only forwards a pointer's click to it. -->
+           reach, and this only forwards a pointer's click to it.
+
+           Not draggable: a mouse drags an <img> as an image, and the browser's
+           drag-and-drop then cancels the pointer, so a swipe that started on the
+           photo snapped back instead of ticking or removing the row. -->
       <img
         v-if="avatarUrl"
         :src="avatarUrl"
         :alt="t('common.avatarAlt', { name: avatarLabel })"
         class="item-avatar"
+        draggable="false"
         @click="onToggleClick"
       />
       <span
@@ -1159,6 +1164,37 @@ function settle() {
   height: 1.6rem;
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Open, the pill's two halves ARE the buttons. The minus and plus are 1.6rem
+   wide, too small to hit reliably with a thumb that is spamming them, so each
+   carries an invisible tap area over its half of the pill, the number included,
+   reaching out to the 4px ring the open pill already draws. Nothing visible
+   moves. The areas are positioned against .item-qty (the steps are not
+   positioned), which is also why the steps' overflow:hidden does not clip them.
+
+   The number stops taking taps while open, so tapping it no longer closes the
+   stepper; the idle timeout, a swipe and opening another row still do, and a
+   keyboard can still press it. */
+.item-qty--open .item-qty__face {
+  pointer-events: none;
+}
+
+.item-qty--open .item-qty__step::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+}
+
+.item-qty--open .item-qty__step:first-child::after {
+  left: -4px;
+  right: 50%;
+}
+
+.item-qty--open .item-qty__step:last-child::after {
+  left: 50%;
+  right: -4px;
 }
 
 .item-qty--open .item-qty__step:hover:not(:disabled) {

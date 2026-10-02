@@ -169,7 +169,24 @@ export function useShoppingListActions(options: {
   // whole intent -- from the tap that scheduled it until the write settles --
   // because the two things that would otherwise overwrite it (the insert echo,
   // a refetch) can arrive at either end of that window.
-  const quantityIntent = new Set<string>()
+  //
+  // Counted per row, one per burst, because bursts overlap: spamming + starts a
+  // new burst while the last one is still on the wire. As a set, the first
+  // write settling cleared the row while the next burst still waited, so the
+  // first write's own echo was taken as news and the count jumped back.
+  const quantityIntent = new Map<string, number>()
+
+  function beginQuantityIntent(id: string): void {
+    quantityIntent.set(id, (quantityIntent.get(id) ?? 0) + 1)
+    beginItemWrite(id)
+  }
+
+  function endQuantityIntent(id: string): void {
+    const left = (quantityIntent.get(id) ?? 1) - 1
+    if (left > 0) quantityIntent.set(id, left)
+    else quantityIntent.delete(id)
+    endItemWrite(id)
+  }
 
   // Rows a delete or checkout has taken off the list while the server still
   // has them. pendingItemWrites cannot cover these: it keeps the LOCAL copy of
@@ -196,8 +213,7 @@ export function useShoppingListActions(options: {
         // id stayed in pendingItemWrites for the life of the view, so every
         // later refetch built a reconciliation map for a row that no longer
         // exists.
-        quantityIntent.delete(id)
-        endItemWrite(id)
+        endQuantityIntent(id)
         return Promise.resolve()
       }),
     )
@@ -469,7 +485,7 @@ export function useShoppingListActions(options: {
         addError.value = userMessage(error, t('error.updateItemFailed'))
         return false
       }
-      adoptServerQuantity(target, data)
+      adoptServerQuantity(target, data, 0)
       return true
     } finally {
       endItemWrite(target.id)
@@ -967,12 +983,10 @@ export function useShoppingListActions(options: {
     // count back. The number keys the row's transition, so it does not just
     // change: it visibly counts backwards and plays the animation again.
     //
-    // Once per intent, or a burst of twenty taps would raise the depth twenty
-    // times against a single release and pin the row guarded forever.
-    if (!quantityIntent.has(item.id)) {
-      quantityIntent.add(item.id)
-      beginItemWrite(item.id)
-    }
+    // Once per burst, released by that burst's own write, or twenty taps would
+    // raise the depth twenty times against a single release and pin the row
+    // guarded forever.
+    if (!open) beginQuantityIntent(item.id)
     quantityWrites.set(item.id, {
       onError: onError ?? open?.onError,
       // The value from before this BURST, not before this tap: rolling a failed
@@ -999,8 +1013,7 @@ export function useShoppingListActions(options: {
     try {
       await sendQuantity(item, before, onError)
     } finally {
-      quantityIntent.delete(item.id)
-      endItemWrite(item.id)
+      endQuantityIntent(item.id)
     }
   }
 
@@ -1029,7 +1042,7 @@ export function useShoppingListActions(options: {
     try {
       const { data, error } = await db.rpc('add_item_quantity', { p_id: item.id, p_delta: delta })
 
-      if (!error) adoptServerQuantity(item, data)
+      if (!error) adoptServerQuantity(item, data, 1)
       else {
         if (deferIfOffline(error, mutation)) return
         item.quantity = before // rollback, to where the burst started
@@ -1042,10 +1055,13 @@ export function useShoppingListActions(options: {
   }
 
   // The server's total after a change, which includes what other members did.
-  // Not while a newer burst of taps is waiting: its change is measured from the
-  // number on screen, and the next answer brings the total anyway.
-  function adoptServerQuantity(item: ShoppingItemRow, quantity: number | null): void {
-    if (typeof quantity === 'number' && !quantityWrites.has(item.id)) item.quantity = quantity
+  // Only when no other burst for the row is open or on the wire: that total is
+  // as of THIS write, older than the number on screen, and the last write's
+  // answer brings the full one anyway. `own` is how many of the row's bursts
+  // the caller itself holds (a stepper write holds its own; an add holds none).
+  function adoptServerQuantity(item: ShoppingItemRow, quantity: number | null, own: number): void {
+    if (typeof quantity !== 'number') return
+    if ((quantityIntent.get(item.id) ?? 0) <= own) item.quantity = quantity
   }
 
   async function setItemQuantity(item: ShoppingItemRow, next: number): Promise<void> {
