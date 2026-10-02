@@ -158,6 +158,14 @@ describe('ShoppingListItem quantity', () => {
     expect(wrapper.emitted('toggle')).toHaveLength(1)
   })
 
+  // A photo is an <img>, which a mouse drags as an image by default: the
+  // browser starts its own drag-and-drop, cancels the pointer, and the swipe
+  // that began on the face snaps back instead of ticking or removing the row.
+  it('does not let the photo be dragged as an image', () => {
+    const wrapper = mountRow({ avatarUrl: 'https://img.clerk.com/face.png' })
+    expect(wrapper.find('img.item-avatar').attributes('draggable')).toBe('false')
+  })
+
   // A keyboard can remove a row as well as tick it; the list's Undo toast
   // covers a slip either way.
   it('asks to be removed on the Delete key', async () => {
