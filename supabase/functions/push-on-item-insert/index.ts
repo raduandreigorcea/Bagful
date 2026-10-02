@@ -119,6 +119,9 @@ async function sendPush(options: {
       // OneSignal processes the first and swallows the rest.
       idempotency_key: options.idempotencyKey,
     }),
+    // Without one, a OneSignal that never answers holds this function until the
+    // platform kills it. Same bound as admin-services' vendor calls.
+    signal: AbortSignal.timeout(10_000),
   })
 
   const result = await res.json().catch(() => null)

@@ -2,7 +2,7 @@
 // minimal and never touch rows the server has never seen; the flush must
 // survive interruptions without replaying acknowledged writes and must never
 // let one rejected mutation wedge the rest of the queue.
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   loadOfflineQueue,
   enqueueOfflineMutation,
@@ -179,14 +179,14 @@ describe('flushOfflineQueue', () => {
       data: [{ id: 'srv-1', name: 'milk', checked: false, quantity: 3 }],
       error: null,
     })
-    db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    db.handlers['rpc.add_item_quantity'] = () => ({ data: 5, error: null })
 
     const result = await flushOfflineQueue(storage, USER, db)
 
     expect(result).toEqual({ flushed: 1, failed: 0, interrupted: false })
-    const update = db.calls.find((q) => q.op === 'update')
-    expect(update.filters.id).toBe('srv-1')
-    expect(update.payload).toEqual({ quantity: 5 })
+    // Added to whatever the row holds when it lands, not to the copy just read.
+    const update = db.calls.find((q) => q.op === 'add_item_quantity')
+    expect(update.params).toEqual({ p_id: 'srv-1', p_delta: 2 })
     expect(hasQueuedOfflineMutations(storage, USER)).toBe(false)
   })
 
@@ -216,14 +216,14 @@ describe('flushOfflineQueue', () => {
       ],
       error: null,
     })
-    db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    db.handlers['rpc.add_item_quantity'] = () => ({ data: 5, error: null })
 
     const result = await flushOfflineQueue(storage, USER, db)
 
     expect(result).toEqual({ flushed: 1, failed: 0, interrupted: false })
-    const update = db.calls.find((q) => q.op === 'update')
-    expect(update.filters.id).toBe('srv-1')
-    expect(update.payload).toEqual({ quantity: 5 })
+    // Added to whatever the row holds when it lands, not to the copy just read.
+    const update = db.calls.find((q) => q.op === 'add_item_quantity')
+    expect(update.params).toEqual({ p_id: 'srv-1', p_delta: 2 })
     expect(hasQueuedOfflineMutations(storage, USER)).toBe(false)
   })
 
@@ -247,11 +247,14 @@ describe('flushOfflineQueue', () => {
     const result = await flushOfflineQueue(storage, USER, db)
 
     expect(result).toEqual({ flushed: 1, failed: 0, interrupted: false })
-    expect(db.calls.find((q) => q.op === 'update')).toBeUndefined()
+    expect(db.calls.find((q) => q.op === 'add_item_quantity')).toBeUndefined()
     expect(hasQueuedOfflineMutations(storage, USER)).toBe(false)
   })
 
-  it('holds a folded quantity at the database bound', async () => {
+  // The bound is add_item_quantity's to hold (004_shopping_list.sql, pinned in
+  // rls.test.sql): it clamps against the row as it is when the change lands,
+  // which a number worked out here from an older read could not.
+  it('sends a folded quantity as the change, leaving the bound to the server', async () => {
     const storage = makeStorage()
     enqueueOfflineMutation(storage, USER, insertMutation('a', { name: 'Milk', quantity: 600 }))
 
@@ -264,11 +267,11 @@ describe('flushOfflineQueue', () => {
       data: [{ id: 'srv-1', name: 'milk', checked: false, quantity: 600 }],
       error: null,
     })
-    db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    db.handlers['rpc.add_item_quantity'] = () => ({ data: 999, error: null })
 
     await flushOfflineQueue(storage, USER, db)
 
-    expect(db.calls.find((q) => q.op === 'update').payload).toEqual({ quantity: 999 })
+    expect(db.calls.find((q) => q.op === 'add_item_quantity').params.p_delta).toBe(600)
   })
 
   it('stops on a network-level failure and keeps the unsent tail', async () => {
@@ -597,5 +600,118 @@ describe('legacy pre-rename queue rows', () => {
       expect(queued[0]).toEqual({ kind: 'delete', id: 'row-10' })
       expect(queued[queued.length - 1]).toEqual({ kind: 'delete', id: 'row-509' })
     })
+  })
+})
+
+// Quantity changes are queued as changes ("+2"), not totals ("= 4"), so a
+// replay adds to whatever another member did meanwhile instead of overwriting it.
+describe('quantity changes', () => {
+  const change = (id, delta) => ({ kind: 'quantity', id, delta })
+
+  it('adds up changes to the same row', () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, change('a', 2))
+    enqueueOfflineMutation(storage, USER, change('a', 3))
+    expect(loadOfflineQueue(storage, USER)).toEqual([change('a', 5)])
+  })
+
+  it('drops changes that cancel out', () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, change('a', 2))
+    enqueueOfflineMutation(storage, USER, change('a', -2))
+    expect(loadOfflineQueue(storage, USER)).toEqual([])
+  })
+
+  it('folds into a row not yet sent, held at 1', () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, insertMutation('a', { quantity: 2 }))
+    enqueueOfflineMutation(storage, USER, change('a', 3))
+    expect(loadOfflineQueue(storage, USER)[0].row.quantity).toBe(5)
+    enqueueOfflineMutation(storage, USER, change('a', -9))
+    expect(loadOfflineQueue(storage, USER)[0].row.quantity).toBe(1)
+  })
+
+  it('is dropped with the row when the row is deleted', () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, change('srv-1', 2))
+    enqueueOfflineMutation(storage, USER, { kind: 'delete', id: 'srv-1' })
+    expect(loadOfflineQueue(storage, USER)).toEqual([{ kind: 'delete', id: 'srv-1' }])
+  })
+
+  it('replays through add_item_quantity, and a row gone by then is done', async () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, change('srv-1', 2))
+    const db = createFakeDb()
+    db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
+
+    const result = await flushOfflineQueue(storage, USER, db)
+
+    expect(result).toEqual({ flushed: 1, failed: 0, interrupted: false })
+    expect(db.calls[0].params).toEqual({ p_id: 'srv-1', p_delta: 2 })
+  })
+
+  // Build 1 replays a kind it does not know as a DELETE, so the queue moved to
+  // version 2 to keep a stale tab away from it. This build still reads build
+  // 1's queues, or upgrading would drop their unsent writes.
+  it('reads a queue written by the previous version, and writes the new one', () => {
+    const storage = makeStorage()
+    storage.setItem(
+      `bagful-offline-queue:${USER}`,
+      JSON.stringify({ version: 1, userId: USER, mutations: [{ kind: 'delete', id: 'x' }] }),
+    )
+    expect(loadOfflineQueue(storage, USER)).toEqual([{ kind: 'delete', id: 'x' }])
+
+    enqueueOfflineMutation(storage, USER, change('a', 1))
+    expect(JSON.parse(storage.getItem(`bagful-offline-queue:${USER}`)).version).toBe(2)
+  })
+})
+
+describe('a replayed write that never answers', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  // Every refetch waits on the flush, so a write stuck on a dead socket would
+  // hold up every refresh behind it. It is given up on and kept instead.
+  it('is given up on and kept for the next attempt', async () => {
+    const timeout = new AbortController()
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeout.signal)
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, { kind: 'delete', id: 'srv-1' })
+    const db = createFakeDb()
+    // Answers only once the request is given up on, as a dead socket would.
+    db.handlers['shopping_list_items.delete'] = (q) =>
+      new Promise((resolve) => {
+        const timedOut = () =>
+          resolve({ data: null, error: { code: '', message: 'TimeoutError: signal timed out' } })
+        if (q.signal.aborted) timedOut()
+        else q.signal.addEventListener('abort', timedOut)
+      })
+
+    const flushing = flushOfflineQueue(storage, USER, db)
+    timeout.abort()
+
+    expect(await flushing).toEqual({ flushed: 0, failed: 0, interrupted: true })
+    expect(loadOfflineQueue(storage, USER)).toEqual([{ kind: 'delete', id: 'srv-1' }])
+  })
+})
+
+describe('a write refused for an expired login', () => {
+  // The phone was away long enough for its token to lapse. The write itself is
+  // fine, and the next attempt carries a fresh token, so it is kept, not
+  // dropped like a permanent refusal.
+  it('is kept for the next attempt', async () => {
+    const storage = makeStorage()
+    enqueueOfflineMutation(storage, USER, { kind: 'delete', id: 'srv-1' })
+    const db = createFakeDb()
+    db.handlers['shopping_list_items.delete'] = () => ({
+      data: null,
+      error: { code: 'PGRST303', message: 'JWT expired' },
+    })
+
+    expect(await flushOfflineQueue(storage, USER, db)).toEqual({
+      flushed: 0,
+      failed: 0,
+      interrupted: true,
+    })
+    expect(loadOfflineQueue(storage, USER)).toHaveLength(1)
   })
 })

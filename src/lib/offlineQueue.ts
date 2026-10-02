@@ -3,7 +3,7 @@ import type { TablesInsert, TablesUpdate } from '../types/database'
 import { findActiveItemByName, type ShoppingItem } from './shoppingList'
 import { captureException } from './errorReporting'
 import { clearUserScopedKeys, userScopedKey } from './perUserStorage'
-import { sumQuantities } from './limits'
+import { ITEM_QUANTITY_DB_MAX } from './limits'
 
 // Write queue for shopping-list mutations made while offline. The views apply
 // every mutation optimistically already; when the browser reports no
@@ -25,6 +25,11 @@ export type OfflineMutation =
   // list, so a row already bought, or unticked since by someone else, is
   // simply not moved. The ticks it relies on are queued before it, in order.
   | { kind: 'checkout'; id: string; ids: string[] }
+  // A quantity CHANGE ("+1"), replayed through add_item_quantity
+  // (004_shopping_list.sql) onto whatever the row holds by then. It was an
+  // absolute update ("= 2") worked out from this phone's copy, which on replay
+  // wrote over anything another member had changed in the meantime.
+  | { kind: 'quantity'; id: string; delta: number }
 
 export interface FlushResult {
   // Mutations acknowledged by the server (including inserts folded into a
@@ -69,8 +74,17 @@ const STORAGE_PREFIX = 'bagful-offline-queue'
 // 2026-09-22; these stayed because removing them loses writes rather than a
 // cache. Safe to delete from 2026-11-14, three months after the newer of the two.
 const LEGACY_STORAGE_KEY = STORAGE_PREFIX
-const VERSION = 1
+// 2 since the 'quantity' kind. Build 1 replays any kind it does not know as a
+// DELETE, so a tab still running it must not read a queue that can hold one:
+// it skips a version it does not know. This build reads both.
+const VERSION = 2
+const READABLE_VERSIONS = [1, VERSION]
 const TABLE = 'shopping_list_items'
+// How long one replayed write may take before the replay stops and keeps it.
+// Safe to resend after a timeout that did land: an insert finds its own id, an
+// update and a delete repeat harmlessly, buy_items moves only what is still
+// ticked. A quantity change counts twice, which add_item_quantity accepts.
+const REPLAY_TIMEOUT_MS = 15_000
 
 // A ceiling on how many unsent mutations one account may accumulate.
 //
@@ -113,7 +127,7 @@ export function loadOfflineQueue(storage: Storage, userId: string): OfflineMutat
     const raw = storage.getItem(queueKey(userId)) ?? storage.getItem(LEGACY_STORAGE_KEY)
     if (!raw) return []
     const stored = JSON.parse(raw) as StoredQueue
-    if (stored.version !== VERSION) return []
+    if (!READABLE_VERSIONS.includes(stored.version)) return []
     // Never replay one account's writes as another account on the same browser.
     // Still checked despite the key now carrying the user id, because the legacy
     // key read above has no such guarantee.
@@ -213,6 +227,29 @@ export function enqueueOfflineMutation(
     }
   }
 
+  if (mutation.kind === 'quantity') {
+    // A row not yet sent takes the change into its own quantity.
+    const insert = mutations.find(
+      (m): m is Extract<OfflineMutation, { kind: 'insert' }> =>
+        m.kind === 'insert' && m.id === mutation.id,
+    )
+    if (insert) {
+      insert.row = { ...insert.row, quantity: clampQuantity((insert.row.quantity ?? 1) + mutation.delta) }
+      save(mutations)
+      return
+    }
+    // Changes add up. One that cancels out has nothing left to say.
+    const queued = mutations.find(
+      (m): m is Extract<OfflineMutation, { kind: 'quantity' }> =>
+        m.kind === 'quantity' && m.id === mutation.id,
+    )
+    if (queued) {
+      queued.delta += mutation.delta
+      save(queued.delta ? mutations : mutations.filter((m) => m !== queued))
+      return
+    }
+  }
+
   if (mutation.kind === 'delete') {
     const hadQueuedInsert = mutations.some((m) => m.kind === 'insert' && m.id === mutation.id)
     const kept = mutations.filter((m) => m.id !== mutation.id)
@@ -245,6 +282,10 @@ export function enqueueOfflineMutation(
 // reports: silently discarding a user's writes is precisely the outcome this
 // file is built to avoid, and it should never be inferred from a support
 // ticket.
+function clampQuantity(quantity: number): number {
+  return Math.max(1, Math.min(ITEM_QUANTITY_DB_MAX, quantity))
+}
+
 function enforceQueueBound(mutations: OfflineMutation[]): OfflineMutation[] {
   if (mutations.length <= MAX_QUEUED_MUTATIONS) return mutations
   const dropped = mutations.length - MAX_QUEUED_MUTATIONS
@@ -299,6 +340,16 @@ export function isOfflineError(error: unknown): boolean {
   )
 }
 
+// A refusal that says nothing about the write itself: no network, or a login
+// token that expired or is not valid yet while the phone was away. Kept for the
+// next attempt, which carries a fresh token. "Permission denied" is NOT here:
+// it is also what a member removed from the list gets, and that one is final.
+const EXPIRED_TOKEN_CODES = ['PGRST301', 'PGRST303']
+function isRetryable(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code
+  return isOfflineError(error) || (!!code && EXPIRED_TOKEN_CODES.includes(code))
+}
+
 // The item-insert ceiling in 004_shopping_list.sql, recognised by the
 // detail string that migration raises with.
 //
@@ -346,9 +397,10 @@ export function isItemLimitError(error: unknown): boolean {
 async function applyMutation(
   db: Db,
   mutation: OfflineMutation,
+  signal: AbortSignal,
 ): Promise<{ ok: boolean; transient: boolean }> {
   if (mutation.kind === 'insert') {
-    const { error } = await db.from(TABLE).insert(mutation.row)
+    const { error } = await db.from(TABLE).insert(mutation.row).abortSignal(signal)
     if (!error) return { ok: true, transient: false }
     // Throttled, not rejected: keep it for the next attempt (see above).
     if (isRateLimitedError(error)) return { ok: false, transient: true }
@@ -367,7 +419,8 @@ async function applyMutation(
         .from(TABLE)
         .select('*')
         .eq('list_id', mutation.row.list_id)
-      if (selectErr) return { ok: false, transient: isOfflineError(selectErr) }
+        .abortSignal(signal)
+      if (selectErr) return { ok: false, transient: isRetryable(selectErr) }
       const rows = (data ?? []) as ShoppingItem[]
       if (rows.some((row) => row.id === mutation.id)) return { ok: true, transient: false }
       // The live equivalent of this lookup is resolveActiveItemByName in
@@ -394,32 +447,48 @@ async function applyMutation(
       // this read, or gone). Dropped rather than kept, because a replay would
       // hit the same 23505 forever and wedge the queue behind it.
       if (!target) return { ok: false, transient: false }
-      const merged = sumQuantities(Number(target.quantity) || 1, Number(mutation.row.quantity) || 1)
+      // Added to what the row holds when this lands, not to the copy read
+      // above, so a change made to it in between still counts.
       const { error: updateErr } = await db
-        .from(TABLE)
-        .update({ quantity: merged })
-        .eq('id', target.id)
-      if (updateErr) return { ok: false, transient: isOfflineError(updateErr) }
+        .rpc('add_item_quantity', {
+          p_id: target.id,
+          p_delta: Number(mutation.row.quantity) || 1,
+        })
+        .abortSignal(signal)
+      if (updateErr) return { ok: false, transient: isRetryable(updateErr) }
       return { ok: true, transient: false }
     }
-    return { ok: false, transient: isOfflineError(error) }
+    return { ok: false, transient: isRetryable(error) }
   }
 
   if (mutation.kind === 'checkout') {
-    const { error } = await db.rpc('buy_items', { p_item_ids: mutation.ids })
+    const { error } = await db.rpc('buy_items', { p_item_ids: mutation.ids }).abortSignal(signal)
     if (!error) return { ok: true, transient: false }
-    return { ok: false, transient: isOfflineError(error) }
+    return { ok: false, transient: isRetryable(error) }
   }
 
   if (mutation.kind === 'update') {
-    const { error } = await db.from(TABLE).update(mutation.patch).eq('id', mutation.id)
+    const { error } = await db
+      .from(TABLE)
+      .update(mutation.patch)
+      .eq('id', mutation.id)
+      .abortSignal(signal)
     if (!error) return { ok: true, transient: false }
-    return { ok: false, transient: isOfflineError(error) }
+    return { ok: false, transient: isRetryable(error) }
   }
 
-  const { error } = await db.from(TABLE).delete().eq('id', mutation.id)
+  // A row gone by now answers null, not an error: nothing left to change.
+  if (mutation.kind === 'quantity') {
+    const { error } = await db
+      .rpc('add_item_quantity', { p_id: mutation.id, p_delta: mutation.delta })
+      .abortSignal(signal)
+    if (!error) return { ok: true, transient: false }
+    return { ok: false, transient: isRetryable(error) }
+  }
+
+  const { error } = await db.from(TABLE).delete().eq('id', mutation.id).abortSignal(signal)
   if (!error) return { ok: true, transient: false }
-  return { ok: false, transient: isOfflineError(error) }
+  return { ok: false, transient: isRetryable(error) }
 }
 
 // Whether two queued mutations are the same intent, for the purpose of striking
@@ -463,13 +532,19 @@ export async function flushOfflineQueue(
 
     const sent = queued[0]!
     onWire = { userId, kind: sent.kind, id: sent.id }
+    // Writes have no timeout of their own (see fetchWithRetry), and every list
+    // refetch waits on this flush first, so one write stuck on a dead socket
+    // after the phone wakes would hold up every refresh behind it. Given up on
+    // here and kept for the next attempt, like any other network failure.
+    const signal = AbortSignal.timeout(REPLAY_TIMEOUT_MS)
     let outcome
     try {
-      outcome = await applyMutation(db, sent)
+      outcome = await applyMutation(db, sent, signal)
     } finally {
       onWire = null
     }
-    const { ok, transient } = outcome
+    const { ok } = outcome
+    const transient = outcome.transient || (!ok && signal.aborted)
 
     // The window closed. Whatever is in storage now is what the next decision
     // has to be made against.

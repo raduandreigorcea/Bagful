@@ -57,7 +57,7 @@
 -- Tests run inside a transaction that is rolled back, so they leave no data behind.
 
 begin;
-select plan(136);
+select plan(143);
 
 -- ── Seed as the migration/superuser role (bypasses RLS) ──────────────────────
 -- Three lists, because promoting a contributed product to the global catalog
@@ -1742,6 +1742,57 @@ select throws_ok(
   'P0001',
   'Nothing to merge.',
   'merge_items refuses a source that is already gone'
+);
+
+-- 18. add_item_quantity applies a change to what the row holds now, so two
+-- members bumping the same row both count. The target above sits at 999.
+select is(
+  public.add_item_quantity('00000000-0000-0000-0000-0000000000c2', -998),
+  1,
+  'add_item_quantity subtracts from the stored quantity'
+);
+
+select is(
+  public.add_item_quantity('00000000-0000-0000-0000-0000000000c2', 2)
+    + public.add_item_quantity('00000000-0000-0000-0000-0000000000c2', 3),
+  9,
+  'two changes in a row both land (1+2 = 3, then 3+3 = 6)'
+);
+
+select is(
+  public.add_item_quantity('00000000-0000-0000-0000-0000000000c2', -50),
+  1,
+  'and it is held at 1 on the way down'
+);
+
+select is(
+  public.add_item_quantity('00000000-0000-0000-0000-0000000000c3', 1),
+  null,
+  'a row that is gone answers null, not an error'
+);
+
+select throws_ok(
+  $$ select public.add_item_quantity('00000000-0000-0000-0000-0000000000c2', 5000) $$,
+  'P0001',
+  'Quantity change out of range.',
+  'add_item_quantity refuses a change past the bound'
+);
+
+-- A stranger changes nothing: RLS hides the row, so it reads as gone.
+set local request.jwt.claims = '{"sub":"user_a"}';
+
+select is(
+  public.add_item_quantity('00000000-0000-0000-0000-0000000000c2', 5),
+  null,
+  'add_item_quantity cannot reach a row in a list the caller is not in'
+);
+
+reset role;
+select is(
+  (select quantity from public.shopping_list_items
+   where id = '00000000-0000-0000-0000-0000000000c2'),
+  1,
+  'and the row is untouched by that attempt'
 );
 
 reset role;

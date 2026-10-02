@@ -154,11 +154,11 @@ describe('persisting the list snapshot', () => {
 // old one back. The same teardown that settles the snapshot now settles these.
 describe('flushing pending quantity writes', () => {
   const quantityUpdates = () =>
-    mocks.db.calls.filter((c) => c.table === 'shopping_list_items' && c.op === 'update')
+    mocks.db.calls.filter((c) => c.table === 'rpc' && c.op === 'add_item_quantity')
 
   async function bumpQuantity() {
     const wrapper = await bootHome()
-    mocks.db.handlers['shopping_list_items.update'] = () => ({ data: null, error: null })
+    mocks.db.handlers['rpc.add_item_quantity'] = () => ({ data: null, error: null })
     // The live row, not a copy of it: the optimistic bump mutates the object it
     // is handed, and the flush reads the number back off the row in the list.
     const row = wrapper.findComponent(ShoppingList).props('items')[0]
@@ -176,7 +176,8 @@ describe('flushing pending quantity writes', () => {
     await flushPromises()
 
     expect(quantityUpdates()).toHaveLength(1)
-    expect(quantityUpdates()[0].payload).toMatchObject({ quantity: 4 })
+    // 1 -> 4, sent as the change.
+    expect(quantityUpdates()[0].params).toMatchObject({ p_delta: 3 })
   })
 
   it('sends the change when the app is backgrounded', async () => {

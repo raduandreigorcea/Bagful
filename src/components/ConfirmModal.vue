@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useId } from 'vue'
+import { computed, useId, type PropType } from 'vue'
 import AppButton from './AppButton.vue'
 import AppModal from './AppModal.vue'
 import AppIcon from './AppIcon.vue'
@@ -25,11 +25,7 @@ const props = defineProps({
   title: { type: String, default: '' },
   message: { type: String, default: '' },
   danger: { type: Boolean, default: false },
-  tone: {
-    type: String,
-    default: '',
-    validator: (value: string) => ['danger', 'warning', 'success', ''].includes(value),
-  },
+  tone: { type: String as PropType<'danger' | 'warning' | 'success' | ''>, default: '' },
   // Empty rather than the English word, for the reason ErrorModal spells out:
   // a t() call in a prop default runs once at import and never changes again.
   confirmText: { type: String, default: '' },
@@ -46,7 +42,7 @@ const resolvedTone = computed(() => {
 })
 
 // Falls back to the warning mark, which is also what resolvedTone falls back to,
-// so a tone the validator let through without an icon still draws something.
+// so a tone without an icon of its own still draws something.
 const toneIcon = computed(() => TONE_ICONS[resolvedTone.value] ?? TONE_ICONS.warning)
 
 const confirmVariant = computed(() => {

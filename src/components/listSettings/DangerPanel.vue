@@ -7,6 +7,7 @@ import { randomInviteCode } from '../../lib/inviteCode'
 import type { ConfirmOptions } from '../../lib/useConfirm'
 import { t, tAccent } from '../../lib/i18n'
 import AppIcon from '../AppIcon.vue'
+import AppButton from '../AppButton.vue'
 
 // The actions that cannot be undone: rotating the invite code, leaving, and
 // deleting the list. An owner sees delete, everyone else sees leave — the
@@ -161,7 +162,7 @@ async function deleteList() {
         <div class="card-item__info">
           <p>{{ t('danger.leaveDesc') }}</p>
         </div>
-        <button class="danger-action-btn" type="button" :disabled="leavingList" @click="leaveList">{{ t('danger.leaveTitle') }}</button>
+        <AppButton variant="danger" size="sm" class="danger-action-btn" :disabled="leavingList" @click="leaveList">{{ t('danger.leaveTitle') }}</AppButton>
       </div>
     </div>
 
@@ -177,15 +178,16 @@ async function deleteList() {
                per language. -->
           <p>{{ deleteDesc[0] }}<strong>{{ deleteDesc[1] }}</strong>{{ deleteDesc[2] }}</p>
         </div>
-        <button
+        <AppButton
+          variant="danger"
+          size="sm"
           class="danger-action-btn danger-action-btn--delete"
-          type="button"
           :disabled="deletingList"
           @click="deleteList"
         >
           <span v-if="deletingList" class="btn-spinner btn-spinner--light"></span>
           <span v-else>{{ t('danger.deleteTitle') }}</span>
-        </button>
+        </AppButton>
       </div>
     </div>
   </div>
@@ -264,21 +266,9 @@ async function deleteList() {
   background: var(--danger-bg);
 }
 
+/* Layout only: the look is AppButton's danger variant. */
 .danger-action-btn {
-  background: var(--danger-solid);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: var(--radius-md);
-  padding: 0.6rem 1.25rem;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  cursor: pointer;
-  transition: all var(--transition-base) ease;
-  box-shadow: var(--elevation-danger-subtle);
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   min-width: 100px;
   /* Pairs with white-space:nowrap. Without it this is an ordinary flex item and
      will shrink under its own label, which nowrap then spills outside the button
@@ -286,20 +276,5 @@ async function deleteList() {
      Latent until "Delete Family" became "Delete List" and the label got
      wide enough to cross the threshold. */
   flex-shrink: 0;
-}
-
-.danger-action-btn:hover:not(:disabled) {
-  background: var(--danger-solid-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--elevation-danger-hover);
-}
-
-.danger-action-btn--delete:hover:not(:disabled) {
-  transform: none;
-}
-
-.danger-action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>

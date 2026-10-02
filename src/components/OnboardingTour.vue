@@ -25,6 +25,7 @@ import { t, tn } from '../lib/i18n'
 import { getProductEmoji } from '../lib/productEmoji'
 import type { ShoppingItemRow } from '../lib/listRealtime'
 import AppIcon from './AppIcon.vue'
+import AppButton from './AppButton.vue'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -649,9 +650,9 @@ onBeforeUnmount(stopScene)
 
         <div class="tour-actions">
           <BackButton v-if="step > 0" @click="back" />
-          <button class="tour-next" type="button" @click="next">
+          <AppButton class="tour-next" block @click="next">
             {{ isLast ? t('tour.start') : t('tour.next') }}
-          </button>
+          </AppButton>
         </div>
       </div>
   </AppModal>
@@ -1188,14 +1189,6 @@ onBeforeUnmount(stopScene)
 /* Shared BackButton. It carries a top margin for standalone use at the top of a
    view; this row centres its items, so drop it and keep it from being squeezed. */
 .tour-actions :deep(.back-btn) { flex-shrink: 0; margin-top: 0; }
-.tour-next {
-  flex: 1; background: var(--color-primary); color: var(--text-inverse); border: none;
-  border-radius: var(--radius-md); padding: 0.75rem var(--space-4);
-  font-size: var(--text-base); font-weight: var(--weight-bold); cursor: pointer;
-  box-shadow: var(--elevation-primary); transition: background var(--transition-fast) ease;
-}
-/* Colour shift only — a lift here nudged the card's whole action row on hover. */
-.tour-next:hover { background: color-mix(in srgb, var(--color-primary) 85%, var(--text-primary)); }
 
 /* ── Transitions ── */
 .tour-fade-enter-active, .tour-fade-leave-active { transition: opacity var(--transition-base) ease; }
