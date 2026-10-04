@@ -29,15 +29,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # Bagful-catalog is private, which the workflow token cannot read, so it is
       # fetched on its own with a read-only deploy key on that repo (its private
-      # half is the secret CATALOG_DEPLOY_KEY), at the exact commit this
-      # repo pins for it. admin/ is private too and nothing here needs it.
-      - name: Find the pinned catalog commit
-        id: catalog
-        run: echo "sha=$(git rev-parse HEAD:catalog)" >> "$GITHUB_OUTPUT"
+      # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master, not
+      # the commit this repo records (.gitmodules says why). admin/ is private
+      # too and nothing here needs it.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: raduandreigorcea/Bagful-catalog
-          ref: ${{ steps.catalog.outputs.sha }}
+          ref: master
           path: catalog
           ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
           persist-credentials: false
@@ -98,15 +96,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # Bagful-catalog is private, which the workflow token cannot read, so it is
       # fetched on its own with a read-only deploy key on that repo (its private
-      # half is the secret CATALOG_DEPLOY_KEY), at the exact commit this
-      # repo pins for it. admin/ is private too and nothing here needs it.
-      - name: Find the pinned catalog commit
-        id: catalog
-        run: echo "sha=$(git rev-parse HEAD:catalog)" >> "$GITHUB_OUTPUT"
+      # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master, not
+      # the commit this repo records (.gitmodules says why). admin/ is private
+      # too and nothing here needs it.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: raduandreigorcea/Bagful-catalog
-          ref: ${{ steps.catalog.outputs.sha }}
+          ref: master
           path: catalog
           ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
           persist-credentials: false
