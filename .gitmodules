@@ -1,6 +1,14 @@
+# Both folders follow their repo's latest commit; the commit recorded here is
+# never bumped and goes stale on purpose. `ignore = all` keeps git status quiet
+# about it, CI checks out the catalog's master instead of it, and after a fresh
+# clone `git submodule update --init --remote` brings both folders up to date.
 [submodule "admin"]
 	path = admin
 	url = https://github.com/raduandreigorcea/Bagful-admin.git
+	branch = main
+	ignore = all
 [submodule "catalog"]
 	path = catalog
 	url = https://github.com/raduandreigorcea/Bagful-catalog.git
+	branch = master
+	ignore = all
