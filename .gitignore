@@ -41,8 +41,8 @@ graphify-out
 # which project the CLI is linked to, so with three projects to switch between,
 # every `supabase link` was rewriting files in the working tree.
 #
-# Only the app's own. The catalog is a submodule again (catalog/, published as
-# raduandreigorcea/Bagful-catalog) and keeps its own .gitignore for the
+# Only the app's own. The catalog (catalog/, its own repo, ignored below)
+# keeps its own .gitignore for the
 # equivalent files, which is where a rule about that repo's local state belongs.
 supabase/.branches
 supabase/.temp
@@ -67,3 +67,12 @@ skills-lock.json
 # The bot swarm (bots/swarm.mjs): failure dumps and saved bot sessions.
 bots/runs/
 bots/.auth/
+
+# The dashboard and the catalog are repos of their own, cloned into these
+# folders so one checkout shows all three. They are not submodules: nothing
+# here records which commit they are on, so there is nothing to keep bumping.
+# CI fetches the catalog's master itself. On a fresh clone:
+#   git clone https://github.com/raduandreigorcea/Bagful-admin.git admin
+#   git clone https://github.com/raduandreigorcea/Bagful-catalog.git catalog
+/admin/
+/catalog/

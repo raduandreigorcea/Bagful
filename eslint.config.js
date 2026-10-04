@@ -35,9 +35,10 @@ export default ts.config(
       // Local state written by `supabase db start` — gitignored, and it contains
       // a bundled edge-runtime entrypoint that is nothing to do with this app.
       'supabase/.temp/**',
-      // The two submodules. Each carries its own lint config and its own CI;
+      // The dashboard and catalog repos, cloned into these folders. Each carries
+      // its own lint config and its own CI;
       // linting them from here would apply this app's rules to code that is not
-      // this app's, and would fail outright on a checkout with no submodules.
+      // this app's, and would fail outright on a checkout without them.
       'admin/**',
       'catalog/**',
     ],
