@@ -9,14 +9,14 @@ import { fileURLToPath } from 'node:url'
 // runtime that would ever tell you they had stopped agreeing.
 //
 // THIS TEST READS ACROSS A REPOSITORY BOUNDARY ON PURPOSE, and it is the only
-// one here that does. The catalog is a submodule (catalog/, published as
-// raduandreigorcea/Bagful-catalog) with its own tests, and everything that
+// one here that does. The catalog is its own repo, cloned into catalog/
+// (raduandreigorcea/Bagful-catalog), with its own tests, and everything that
 // concerns only the catalog lives over there. This one cannot: it compares the
 // catalog's market list against src/lib/region.ts, and neither repo can see
 // both sides on its own.
 //
-// It therefore FAILS LOUDLY on a checkout with no submodules, which is why
-// .github/workflows/ci.yml passes `submodules: true` on the unit-test job.
+// It therefore FAILS LOUDLY on a checkout without catalog/, which is why
+// .github/workflows/ci.yml checks the catalog out on the unit-test job.
 //
 // WHAT GOES WRONG WITHOUT IT, and note that the second one CHANGED with the
 // catalog rebuild:

@@ -29,8 +29,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # Bagful-catalog is private, which the workflow token cannot read, so it is
       # fetched on its own with a read-only deploy key on that repo (its private
-      # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master, not
-      # the commit this repo records (.gitmodules says why). admin/ is private
+      # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master
+      # (catalog/ is not tracked here; .gitignore says why). admin/ is private
       # too and nothing here needs it.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -96,8 +96,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # Bagful-catalog is private, which the workflow token cannot read, so it is
       # fetched on its own with a read-only deploy key on that repo (its private
-      # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master, not
-      # the commit this repo records (.gitmodules says why). admin/ is private
+      # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master
+      # (catalog/ is not tracked here; .gitignore says why). admin/ is private
       # too and nothing here needs it.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -127,7 +127,7 @@ jobs:
       - run: supabase --workdir catalog db reset
       - run: supabase --workdir catalog test db
       # Same check for src/types/catalog.ts. This is what catches a catalog
-      # RPC change landing through a submodule bump with stale app types.
+      # RPC change landing on the catalog's master with stale app types.
       - name: Generated types match the catalog migrations
         run: |
           supabase --workdir catalog gen types typescript --local --schema public > /tmp/catalog.ts
