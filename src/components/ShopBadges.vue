@@ -80,8 +80,10 @@ const WHITE_TILE = new Set(['mega-image'])
 // looks like a bug.
 const KNOWN_LOGOS = new Set(['aldi', 'auchan', 'carrefour', 'delhaize', 'kaufland', 'lidl', 'mega-image', 'mpreis', 'penny'])
 
-// Hofer is Aldi Sued's name in Austria and wears the same stripes.
-const SAME_MARK: Record<string, string> = { hofer: 'aldi' }
+// Hofer is Aldi Sued's name in Austria and wears the same stripes. Aldi Nord
+// (`aldi-nord-de`) is a different company, and wears them like Aldi France and
+// Aldi Spain already do until somebody draws its own mark.
+const SAME_MARK: Record<string, string> = { hofer: 'aldi', 'aldi-nord': 'aldi' }
 
 // Logos belong to the CHAIN: Lidl Germany wears the Lidl roundel. See shopBrand.
 function mark(slug: string): string {

@@ -38,15 +38,20 @@ const SLUG = /^[a-z0-9-]{1,40}$/
 // its name down.
 const SHOP_NAMES: Record<string, string> = {
   aldi: 'Aldi',
+  'aldi-nord': 'Aldi Nord',
   auchan: 'Auchan',
   carrefour: 'Carrefour',
+  condis: 'Condis',
   delhaize: 'Delhaize',
   hofer: 'Hofer',
   kaufland: 'Kaufland',
   lidl: 'Lidl',
   'mega-image': 'Mega Image',
+  morrisons: 'Morrisons',
   mpreis: 'MPreis',
   penny: 'Penny',
+  picard: 'Picard',
+  supervalu: 'SuperValu',
 }
 
 /**
