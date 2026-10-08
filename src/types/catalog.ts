@@ -173,6 +173,42 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_near_duplicate_pairs: {
+        Row: {
+          a: string
+          b: string
+          fam: string
+          score: number
+        }
+        Insert: {
+          a: string
+          b: string
+          fam: string
+          score: number
+        }
+        Update: {
+          a?: string
+          b?: string
+          fam?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_near_duplicate_pairs_a_fkey"
+            columns: ["a"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_near_duplicate_pairs_b_fkey"
+            columns: ["b"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_product_merges: {
         Row: {
           drop_id: string
@@ -618,6 +654,7 @@ export type Database = {
         Args: { p_drop: string; p_keep: string; p_source: string }
         Returns: string
       }
+      catalog_near_duplicates_refresh: { Args: never; Returns: undefined }
       catalog_normalize: { Args: { p_text: string }; Returns: string }
       catalog_number_key: { Args: { p_value: number }; Returns: string }
       catalog_purge_listings: {
