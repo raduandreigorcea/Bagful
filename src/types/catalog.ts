@@ -152,6 +152,66 @@ export type Database = {
           },
         ]
       }
+      catalog_merge_rejections: {
+        Row: {
+          product_a: string
+          product_b: string
+          rejected_at: string
+          rejected_by: string | null
+        }
+        Insert: {
+          product_a: string
+          product_b: string
+          rejected_at?: string
+          rejected_by?: string | null
+        }
+        Update: {
+          product_a?: string
+          product_b?: string
+          rejected_at?: string
+          rejected_by?: string | null
+        }
+        Relationships: []
+      }
+      catalog_product_merges: {
+        Row: {
+          drop_id: string
+          drop_row: Json
+          id: string
+          identifier_ids: string[]
+          keep_id: string
+          listing_ids: string[]
+          merged_at: string
+          merged_by: string | null
+          source: string
+          undone_at: string | null
+        }
+        Insert: {
+          drop_id: string
+          drop_row: Json
+          id?: string
+          identifier_ids?: string[]
+          keep_id: string
+          listing_ids?: string[]
+          merged_at?: string
+          merged_by?: string | null
+          source: string
+          undone_at?: string | null
+        }
+        Update: {
+          drop_id?: string
+          drop_row?: Json
+          id?: string
+          identifier_ids?: string[]
+          keep_id?: string
+          listing_ids?: string[]
+          merged_at?: string
+          merged_by?: string | null
+          source?: string
+          undone_at?: string | null
+        }
+        Relationships: []
+      }
       catalog_products: {
         Row: {
           add_count: number
@@ -161,6 +221,7 @@ export type Database = {
           first_seen_at: string
           id: string
           listing_count: number
+          match_key: string | null
           merge_key: string
           popularity: number | null
           quantity: number | null
@@ -176,6 +237,7 @@ export type Database = {
           first_seen_at?: string
           id?: string
           listing_count?: number
+          match_key?: string | null
           merge_key?: string
           popularity?: number | null
           quantity?: number | null
@@ -191,6 +253,7 @@ export type Database = {
           first_seen_at?: string
           id?: string
           listing_count?: number
+          match_key?: string | null
           merge_key?: string
           popularity?: number | null
           quantity?: number | null
@@ -405,6 +468,32 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      catalog_admin_merge: {
+        Args: { p_drop: string; p_keep: string }
+        Returns: string
+      }
+      catalog_admin_merges: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          drop_name: string
+          id: string
+          keep_id: string
+          keep_name: string
+          merged_at: string
+          merged_by: string
+          source: string
+          total: number
+          undone_at: string
+        }[]
+      }
+      catalog_admin_near_duplicates: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          family: string
+          products: Json
+          total: number
+        }[]
+      }
       catalog_admin_products: {
         Args: {
           p_added_since?: string
@@ -440,6 +529,10 @@ export type Database = {
           total_count: number
         }[]
       }
+      catalog_admin_reject_group: {
+        Args: { p_ids: string[] }
+        Returns: undefined
+      }
       catalog_admin_run_listings: {
         Args: {
           p_kind: string
@@ -458,6 +551,10 @@ export type Database = {
           total: number
         }[]
       }
+      catalog_admin_unmerge: {
+        Args: { p_merge_id: string }
+        Returns: undefined
+      }
       catalog_admin_update_product: {
         Args: {
           p_barcode?: string
@@ -469,6 +566,10 @@ export type Database = {
           p_quantity_unit?: string
         }
         Returns: undefined
+      }
+      catalog_backfill_match_keys: {
+        Args: { p_after: string; p_limit?: number }
+        Returns: string
       }
       catalog_canonical_quantity: {
         Args: { p_quantity: number; p_unit: string }
@@ -485,6 +586,25 @@ export type Database = {
       catalog_is_admin: { Args: never; Returns: boolean }
       catalog_key_fold: { Args: { p_text: string }; Returns: string }
       catalog_like_escape: { Args: { p_text: string }; Returns: string }
+      catalog_match_family: { Args: { p_match_key: string }; Returns: string }
+      catalog_match_groups: {
+        Args: never
+        Returns: {
+          match_key: string
+          names: string[]
+          product_ids: string[]
+          retailers: string[]
+        }[]
+      }
+      catalog_match_key: {
+        Args: {
+          p_brand: string
+          p_name: string
+          p_quantity: number
+          p_unit: string
+        }
+        Returns: string
+      }
       catalog_merge_key: {
         Args: {
           p_brand: string
@@ -492,6 +612,10 @@ export type Database = {
           p_quantity?: number
           p_unit?: string
         }
+        Returns: string
+      }
+      catalog_merge_products: {
+        Args: { p_drop: string; p_keep: string; p_source: string }
         Returns: string
       }
       catalog_normalize: { Args: { p_text: string }; Returns: string }
@@ -555,6 +679,7 @@ export type Database = {
       catalog_stats: { Args: never; Returns: Json }
       catalog_stats_refresh: { Args: never; Returns: undefined }
       catalog_strip_quantity: { Args: { p_name: string }; Returns: string }
+      catalog_unmerge: { Args: { p_merge_id: string }; Returns: undefined }
       lookup_barcode: {
         Args: { p_codes: string[]; p_langs?: string[]; p_markets?: string[] }
         Returns: {
