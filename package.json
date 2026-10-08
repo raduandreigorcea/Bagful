@@ -1,7 +1,7 @@
 {
   "name": "bagful",
   "private": true,
-  "version": "0.7.35",
+  "version": "0.7.37",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "catalog:scrape:lidl": "npm --prefix catalog run scrape:lidl",
     "catalog:scrape:all": "npm --prefix catalog run scrape:all",
     "catalog:import": "npm --prefix catalog run import --",
+    "catalog:dedupe": "npm --prefix catalog run dedupe --",
     "catalog:unit": "npm --prefix catalog test",
     "catalog:test": "supabase --workdir catalog db reset && supabase --workdir catalog test db",
     "lint": "eslint .",
