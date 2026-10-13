@@ -312,4 +312,10 @@ describe('memoization', () => {
     }
     for (const [name, icon] of Object.entries(cases)) expect(getProductIcon(name)).toBe(icon)
   })
+
+  it('does not read the brand Old Spice as a spice', () => {
+    expect(getProductIcon('Old Spice')).toBe('shampoo')
+    expect(getProductIcon('After shave Old Spice')).toBe('shampoo')
+    expect(getProductIcon('Spice Mix Burrito')).not.toBe('shampoo')
+  })
 })

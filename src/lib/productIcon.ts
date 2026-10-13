@@ -165,7 +165,7 @@ const ICON_RULES = [
   { icon: 'toilet-paper', keywords: ['papel higienico', 'hartie igienica', 'toilet paper', 'servetele', 'napkins', 'prosoape de hartie', 'paper towels'] },
   { icon: 'tissues', keywords: ['servetele faciale', 'servetele demachiante', 'batiste', 'tissues', 'servetele umede', 'wet wipes'] },
   { icon: 'soap', keywords: ['apa micelara', 'micellar water', 'shower gel', 'douchegel', 'duschgel', 'sapun', 'soap', 'gel de dus', 'body wash', 'dezinfectant', 'sanitizer', 'clor'] },
-  { icon: 'shampoo', keywords: ['deodorant', 'antiperspirant', 'anti perspirant', 'roll on', 'sampon', 'shampoo', 'balsam', 'conditioner', 'lotiune', 'lotion', 'crema', 'cream', 'deodorant', 'spuma', 'gel'] },
+  { icon: 'shampoo', keywords: ['after shave', 'aftershave', 'deodorant', 'antiperspirant', 'anti perspirant', 'roll on', 'sampon', 'shampoo', 'balsam', 'conditioner', 'lotiune', 'lotion', 'crema', 'cream', 'deodorant', 'spuma', 'gel'] },
   { icon: 'laundry', keywords: ['laundry gel', 'laundry', 'fabric conditioner', 'waschmittel', 'lessive', 'detergent', 'detergent de rufe', 'balsam de rufe', 'laundry detergent', 'fabric softener', 'inalbitor', 'bleach'] },
   { icon: 'dishwashing', keywords: ['detergent de vase', 'dish soap', 'masina de spalat vase', 'dishwasher', 'tablete', 'detergent vase', 'detergent pentru vase', 'detergent lichid de vase', 'fairy'] },
   { icon: 'toothbrush', keywords: ['pasta de dinti', 'toothpaste', 'periuta', 'toothbrush', 'apa de gura', 'mouthwash', 'ata dentara', 'floss'] },
@@ -204,6 +204,7 @@ const ICON_RULES = [
 // Dorna which is both a water and a dairy — would fire on products it never
 // made. When in doubt, leave it out and let the keywords decide.
 const BRAND_RULES = [
+  { icon: 'shampoo', keywords: ['old spice', 'lynx', 'rexona', 'nivea'] },
   { icon: 'chips', keywords: ['pringles', 'lays', 'lay s', 'doritos', 'cheetos', 'takis', 'chio', 'croco'] },
   { icon: 'chocolate', keywords: ['milka', 'heidi', 'poiana', 'kandia', 'snickers', 'twix', 'bounty', 'kitkat', 'kit kat', 'toblerone', 'raffaello', 'ferrero', 'roshen', 'lindt', 'ritter sport', 'novatini'] },
   { icon: 'cookie', keywords: ['eugenia', 'belvita', 'toortitzi'] },
