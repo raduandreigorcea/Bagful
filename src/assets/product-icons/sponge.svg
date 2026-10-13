@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#DADCE8"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<rect x="140" y="236" width="232" height="140" rx="20" fill="#F5C84A"/><ellipse cx="190" cy="290" rx="14" ry="9" transform="rotate(0 190 290)" fill="#E9AE2F"/><ellipse cx="258" cy="330" rx="16" ry="10" transform="rotate(0 258 330)" fill="#E9AE2F"/><ellipse cx="320" cy="296" rx="12" ry="8" transform="rotate(0 320 296)" fill="#E9AE2F"/><ellipse cx="212" cy="348" rx="10" ry="7" transform="rotate(0 212 348)" fill="#E9AE2F"/><ellipse cx="306" cy="352" rx="12" ry="8" transform="rotate(0 306 352)" fill="#E9AE2F"/><rect x="140" y="188" width="232" height="62" rx="18" fill="#5FAE72"/><circle cx="176" cy="210" r="5" fill="#4A9A52"/><circle cx="220" cy="226" r="5" fill="#4A9A52"/><circle cx="268" cy="206" r="5" fill="#4A9A52"/><circle cx="316" cy="224" r="5" fill="#4A9A52"/><circle cx="348" cy="208" r="5" fill="#4A9A52"/><circle cx="396" cy="150" r="24" fill="#FFFFFF" stroke="#BFD9EA" stroke-width="5"/><circle cx="440" cy="196" r="14" fill="#FFFFFF" stroke="#BFD9EA" stroke-width="5"/><circle cx="350" cy="120" r="16" fill="#FFFFFF" stroke="#BFD9EA" stroke-width="5"/>
+</g>
+</svg>

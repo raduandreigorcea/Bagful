@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#F7E2C0"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<clipPath id="clip-croi"><path d="M70 372 C56 220 160 148 256 148 C352 148 456 220 442 372 C420 340 396 316 362 308 C330 300 290 296 256 296 C222 296 182 300 150 308 C116 316 92 340 70 372 Z"/></clipPath><g clip-path="url(#clip-croi)"><path d="M256 520 L-295.5 422.8 L-218.9 223.2 Z" fill="#D9923F"/><path d="M256 520 L-218.9 223.2 L-57.1 55.7 Z" fill="#EDB05A"/><path d="M256 520 L-57.1 55.7 L149.1 -29.7 Z" fill="#E4A04C"/><path d="M256 520 L149.1 -29.7 L362.9 -29.7 Z" fill="#F2BC66"/><path d="M256 520 L362.9 -29.7 L569.1 55.7 Z" fill="#E4A04C"/><path d="M256 520 L569.1 55.7 L730.9 223.2 Z" fill="#EDB05A"/><path d="M256 520 L730.9 223.2 L807.5 422.8 Z" fill="#D9923F"/><path d="M256 520 L-218.9 223.2" stroke="#B96F34" stroke-width="7" fill="none"/><path d="M256 520 L-57.1 55.7" stroke="#B96F34" stroke-width="7" fill="none"/><path d="M256 520 L149.1 -29.7" stroke="#B96F34" stroke-width="7" fill="none"/><path d="M256 520 L362.9 -29.7" stroke="#B96F34" stroke-width="7" fill="none"/><path d="M256 520 L569.1 55.7" stroke="#B96F34" stroke-width="7" fill="none"/><path d="M256 520 L730.9 223.2" stroke="#B96F34" stroke-width="7" fill="none"/></g>
+</g>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#EDD99A"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<path d="M138 192 H374 L392 392 C392 410 380 420 362 420 H150 C132 420 120 410 120 392 Z" fill="#FBF7F0"/><path d="M150 148 H362 L374 192 H138 Z" fill="#E3D3AC" stroke="#E3D3AC" stroke-width="8" stroke-linejoin="round"/><path d="M256 392 V256" fill="none" stroke="#C98B3A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="236" cy="270" rx="11" ry="20" transform="rotate(-30 236 270)" fill="#E0A83E"/><ellipse cx="276" cy="270" rx="11" ry="20" transform="rotate(30 276 270)" fill="#E0A83E"/><ellipse cx="236" cy="304" rx="11" ry="20" transform="rotate(-30 236 304)" fill="#E0A83E"/><ellipse cx="276" cy="304" rx="11" ry="20" transform="rotate(30 276 304)" fill="#E0A83E"/><ellipse cx="236" cy="338" rx="11" ry="20" transform="rotate(-30 236 338)" fill="#E0A83E"/><ellipse cx="276" cy="338" rx="11" ry="20" transform="rotate(30 276 338)" fill="#E0A83E"/><ellipse cx="256" cy="242" rx="11" ry="22" transform="rotate(0 256 242)" fill="#E0A83E"/>
+</g>
+</svg>

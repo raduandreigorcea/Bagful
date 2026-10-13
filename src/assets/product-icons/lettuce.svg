@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#CBE7D5"/>
+<g transform="translate(256 256) scale(1.32) translate(-256 -256)">
+<g transform="translate(256 410) rotate(-42) scale(1.9)"><path d="M0 0 C28 -26 28 -70 0 -96 C-28 -70 -28 -26 0 0 Z" fill="#4A9A52"/><path d="M0 -10 V-78" stroke="#4A9A52" stroke-width="7" stroke-linecap="round"/></g><g transform="translate(256 410) rotate(42) scale(1.9)"><path d="M0 0 C28 -26 28 -70 0 -96 C-28 -70 -28 -26 0 0 Z" fill="#4A9A52"/><path d="M0 -10 V-78" stroke="#4A9A52" stroke-width="7" stroke-linecap="round"/></g><g transform="translate(256 414) rotate(-18) scale(2.1)"><path d="M0 0 C28 -26 28 -70 0 -96 C-28 -70 -28 -26 0 0 Z" fill="#66B063"/><path d="M0 -10 V-78" stroke="#4A9A52" stroke-width="7" stroke-linecap="round"/></g><g transform="translate(256 414) rotate(18) scale(2.1)"><path d="M0 0 C28 -26 28 -70 0 -96 C-28 -70 -28 -26 0 0 Z" fill="#66B063"/><path d="M0 -10 V-78" stroke="#4A9A52" stroke-width="7" stroke-linecap="round"/></g><g transform="translate(256 416) rotate(0) scale(2.2)"><path d="M0 0 C28 -26 28 -70 0 -96 C-28 -70 -28 -26 0 0 Z" fill="#A9D98E"/><path d="M0 -10 V-78" stroke="#66B063" stroke-width="7" stroke-linecap="round"/></g>
+</g>
+</svg>

@@ -4,7 +4,7 @@ import { useSupabase } from '../supabase'
 import AppModal from './AppModal.vue'
 import ModalCloseButton from './ModalCloseButton.vue'
 import SkeletonBlock from './SkeletonBlock.vue'
-import { getProductEmoji } from '../lib/productEmoji'
+import ProductIcon from './ProductIcon.vue'
 import { normalizeSearchText, type ProductSuggestion } from '../lib/productSearch'
 import {
   groupCheckouts,
@@ -263,7 +263,7 @@ function dayLabel(label: DayLabel) {
 
                 <ul class="history-list">
                   <li v-for="entry in checkout.items" :key="entry.id" class="history-row">
-                    <span class="history-emoji" aria-hidden="true">{{ getProductEmoji(entry.name ?? '', entry.maker || '') }}</span>
+                    <span class="history-emoji" aria-hidden="true"><ProductIcon :name="entry.name ?? ''" :maker="entry.maker || ''" /></span>
                     <span class="history-text">
                       <span class="history-name">{{ entry.name }}</span>
                       <span v-if="entry.maker" class="history-maker">{{ entry.maker }}</span>
@@ -666,8 +666,14 @@ function dayLabel(label: DayLabel) {
   width: 2.05rem;
   height: 2.05rem;
   border-radius: 0.65rem;
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-surface));
-  border: var(--border-width-thin) solid color-mix(in srgb, var(--color-primary) 22%, var(--bg-surface));
+}
+
+/* The drawing is a full-bleed square: the tile is the picture, and its own
+   rounded corners are the squircle. */
+.history-emoji :deep(.product-icon) {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
 
 .history-text {

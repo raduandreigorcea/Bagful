@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch, type PropType } from 'vue'
-import { getProductEmoji } from '../lib/productEmoji'
+import ProductIcon from './ProductIcon.vue'
 import { ITEM_QUANTITY_MAX } from '../lib/limits'
 import type { ShoppingItemRow } from '../lib/listRealtime'
 import { t } from '../lib/i18n'
@@ -434,7 +434,7 @@ function settle() {
         @keydown.delete.prevent="emit('delete', item)"
       >
         <span class="item-emoji" aria-hidden="true">
-          {{ getProductEmoji(item.name, item.maker || '') }}
+          <ProductIcon :name="item.name" :maker="item.maker || ''" />
           <span v-if="item.checked" class="item-emoji__check"><AppIcon name="check-bold" /></span>
         </span>
         <span class="item-text">
@@ -811,8 +811,14 @@ function settle() {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+
+/* The drawing is a full-bleed square: the tile is the picture, and its own
+   rounded corners are the squircle. */
+.item-emoji :deep(.product-icon) {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
 
 /* The tick, on the tile's corner: the thing you just did, said with the one

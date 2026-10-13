@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#CDEAE8"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<path d="M352 250 C398 250 398 332 342 332" fill="none" stroke="#FBF7F0" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/><path d="M152 232 H360 C366 332 322 394 256 394 C190 394 146 332 152 232 Z" fill="#FBF7F0"/><ellipse cx="256" cy="232" rx="104" ry="24" fill="#FBF7F0"/><ellipse cx="256" cy="234" rx="92" ry="19" fill="#BFA97D"/><clipPath id="clip-tea"><ellipse cx="256" cy="234" rx="92" ry="19"/></clipPath><g clip-path="url(#clip-tea)"><ellipse cx="256" cy="245" rx="92" ry="19" fill="#B5864A"/><ellipse cx="256" cy="248" rx="54" ry="7" fill="#C9A06A"/></g><path d="M296 240 C306 196 326 170 350 156" fill="none" stroke="#8A5A33" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="338" y="128" width="38" height="44" rx="6" transform="rotate(14 357 150)" fill="#7DBE5E"/><path d="M226 332 C226 302 252 288 280 290 C282 320 258 342 226 332 Z" fill="#7DBE5E"/><path d="M232 332 C246 316 260 304 274 296" fill="none" stroke="#4A9A52" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

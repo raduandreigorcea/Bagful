@@ -4,7 +4,7 @@ import { closeModal, isTopModal, openModal } from '../lib/modalStack'
 import { isSheetWidth, useSearchSheet } from '../lib/useSearchSheet'
 import { useTapPops } from '../lib/useTapPops'
 import { useAddedConfirmation } from '../lib/useAddedConfirmation'
-import { getProductEmoji } from '../lib/productEmoji'
+import ProductIcon from './ProductIcon.vue'
 import BackButton from './BackButton.vue'
 import SkeletonBlock from './SkeletonBlock.vue'
 import { productKey, type ProductSuggestion } from '../lib/productSearch'
@@ -168,6 +168,11 @@ function onAction() {
 const inputFocused = ref(false)
 
 const inputRef = ref<HTMLInputElement | null>(null)
+
+function clearName() {
+  name.value = ''
+  inputRef.value?.focus()
+}
 
 // The input and the results are a combobox and its listbox, and saying so is
 // what makes the pair navigable: without aria-controls the two are unrelated
@@ -604,6 +609,21 @@ onBeforeUnmount(() => {
             @keydown.up.prevent="moveActive(-1)"
             @keydown.enter="onEnter"
           />
+          <!-- Wipes what was typed. Shown only while there is something to wipe, and it
+               keeps focus on the field (mousedown.prevent, then focus() by hand for
+               the keyboard) so the next word can be typed straight away, with the
+               keyboard still up. The button after it turns back into the scanner
+               in the same moment, since showScan follows the emptied field. -->
+          <button
+            v-if="name"
+            type="button"
+            class="add-clear"
+            :aria-label="t('add.clearLabel')"
+            @mousedown.prevent
+            @click="clearName"
+          >
+            <AppIcon name="x" />
+          </button>
           <!-- One control, two jobs. type follows the job so Enter in the field
                still submits when there is something to add, and the scan state is
                never a submit button that would fire on it. -->
@@ -811,7 +831,7 @@ onBeforeUnmount(() => {
                   @click="onSuggestionClick(product, $event)"
                 >
                   <span class="suggestion-emoji" aria-hidden="true">
-                    {{ getProductEmoji(product.name, product.maker || '') }}
+                    <ProductIcon :name="product.name" :maker="product.maker || ''" />
                     <!-- On the tile, the way the row on the list wears its own
                          mark. Rendering it only when added would pop the layout;
                          it scales in from nothing instead. -->
@@ -1463,8 +1483,14 @@ onBeforeUnmount(() => {
   width: 1.9rem;
   height: 1.9rem;
   border-radius: 0.6rem;
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-surface));
-  border: var(--border-width-thin) solid color-mix(in srgb, var(--color-primary) 22%, var(--bg-surface));
+}
+
+/* The drawing is a full-bleed square: the tile is the picture, and its own
+   rounded corners are the squircle. */
+.suggestion-emoji :deep(.product-icon) {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
 
 .suggestion-text {
@@ -1589,6 +1615,45 @@ onBeforeUnmount(() => {
   color: var(--text-disabled);
 }
 
+
+/* The wipe button: a small green-tinted disc inside the field, left of the green one.
+   30px keeps it a comfortable tap without crowding the 42px button beside it. The
+   icon sits in an inline span, which carries a line box and pushes the glyph a hair
+   below centre; making that span a flex box with no line height is what centres it. */
+.add-clear {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  margin-left: 2px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.add-clear:hover,
+.add-clear:focus-visible {
+  background: color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+.add-clear :deep(span) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.add-clear :deep(svg) {
+  display: block;
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.4;
+}
 
 .add-btn {
   width: 42px;

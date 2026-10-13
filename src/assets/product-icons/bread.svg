@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#F7E2C0"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<path d="M104 316 C104 226 166 168 256 168 C346 168 408 226 408 316 V362 C408 384 394 396 374 396 H138 C118 396 104 384 104 362 Z" fill="#E6A955"/><clipPath id="clip-loaf"><path d="M104 316 C104 226 166 168 256 168 C346 168 408 226 408 316 V362 C408 384 394 396 374 396 H138 C118 396 104 384 104 362 Z"/></clipPath><g clip-path="url(#clip-loaf)"><rect x="90" y="348" width="330" height="60" fill="#C98B3A"/></g><path d="M180 214 L208 268 M242 196 L270 258 M306 214 L332 270" fill="none" stroke="#F4CF8E" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

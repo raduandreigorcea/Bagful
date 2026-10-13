@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#F2D9E6"/>
+<g transform="translate(256 256) scale(1.2) translate(-256 -256)">
+<rect x="190" y="204" width="132" height="216" rx="34" fill="#F58A3A"/><rect x="226" y="146" width="60" height="64" rx="12" fill="#FBF7F0"/><rect x="204" y="266" width="104" height="124" rx="20" fill="#FBF7F0"/><circle cx="256" cy="328" r="26" fill="#F5C84A"/><circle cx="298" cy="328" r="5" fill="#E9AE2F"/><circle cx="289.9787137637478" cy="352.6869805962839" r="5" fill="#E9AE2F"/><circle cx="268.9787137637478" cy="367.94437368439645" r="5" fill="#E9AE2F"/><circle cx="243.02128623625222" cy="367.94437368439645" r="5" fill="#E9AE2F"/><circle cx="222.0212862362522" cy="352.6869805962839" r="5" fill="#E9AE2F"/><circle cx="214" cy="328" r="5" fill="#E9AE2F"/><circle cx="222.0212862362522" cy="303.3130194037161" r="5" fill="#E9AE2F"/><circle cx="243.0212862362522" cy="288.05562631560355" r="5" fill="#E9AE2F"/><circle cx="268.9787137637478" cy="288.05562631560355" r="5" fill="#E9AE2F"/><circle cx="289.9787137637478" cy="303.3130194037161" r="5" fill="#E9AE2F"/>
+</g>
+</svg>

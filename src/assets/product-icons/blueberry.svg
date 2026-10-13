@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#CBE7D5"/>
+<g transform="translate(256 256) scale(1.32) translate(-256 -256)">
+<circle cx="226" cy="306" r="98" fill="#5B6FD6"/><circle cx="346" cy="248" r="64" fill="#4A5CC2"/><circle cx="342" cy="364" r="58" fill="#6C80E2"/><ellipse cx="190" cy="270" rx="20" ry="30" transform="rotate(25 190 270)" fill="#92A2F0"/><circle cx="226" cy="236" r="22" fill="#3B4AA8"/><ellipse cx="248" cy="236" rx="6" ry="12" transform="rotate(90 248 236)" fill="#3B4AA8"/><ellipse cx="232.79837387624883" cy="256.9232433584934" rx="6" ry="12" transform="rotate(162 232.79837387624883 256.9232433584934)" fill="#3B4AA8"/><ellipse cx="208.20162612375117" cy="248.9312755504344" rx="6" ry="12" transform="rotate(234 208.20162612375117 248.9312755504344)" fill="#3B4AA8"/><ellipse cx="208.20162612375117" cy="223.0687244495656" rx="6" ry="12" transform="rotate(306 208.20162612375117 223.0687244495656)" fill="#3B4AA8"/><ellipse cx="232.79837387624883" cy="215.07675664150662" rx="6" ry="12" transform="rotate(378 232.79837387624883 215.07675664150662)" fill="#3B4AA8"/><circle cx="346" cy="200" r="13" fill="#3B4AA8"/><circle cx="342" cy="318" r="12" fill="#3B4AA8"/>
+</g>
+</svg>

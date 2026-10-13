@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#F6D2CA"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<path d="M108 262 C108 168 168 118 256 118 C344 118 404 168 404 262 Z" fill="#E6A955"/><ellipse cx="200" cy="170" rx="11" ry="6" transform="rotate(20 200 170)" fill="#F6EBD3"/><ellipse cx="256" cy="148" rx="11" ry="6" transform="rotate(20 256 148)" fill="#F6EBD3"/><ellipse cx="314" cy="172" rx="11" ry="6" transform="rotate(20 314 172)" fill="#F6EBD3"/><ellipse cx="230" cy="204" rx="11" ry="6" transform="rotate(20 230 204)" fill="#F6EBD3"/><ellipse cx="292" cy="208" rx="11" ry="6" transform="rotate(20 292 208)" fill="#F6EBD3"/><path d="M100 258 C126 238 148 276 178 258 C208 238 228 276 258 258 C288 238 308 276 338 258 C368 238 388 276 412 258 V284 H100 Z" fill="#7DBE5E"/><rect x="106" y="276" width="300" height="26" fill="#E8574F"/><rect x="102" y="296" width="308" height="46" rx="18" fill="#7A4A2B"/><path d="M108 336 H404 V366 C404 390 386 404 362 404 H150 C126 404 108 390 108 366 Z" fill="#E6A955"/>
+</g>
+</svg>
