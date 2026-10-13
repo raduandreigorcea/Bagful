@@ -136,6 +136,7 @@ const es: Catalog = {
   'add.inputLabel': 'Añadir un artículo',
   'add.inputPlaceholder': 'Añadir un artículo…',
   'add.scanLabel': 'Escanear un código de barras',
+  'add.clearLabel': 'Borrar texto',
   'add.submitLabel': 'Añadir',
   'add.listRecents': 'Productos que compras a menudo',
   'add.listSuggestions': 'Sugerencias de productos',

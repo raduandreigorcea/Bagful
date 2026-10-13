@@ -7,7 +7,7 @@
 // it would vanish from one and pop into the other. Headings are entries in the
 // same group, keyed, so they slide aside for the rows the same way.
 
-import { AISLES, getProductAisle, type Aisle } from './productEmoji'
+import { AISLES, getProductAisle, type Aisle } from './productIcon'
 
 export type ListSort = 'added' | 'aisle'
 

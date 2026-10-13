@@ -22,7 +22,7 @@ import ShoppingListItem from './ShoppingListItem.vue'
 import { useCopyFeedback } from '../lib/clipboard'
 import BackButton from './BackButton.vue'
 import { t, tn } from '../lib/i18n'
-import { getProductEmoji } from '../lib/productEmoji'
+import ProductIcon from './ProductIcon.vue'
 import type { ShoppingItemRow } from '../lib/listRealtime'
 import AppIcon from './AppIcon.vue'
 import AppButton from './AppButton.vue'
@@ -101,7 +101,7 @@ const face = (bg: string) =>
 const AVATARS = [face('#6fb39b'), face('#e3a063'), face('#9489d4')]
 
 // Sample products whose names are the same word in all six languages, so the
-// rows need no translating and getProductEmoji (which knows English and
+// rows need no translating and getProductIcon (which knows English and
 // Romanian) gives each the right picture everywhere. "Milch" or "Latte" would
 // have come out as a shopping bag and a coffee. `who` picks the avatar and
 // travels with the row, so a row leaving does not reshuffle the faces.
@@ -469,7 +469,7 @@ onBeforeUnmount(stopScene)
                   :class="{ 'art-result--added': addedResult === i }"
                 >
                   <span class="art-result__emoji">
-                    {{ getProductEmoji(name, '') }}
+                    <ProductIcon :name="name" />
                     <AppIcon class="art-result__tick" name="check" />
                   </span>
                   <span class="art-result__name">{{ name }}</span>
@@ -871,8 +871,14 @@ onBeforeUnmount(stopScene)
   align-items: center;
   justify-content: center;
   border-radius: 0.6rem;
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-surface));
-  border: var(--border-width-thin) solid color-mix(in srgb, var(--color-primary) 22%, var(--bg-surface));
+}
+
+/* The drawing is a full-bleed square: the tile is the picture, and its own
+   rounded corners are the squircle. */
+.art-result__emoji :deep(.product-icon) {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
 .art-result__tick {
   position: absolute;

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#DADCE8"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<g transform="rotate(30 256 290)"><rect x="198" y="176" width="116" height="250" rx="20" fill="#3E4A63"/><rect x="236" y="146" width="40" height="36" rx="8" fill="#C7CCD6"/><path d="M198 240 V196 a20 20 0 0 1 20 -20 H294 a20 20 0 0 1 20 20 V240 Z" fill="#E6A955"/><path d="M264 276 L228 340 H254 L244 398 L288 322 H260 Z" fill="#F5C84A"/></g>
+</g>
+</svg>

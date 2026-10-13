@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#E3D0EE"/>
+<g transform="translate(256 256) scale(1.15) translate(-256 -256)">
+<circle cx="190" cy="232" r="40" fill="#F9EFC2"/><circle cx="252" cy="204" r="48" fill="#F9EFC2"/><circle cx="320" cy="228" r="42" fill="#F9EFC2"/><circle cx="214" cy="172" r="34" fill="#F9EFC2"/><circle cx="290" cy="162" r="38" fill="#F9EFC2"/><circle cx="200" cy="222" r="9" fill="#F5C84A"/><circle cx="262" cy="196" r="9" fill="#F5C84A"/><circle cx="316" cy="226" r="9" fill="#F5C84A"/><circle cx="232" cy="168" r="9" fill="#F5C84A"/><circle cx="296" cy="156" r="9" fill="#F5C84A"/><clipPath id="clip-pop"><path d="M150 262 H362 L338 420 H174 Z"/></clipPath><g clip-path="url(#clip-pop)"><rect x="140" y="250" width="240" height="180" fill="#FBF7F0"/><rect x="130" y="250" width="28" height="180" fill="#E8574F"/><rect x="186" y="250" width="28" height="180" fill="#E8574F"/><rect x="242" y="250" width="28" height="180" fill="#E8574F"/><rect x="298" y="250" width="28" height="180" fill="#E8574F"/><rect x="354" y="250" width="28" height="180" fill="#E8574F"/></g>
+</g>
+</svg>

@@ -168,6 +168,7 @@ export default {
   'add.inputLabel': 'Add an item',
   'add.inputPlaceholder': 'Add an item…',
   'add.scanLabel': 'Scan a barcode',
+  'add.clearLabel': 'Clear text',
   'add.submitLabel': 'Add',
   'add.listRecents': 'Products you buy often',
   'add.listSuggestions': 'Product suggestions',

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#CFE3F5"/>
+<g transform="translate(256 256) scale(1.2) translate(-256 -256)">
+<path d="M256 100 C330 100 380 200 380 290 C380 370 330 420 256 420 C182 420 132 370 132 290 C132 200 182 100 256 100 Z" fill="#F6EBD3"/><clipPath id="clip-egg"><path d="M256 100 C330 100 380 200 380 290 C380 370 330 420 256 420 C182 420 132 370 132 290 C132 200 182 100 256 100 Z"/></clipPath><g clip-path="url(#clip-egg)"><ellipse cx="374" cy="300" rx="64" ry="182" transform="rotate(-8 374 300)" fill="#E3D3AC"/></g><ellipse cx="206" cy="232" rx="15" ry="38" transform="rotate(20 206 232)" fill="#FFF8E8"/>
+</g>
+</svg>

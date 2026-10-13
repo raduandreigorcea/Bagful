@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import ShoppingListItem from './ShoppingListItem.vue'
 import SkeletonBlock from './SkeletonBlock.vue'
 import ListSortMenu from './ListSortMenu.vue'
-import { getProductEmoji } from '../lib/productEmoji'
+import ProductIcon from './ProductIcon.vue'
 import { memberDisplayName } from '../lib/userIdentity'
 import { productKey } from '../lib/productSearch'
 import { buildListEntries, type ListSort } from '../lib/listSections'
@@ -628,7 +628,7 @@ const labelText = computed(() =>
           @click="emit('add', product)"
         >
           <span class="chip__emoji" aria-hidden="true">
-            {{ getProductEmoji(product.name, product.maker || '') }}
+            <ProductIcon :name="product.name" :maker="product.maker || ''" />
           </span>
           <span class="chip__name">{{ product.name }}</span>
           <span class="chip__plus" aria-hidden="true"></span>

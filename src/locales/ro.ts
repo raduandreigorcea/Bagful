@@ -142,6 +142,7 @@ const ro: Catalog = {
   'add.inputLabel': 'Adaugă un produs',
   'add.inputPlaceholder': 'Adaugă un produs…',
   'add.scanLabel': 'Scanează un cod de bare',
+  'add.clearLabel': 'Șterge textul',
   'add.submitLabel': 'Adaugă',
   'add.listRecents': 'Produse pe care le cumperi des',
   'add.listSuggestions': 'Sugestii de produse',
