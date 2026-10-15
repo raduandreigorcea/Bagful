@@ -22,6 +22,20 @@ export type ServiceRequest =
   | { service: 'clerk'; view: 'summary' }
   | { service: 'clerk'; view: 'user'; userId: string }
   | { service: 'posthog'; view: 'activity' }
+  | { service: 'posthog'; view: 'recordings' }
+  | { service: 'clerk'; view: 'search'; query: string }
+  | ServiceAction
+
+/**
+ * Things the dashboard can DO, as opposed to read. Kept apart from the reads
+ * because they need more than a read key (Sentry) and because index.ts refuses
+ * the ones that would hurt the caller (banning or impersonating yourself).
+ */
+export type ServiceAction =
+  | { service: 'clerk'; action: 'ban' | 'unban' | 'revoke_sessions' | 'impersonate'; userId: string }
+  | { service: 'sentry'; action: 'resolve' | 'ignore' | 'unresolve'; issueId: string }
+  // No userId means "the caller": a test push to your own phone.
+  | { service: 'onesignal'; action: 'test_push'; userId?: string }
 
 // The Sentry project the app reports to. The same two strings vite.config.js
 // uploads source maps under, so they are constants rather than two more secrets.
@@ -38,6 +52,18 @@ export const SENTRY_PROJECT = 'javascript-vue'
 // admin Health page showed as "Sentry answered 404". The region host answers
 // both kinds, so it is what is asked.
 export const SENTRY_API = 'https://de.sentry.io/api/0'
+
+/** What writing to Sentry needs, apart from SENTRY_READ_TOKEN: a token with event:admin. */
+export const SENTRY_WRITE_SECRET = 'SENTRY_WRITE_TOKEN'
+
+/**
+ * Who may use the Clerk actions and the Clerk-wide search: a comma-separated list of Clerk ids.
+ *
+ * is_admin() is per project, but the Clerk key is one instance for every project. Without
+ * this list an admin of bagful-dev, which is easy to grant, could impersonate, ban or sign
+ * out an admin of bagful-prod, and read every account's email. Unset means nobody may.
+ */
+export const CLERK_OWNERS_SECRET = 'CLERK_ACTION_ADMINS'
 
 const SECRETS: Record<Service, string[]> = {
   // A token with event:read and project:read. The build's SENTRY_AUTH_TOKEN is
@@ -67,6 +93,8 @@ export function corsHeaders(origin: string | null): Record<string, string> {
 
 // A Clerk user id. Checked because it is spliced into a URL path.
 const CLERK_USER_ID = /^user_[A-Za-z0-9]{10,64}$/
+// A Sentry issue id: digits, and spliced into a query string.
+const SENTRY_ISSUE_ID = /^\d{1,20}$/
 
 /** The request, or null for anything this function does not answer. */
 export function parseRequest(body: unknown): ServiceRequest | null {
@@ -79,12 +107,48 @@ export function parseRequest(body: unknown): ServiceRequest | null {
   if (service === 'clerk' && view === 'user' && typeof userId === 'string' && CLERK_USER_ID.test(userId)) {
     return { service, view, userId }
   }
+  if (service === 'posthog' && view === 'recordings') return { service, view }
+  const { query, action, issueId } = body as Record<string, unknown>
+  if (service === 'clerk' && view === 'search' && typeof query === 'string') {
+    const trimmed = query.trim().slice(0, 100)
+    return trimmed ? { service, view, query: trimmed } : null
+  }
+  if (service === 'clerk' && typeof userId === 'string' && CLERK_USER_ID.test(userId)) {
+    if (action === 'ban' || action === 'unban' || action === 'revoke_sessions' || action === 'impersonate') {
+      return { service, action, userId }
+    }
+  }
+  if (service === 'sentry' && typeof issueId === 'string' && SENTRY_ISSUE_ID.test(issueId)) {
+    if (action === 'resolve' || action === 'ignore' || action === 'unresolve') return { service, action, issueId }
+  }
+  if (service === 'onesignal' && action === 'test_push') {
+    if (userId === undefined) return { service, action }
+    if (typeof userId === 'string' && CLERK_USER_ID.test(userId)) return { service, action, userId }
+  }
   return null
 }
 
+/** The Clerk requests that reach beyond this project's own people: every action, and the search. */
+export function needsOwner(request: ServiceRequest): boolean {
+  return request.service === 'clerk' && (isAction(request) || ('view' in request && request.view === 'search'))
+}
+
+/** True for a request that changes something somewhere. */
+export function isAction(request: ServiceRequest): request is ServiceAction {
+  return 'action' in request
+}
+
 /** The secrets a service needs that this project does not have. */
-export function missingSecrets(service: Service, read: (name: string) => string | undefined): string[] {
-  return SECRETS[service].filter((name) => !read(name))
+export function missingSecrets(
+  service: Service,
+  read: (name: string) => string | undefined,
+  request?: ServiceRequest,
+): string[] {
+  const needed = [...SECRETS[service]]
+  // Resolving an issue is a write, and the read token must not be able to.
+  if (service === 'sentry' && request && isAction(request)) needed.push(SENTRY_WRITE_SECRET)
+  if (service === 'clerk' && request && needsOwner(request)) needed.push(CLERK_OWNERS_SECRET)
+  return needed.filter((name) => !read(name))
 }
 
 /** A vendor answered, and not with what was asked for. */
@@ -435,4 +499,178 @@ export function shapePostHogActivity(raw: unknown, channel: string, today: Date 
     values[i] = (values[i] ?? 0) + num(n)
   }
   return { channel, days, counts }
+}
+
+// ─── actions ─────────────────────────────────────────────────────────────────
+
+/** The Clerk user id inside a session token, or null. The signature was already checked by is_admin(). */
+export function callerId(authorization: string | null): string | null {
+  const token = authorization?.replace(/^Bearer\s+/i, '')
+  const payload = token?.split('.')[1]
+  if (!payload) return null
+  try {
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof json.sub === 'string' && CLERK_USER_ID.test(json.sub) ? json.sub : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Why an action must not run, or null. Banning yourself locks you out and
+ * impersonating yourself is meaningless. Signing yourself out of every device and
+ * a test notification to your own phone are fine.
+ */
+export function refuseAction(request: ServiceAction, caller: string | null): string | null {
+  if (request.service !== 'clerk') return null
+  if (request.action !== 'ban' && request.action !== 'impersonate') return null
+  if (!caller) return 'Could not tell which account is asking.'
+  if (request.userId === caller) {
+    return request.action === 'impersonate'
+      ? 'Impersonating yourself does nothing.'
+      : 'This is your own account: doing that would lock you out of the dashboard.'
+  }
+  return null
+}
+
+/** Actor tokens last ten minutes: long enough to open the link, short enough not to linger. */
+export const ACTOR_TOKEN_SECONDS = 600
+
+export function actorTokenBody(userId: string, actor: string): Record<string, unknown> {
+  return { user_id: userId, actor: { sub: actor }, expires_in_seconds: ACTOR_TOKEN_SECONDS }
+}
+
+export function clerkSearchUrl(query: string): string {
+  return `${CLERK_API}/users?${new URLSearchParams({ query, limit: '25', order_by: '-last_sign_in_at' })}`
+}
+
+export function sentryIssueUpdateUrl(issueId: string): string {
+  return `${SENTRY_API}/projects/${SENTRY_ORG}/${SENTRY_PROJECT}/issues/?id=${issueId}`
+}
+
+export function sentryStatusOf(action: 'resolve' | 'ignore' | 'unresolve'): string {
+  return action === 'resolve' ? 'resolved' : action === 'ignore' ? 'ignored' : 'unresolved'
+}
+
+/**
+ * The test notification. It names the channel it was sent from (production or
+ * nightly) in both the title and the text, because the two apps look alike on a
+ * phone that has both installed and "which one answered" is the thing a test is for.
+ */
+export function testPushBody(appId: string, userId: string, channel: string): Record<string, unknown> {
+  return {
+    app_id: appId,
+    target_channel: 'push',
+    include_aliases: { external_id: [userId] },
+    headings: { en: `Bagful Admin · ${channel}` },
+    contents: { en: `Test notification sent from ${channel}. If you can read this, push works.` },
+    // The same presentation a real list notification has (push-on-item-insert), so a
+    // test shows the icon and the banner a person actually gets, not OneSignal's
+    // defaults. The channel id must match PUSH_CHANNEL_ID there.
+    chrome_web_badge: 'https://famcart-app.vercel.app/icons/badge-96.png',
+    existing_android_channel_id: 'list_updates',
+    priority: 10,
+  }
+}
+
+/**
+ * Whether OneSignal accepted a notification for at least one subscribed device.
+ *
+ * The id is the answer. A send that reaches nobody comes back with an EMPTY id; one
+ * that reaches a device carries an id. `errors.invalid_aliases` is NOT a failure
+ * signal: an account with a stale, disabled subscription next to a live one (every
+ * phone that reinstalls or signs in again leaves one) is listed there while the
+ * notification is delivered to the live one. Reading it as "nobody" reported a
+ * notification that had arrived as undelivered. And NOT `recipients`, which an
+ * alias-targeted send does not return at all.
+ */
+export function pushWasSent(raw: unknown): boolean {
+  const id = ((raw ?? {}) as Raw).id
+  return typeof id === 'string' && id.length > 0
+}
+
+// ─── PostHog recordings ──────────────────────────────────────────────────────
+
+export interface PostHogRecording {
+  id: string
+  startedAt: string | null
+  seconds: number
+  clicks: number
+  /** The page it started on, path only: a query string can carry an invite code. */
+  startPath: string | null
+  /** A link into PostHog's own player. */
+  url: string
+}
+
+// NAMES NO ONE, like the activity query: a session id, when, how long, how many
+// clicks and where it began. Who it was is for the PostHog player to say, behind
+// PostHog's own login.
+export function posthogRecordingsQuery(): Record<string, unknown> {
+  return {
+    query: {
+      kind: 'HogQLQuery',
+      query: `
+        SELECT session_id, min(min_first_timestamp) AS started,
+          dateDiff('second', min(min_first_timestamp), max(max_last_timestamp)) AS seconds,
+          sum(click_count) AS clicks, any(first_url) AS first_url
+        FROM raw_session_replay_events
+        WHERE min_first_timestamp >= now() - INTERVAL 14 DAY
+        GROUP BY session_id
+        ORDER BY started DESC
+        LIMIT 30`,
+    },
+  }
+}
+
+function pathOf(url: unknown): string | null {
+  try {
+    return typeof url === 'string' ? new URL(url).pathname : null
+  } catch {
+    return null
+  }
+}
+
+export function shapePostHogRecordings(raw: unknown): PostHogRecording[] {
+  const results = ((raw as Raw | null)?.results ?? []) as unknown[]
+  const out: PostHogRecording[] = []
+  for (const row of results) {
+    if (!Array.isArray(row)) continue
+    const [id, started, seconds, clicks, firstUrl] = row
+    if (typeof id !== 'string' || !/^[\w-]{8,64}$/.test(id)) continue
+    const startPath = pathOf(firstUrl)
+    // PostHog answers UTC timestamps, with or without a zone marker.
+    const text = typeof started === 'string' ? started : ''
+    const when = text ? new Date(/[Zz]|[+-]\d\d:?\d\d$/.test(text) ? text : `${text.replace(' ', 'T')}Z`) : null
+    out.push({
+      id,
+      startedAt: when && !Number.isNaN(when.getTime()) ? when.toISOString() : null,
+      seconds: num(seconds),
+      clicks: num(clicks),
+      startPath,
+      url: `${POSTHOG_API}/project/${POSTHOG_PROJECT_ID}/replay/${id}`,
+    })
+  }
+  return out
+}
+
+/** The Clerk ids in CLERK_ACTION_ADMINS. */
+export function parseOwners(raw: string | undefined): string[] {
+  return (raw ?? '').split(',').map((id) => id.trim()).filter((id) => CLERK_USER_ID.test(id))
+}
+
+/**
+ * Why this Clerk request is refused for this caller, or null. The caller must be a listed
+ * owner, and an owner cannot be impersonated, banned or signed out by another one.
+ */
+export function refuseClerkRequest(request: ServiceRequest, caller: string | null, owners: string[]): string | null {
+  if (!needsOwner(request)) return null
+  if (!caller || !owners.includes(caller)) {
+    return 'Clerk actions are limited to the owners listed in CLERK_ACTION_ADMINS.'
+  }
+  // Signing yourself out of every device is yours to do, so it is the one action an owner may aim at an owner.
+  const ownSessions = isAction(request) && request.service === 'clerk' && request.action === 'revoke_sessions' && request.userId === caller
+  if (!ownSessions && isAction(request) && request.service === 'clerk' && request.action !== 'unban' && owners.includes(request.userId)) {
+    return 'That account is an owner, so it is out of reach of this action.'
+  }
+  return null
 }

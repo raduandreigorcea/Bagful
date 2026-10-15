@@ -313,3 +313,199 @@ describe('PostHog', () => {
     expect(shaped.counts.$active[''].at(-2)).toBe(5)
   })
 })
+
+// ─── actions ─────────────────────────────────────────────────────────────────
+// The dashboard can now change things, so what parseRequest lets through, what the
+// function refuses and what it asks of the vendors are pinned here.
+import {
+  actorTokenBody,
+  callerId,
+  clerkSearchUrl,
+  isAction,
+  needsOwner,
+  parseOwners,
+  pushWasSent,
+  refuseClerkRequest,
+  refuseAction,
+  sentryIssueUpdateUrl,
+  sentryStatusOf,
+  shapePostHogRecordings,
+  testPushBody,
+} from '../supabase/functions/_shared/services.ts'
+
+const ME = 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'
+const THEM = 'user_2abcdefghijKLMNOPqrstuvwxyz'
+
+describe('parseRequest, actions', () => {
+  it('accepts the four Clerk actions on a valid id and nothing else', () => {
+    for (const action of ['ban', 'unban', 'revoke_sessions', 'impersonate']) {
+      expect(parseRequest({ service: 'clerk', action, userId: THEM })).toEqual({ service: 'clerk', action, userId: THEM })
+    }
+    expect(parseRequest({ service: 'clerk', action: 'delete', userId: THEM })).toBeNull()
+    expect(parseRequest({ service: 'clerk', action: 'ban', userId: '../users' })).toBeNull()
+  })
+
+  it('accepts a Sentry status change only for a numeric issue id', () => {
+    expect(parseRequest({ service: 'sentry', action: 'resolve', issueId: '123' })).toEqual({
+      service: 'sentry', action: 'resolve', issueId: '123',
+    })
+    expect(parseRequest({ service: 'sentry', action: 'resolve', issueId: '1&project=2' })).toBeNull()
+  })
+
+  it('takes a test push with or without a user', () => {
+    expect(parseRequest({ service: 'onesignal', action: 'test_push' })).toEqual({ service: 'onesignal', action: 'test_push' })
+    expect(parseRequest({ service: 'onesignal', action: 'test_push', userId: THEM })?.userId).toBe(THEM)
+    expect(parseRequest({ service: 'onesignal', action: 'test_push', userId: 'x' })).toBeNull()
+  })
+
+  it('takes a Clerk search, trimmed, and refuses an empty one', () => {
+    expect(parseRequest({ service: 'clerk', view: 'search', query: '  anna ' })).toEqual({ service: 'clerk', view: 'search', query: 'anna' })
+    expect(parseRequest({ service: 'clerk', view: 'search', query: '  ' })).toBeNull()
+  })
+
+  it('knows an action from a read', () => {
+    expect(isAction(parseRequest({ service: 'clerk', action: 'ban', userId: THEM }))).toBe(true)
+    expect(isAction(parseRequest({ service: 'clerk', view: 'summary' }))).toBe(false)
+  })
+})
+
+describe('missingSecrets, writes', () => {
+  const has = (names) => (name) => (names.includes(name) ? 'x' : undefined)
+
+  it('asks for the Sentry write token only when the request writes', () => {
+    const read = parseRequest({ service: 'sentry', view: 'issues' })
+    const write = parseRequest({ service: 'sentry', action: 'resolve', issueId: '1' })
+    expect(missingSecrets('sentry', has(['SENTRY_READ_TOKEN']), read)).toEqual([])
+    expect(missingSecrets('sentry', has(['SENTRY_READ_TOKEN']), write)).toEqual(['SENTRY_WRITE_TOKEN'])
+  })
+})
+
+describe('refuseAction', () => {
+  it('will not ban or impersonate the caller themselves', () => {
+    for (const action of ['ban', 'impersonate']) {
+      expect(refuseAction({ service: 'clerk', action, userId: ME }, ME)).toBeTruthy()
+    }
+  })
+
+  it('lets the caller sign themselves out everywhere', () => {
+    expect(refuseAction({ service: 'clerk', action: 'revoke_sessions', userId: ME }, ME)).toBeNull()
+  })
+
+  it('lets an admin act on someone else, and unban anyone', () => {
+    expect(refuseAction({ service: 'clerk', action: 'ban', userId: THEM }, ME)).toBeNull()
+    expect(refuseAction({ service: 'clerk', action: 'unban', userId: ME }, ME)).toBeNull()
+  })
+
+  it('refuses when the caller cannot be identified', () => {
+    expect(refuseAction({ service: 'clerk', action: 'ban', userId: THEM }, null)).toBeTruthy()
+  })
+})
+
+describe('callerId', () => {
+  const token = (sub) => `h.${btoa(JSON.stringify({ sub })).replace(/=+$/, '')}.s`
+
+  it('reads the Clerk id out of the bearer token', () => {
+    expect(callerId(`Bearer ${token(ME)}`)).toBe(ME)
+  })
+
+  it('returns null for anything that is not a Clerk id', () => {
+    expect(callerId(`Bearer ${token('admin')}`)).toBeNull()
+    expect(callerId('Bearer nonsense')).toBeNull()
+    expect(callerId(null)).toBeNull()
+  })
+})
+
+describe('what is asked of the vendors', () => {
+  it('actor token: this user, acted by the caller, short lived', () => {
+    expect(actorTokenBody(THEM, ME)).toEqual({ user_id: THEM, actor: { sub: ME }, expires_in_seconds: 600 })
+  })
+
+  it('searches Clerk by the query, encoded', () => {
+    expect(clerkSearchUrl('a b&c')).toContain('query=a+b%26c')
+  })
+
+  it('maps actions to Sentry statuses and targets one issue', () => {
+    expect(sentryStatusOf('resolve')).toBe('resolved')
+    expect(sentryStatusOf('ignore')).toBe('ignored')
+    expect(sentryStatusOf('unresolve')).toBe('unresolved')
+    expect(sentryIssueUpdateUrl('42')).toMatch(/\/issues\/\?id=42$/)
+  })
+
+  it('treats an answer with an id as sent, even beside a stale-subscription warning', () => {
+    expect(pushWasSent({ id: 'abc', external_id: null })).toBe(true)
+    expect(pushWasSent({ id: 'abc', errors: { invalid_aliases: { external_id: [THEM] } } })).toBe(true)
+  })
+
+  it('treats an empty id, or no answer, as not sent', () => {
+    expect(pushWasSent({ id: '', errors: ['All included players are not subscribed'] })).toBe(false)
+    expect(pushWasSent(null)).toBe(false)
+  })
+
+  it('addresses a test push to one person by Clerk id', () => {
+    expect(testPushBody('app', THEM, 'nightly').include_aliases).toEqual({ external_id: [THEM] })
+  })
+
+  it('says which channel a test notification came from, in title and text', () => {
+    const body = testPushBody('app', THEM, 'nightly')
+    expect(body.headings.en).toContain('nightly')
+    expect(body.contents.en).toContain('nightly')
+    expect(testPushBody('app', THEM, 'production').headings.en).toContain('production')
+  })
+})
+
+describe('shapePostHogRecordings', () => {
+  it('keeps id, time, length and the start PATH, and links into the player', () => {
+    const [row] = shapePostHogRecordings({
+      results: [['0193abcd-1234-7000-8000-000000000001', '2026-10-15 10:00:00', 61, 12, 'https://x.app/lists?invite=SECRET']],
+    })
+    expect(row.startPath).toBe('/lists')
+    expect(row.seconds).toBe(61)
+    expect(row.startedAt).toBe('2026-10-15T10:00:00.000Z')
+    expect(row.url).toContain('/replay/0193abcd-1234-7000-8000-000000000001')
+    expect(JSON.stringify(row)).not.toContain('SECRET')
+  })
+
+  it('drops a row whose id is not a plain session id', () => {
+    expect(shapePostHogRecordings({ results: [['../x', '2026-10-15 10:00:00', 1, 1, null]] })).toEqual([])
+  })
+})
+
+describe('Clerk owners', () => {
+  const OWNER = ME
+  const act = (action, userId) => parseRequest({ service: 'clerk', action, userId })
+
+  it('treats Clerk actions and search as owner-only, and reads and other services as not', () => {
+    expect(needsOwner(act('ban', THEM))).toBe(true)
+    expect(needsOwner(parseRequest({ service: 'clerk', view: 'search', query: 'a' }))).toBe(true)
+    expect(needsOwner(parseRequest({ service: 'clerk', view: 'summary' }))).toBe(false)
+    expect(needsOwner(parseRequest({ service: 'onesignal', action: 'test_push' }))).toBe(false)
+  })
+
+  it('refuses a caller who is not listed, and everyone when the list is empty', () => {
+    expect(refuseClerkRequest(act('impersonate', THEM), THEM, [OWNER])).toBeTruthy()
+    expect(refuseClerkRequest(act('impersonate', THEM), OWNER, [])).toBeTruthy()
+    expect(refuseClerkRequest(act('impersonate', THEM), null, [OWNER])).toBeTruthy()
+  })
+
+  it('lets a listed owner act on someone else, but not on another owner', () => {
+    const OTHER = 'user_2ownerownerOWNER000000'
+    expect(refuseClerkRequest(act('impersonate', THEM), OWNER, [OWNER, OTHER])).toBeNull()
+    expect(refuseClerkRequest(act('impersonate', OTHER), OWNER, [OWNER, OTHER])).toBeTruthy()
+    expect(refuseClerkRequest(act('revoke_sessions', OTHER), OWNER, [OWNER, OTHER])).toBeTruthy()
+  })
+
+  it('lets an owner sign themselves out everywhere', () => {
+    expect(refuseClerkRequest(act('revoke_sessions', OWNER), OWNER, [OWNER])).toBeNull()
+    expect(refuseClerkRequest(act('ban', OWNER), OWNER, [OWNER])).toBeTruthy()
+  })
+
+  it('asks for the owners secret on a Clerk action and not on a Clerk read', () => {
+    expect(missingSecrets('clerk', (n) => (n === 'CLERK_SECRET_KEY' ? 'x' : undefined), act('ban', THEM))).toEqual(['CLERK_ACTION_ADMINS'])
+    expect(missingSecrets('clerk', (n) => (n === 'CLERK_SECRET_KEY' ? 'x' : undefined), parseRequest({ service: 'clerk', view: 'summary' }))).toEqual([])
+  })
+
+  it('keeps only well-formed ids from the list', () => {
+    expect(parseOwners(` ${ME} , nonsense,${THEM}`)).toEqual([ME, THEM])
+    expect(parseOwners(undefined)).toEqual([])
+  })
+})
