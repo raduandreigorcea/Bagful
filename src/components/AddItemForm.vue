@@ -306,18 +306,9 @@ const activeIndex = ref(-1)
 // roles are lying in the other direction. It sits one past the last row.
 const optionCount = computed(() => rows.value.length + (props.canAddCustom ? 1 : 0))
 
-// "Add 'oat milk'" goes FIRST unless something on screen already is exactly
-// that. Somebody who typed a whole name and sees no row carrying it wants that
-// name, not a place under a dozen near misses at the bottom of the list.
-// When a row does match exactly, that row is the better answer (it has a maker,
-// and it ranks) and the typed version drops to the end.
-const hatchFirst = computed(() => {
-  if (!props.canAddCustom || props.suggestionsLoading) return false
-  const typed = name.value.trim().toLocaleLowerCase()
-  return !rows.value.some((r) => r.name.trim().toLocaleLowerCase() === typed)
-})
-const rowOffset = computed(() => (hatchFirst.value ? 1 : 0))
-const hatchIndex = computed(() => (hatchFirst.value ? 0 : rows.value.length))
+// "Add 'oat milk'" is always the last option: the products come first, and the
+// typed version is what is left when none of them is the one you meant.
+const hatchIndex = computed(() => rows.value.length)
 
 function optionId(index: number): string {
   return `${listboxId}-option-${index}`
@@ -358,7 +349,7 @@ function onEnter(event: KeyboardEvent) {
     emit('add-custom')
     return
   }
-  const product = rows.value[activeIndex.value - rowOffset.value]
+  const product = rows.value[activeIndex.value]
   if (product) selectSuggestion(product)
 }
 
@@ -779,31 +770,6 @@ onBeforeUnmount(() => {
             </template>
 
             <template v-else>
-              <li v-if="canAddCustom && hatchFirst" class="suggestions-hatch" role="presentation">
-                <!-- An option like the products above it, not a stray button:
-                     it is one of the choices this list is offering, and a
-                     non-option child would be dropped from the listbox. -->
-                <button
-                  type="button"
-                  role="option"
-                  class="suggestion suggestion--custom"
-                  :class="{ 'suggestion--active': activeIndex === hatchIndex }"
-                  :id="optionId(hatchIndex)"
-                  :aria-selected="activeIndex === hatchIndex"
-                  @mousedown.prevent="emit('add-custom')"
-                  @click="onAddCustomClick($event)"
-                >
-                  <span class="suggestion-emoji suggestion-emoji--custom" aria-hidden="true">
-                    <span class="suggestion-icon"></span>
-                  </span>
-                  <span class="suggestion-text">
-                    <span class="suggestion-name suggestion-name--custom">{{
-                      t('add.addTyped', { name: name.trim() })
-                    }}</span>
-                    <span class="suggestion-maker suggestion-maker--custom">{{ t('add.addTypedHint') }}</span>
-                  </span>
-                </button>
-              </li>
               <!-- The li is presentational so the listbox owns the options
                    directly: a listbox may only contain options, and a plain
                    list item between the two breaks that ownership and takes the
@@ -818,15 +784,15 @@ onBeforeUnmount(() => {
                   class="suggestion"
                   :class="{
                     'suggestion--added': isAdded(product),
-                    'suggestion--active': activeIndex === index + rowOffset,
+                    'suggestion--active': activeIndex === index,
                     'suggestion--lit-a':
                       litPhase === 0 && productKey(product.name, product.maker) === justAddedKey,
                     'suggestion--lit-b':
                       litPhase === 1 && productKey(product.name, product.maker) === justAddedKey,
                   }"
                   role="option"
-                  :id="optionId(index + rowOffset)"
-                  :aria-selected="activeIndex === index + rowOffset"
+                  :id="optionId(index)"
+                  :aria-selected="activeIndex === index"
                   @mousedown.prevent="selectSuggestion(product, $event)"
                   @click="onSuggestionClick(product, $event)"
                 >
@@ -854,7 +820,7 @@ onBeforeUnmount(() => {
                 </button>
               </li>
 
-              <li v-if="canAddCustom && !hatchFirst" class="suggestions-hatch" role="presentation">
+              <li v-if="canAddCustom" class="suggestions-hatch" role="presentation">
                 <!-- An option like the products above it, not a stray button:
                      it is one of the choices this list is offering, and a
                      non-option child would be dropped from the listbox. -->
@@ -1535,18 +1501,6 @@ onBeforeUnmount(() => {
   border-top: var(--border-width-thin) solid var(--border-light);
   margin-top: 0.3rem;
   padding-top: 0.3rem;
-}
-
-/* First in the list (see hatchFirst), the rule goes under it instead: on top it
-   sat right against the shop filter's own divider and drew a second line, and
-   what it separates from now is the matches below. */
-.suggestions-hatch:not(:only-child):first-child {
-  border-top: none;
-  margin-top: 0;
-  padding-top: 0;
-  border-bottom: var(--border-width-thin) solid var(--border-light);
-  margin-bottom: 0.3rem;
-  padding-bottom: 0.3rem;
 }
 
 /* Edge to edge with the rows it sits under, rather than inset by a card's
