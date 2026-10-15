@@ -1046,11 +1046,6 @@ const orderedActiveMembers = computed(() =>
   transform: scale(0.97);
 }
 
-/* The tile holds its own against the pressed fill, same as on hover. */
-.list-btn:active .list-emoji {
-  background: var(--color-on-strong-fill-strong);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .list-btn:active,
   .topbar-icon-btn:active,
@@ -1327,10 +1322,6 @@ const orderedActiveMembers = computed(() =>
   transform: none;
 }
 
-.list-btn--static:active .list-emoji {
-  background: var(--color-on-strong-fill);
-}
-
 /* The list's emoji, in the same square it wears inside the panel. It leads
    the block: the name is variable-width text and the avatar stack under it is a
    ragged row of circles, so before this there was nothing holding the left edge
@@ -1345,7 +1336,11 @@ const orderedActiveMembers = computed(() =>
   justify-content: center;
   font-size: var(--text-lg);
   line-height: 1;
-  background: var(--color-on-strong-fill);
+  /* The page's own colour, not a wash of the bar's green: the icon is drawn in
+     its own colours (a green bag on a green bar was barely there), and on the
+     page background it reads the same as it does everywhere else. Solid, so it
+     needs no press override against the pressed fill either. */
+  background: var(--bg-main);
 }
 
 

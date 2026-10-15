@@ -105,21 +105,14 @@ describe('AddItemForm suggestions', () => {
     expect(hatch(wrapper).text()).toContain('Add “apa”')
   })
 
-  // Somebody who typed a whole name nothing on screen carries wants that name,
-  // so it leads. It used to sit under every near miss at the bottom.
-  it('leads with the typed name when no match is exactly it', async () => {
-    const wrapper = await mountForm({ suggestions: PRODUCTS, canAddCustom: true })
+  it('puts the typed name last, whether or not a match is exactly it', async () => {
+    for (const name of ['apa', 'banane 1kg']) {
+      const wrapper = await mountForm({ name, suggestions: PRODUCTS, canAddCustom: true })
 
-    const rows = wrapper.findAll('.suggestion')
-    expect(rows).toHaveLength(3)
-    expect(rows[0].classes()).toContain('suggestion--custom')
-  })
-
-  it('puts the typed name last when a match is exactly it', async () => {
-    const wrapper = await mountForm({ name: 'banane 1kg', suggestions: PRODUCTS, canAddCustom: true })
-
-    const rows = wrapper.findAll('.suggestion')
-    expect(rows[2].classes()).toContain('suggestion--custom')
+      const rows = wrapper.findAll('.suggestion')
+      expect(rows).toHaveLength(3)
+      expect(rows[2].classes()).toContain('suggestion--custom')
+    }
   })
 
   it('hides the escape hatch when the parent says the query is too short', async () => {
@@ -237,9 +230,9 @@ describe('AddItemForm suggestions', () => {
 
       expect(wrapper.findAll('.suggestion-skeleton')).toHaveLength(0)
       expect(wrapper.findAll('.suggestion-name').map((n) => n.text())).toEqual([
-        'Add “apa”',
         'Apa Plata 2L',
         'Banane 1kg',
+        'Add “apa”',
       ])
       expect(wrapper.find('.suggestions').attributes('aria-busy')).toBe('false')
     })
@@ -903,9 +896,11 @@ describe('AddItemForm keyboard navigation', () => {
 
   it('walks onto the add-your-own hatch, which is an option like any other', async () => {
     const wrapper = await mountForm({ suggestions: PRODUCTS, canAddCustom: true })
-    await input(wrapper).trigger('keydown', { key: 'ArrowDown' })
-    // Down from nothing lands on the FIRST option, which is the hatch while
-    // nothing matches the typed text exactly.
+    // Down from nothing lands on the first option; the hatch is the last, so it
+    // takes one press per product and one more.
+    for (let i = 0; i < PRODUCTS.length + 1; i++) {
+      await input(wrapper).trigger('keydown', { key: 'ArrowDown' })
+    }
     expect(hatch(wrapper).classes()).toContain('suggestion--active')
 
     await input(wrapper).trigger('keydown', { key: 'Enter' })
