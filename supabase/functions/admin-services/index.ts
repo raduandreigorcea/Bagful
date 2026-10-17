@@ -16,6 +16,12 @@
 //   ONESIGNAL_REST_API_KEY shared with push-on-item-insert
 //   CLERK_SECRET_KEY       the sk_test_ key of the one Clerk instance
 //   POSTHOG_PERSONAL_API_KEY  a phx_ key scoped to query:read, same on both projects
+//   CLERK_ACTION_ADMINS    comma-separated Clerk ids allowed to use the Clerk actions and search
+//                          (impersonate, ban, sign out, find any account). Unset: nobody can.
+//   SENTRY_WRITE_TOKEN     only for resolving/ignoring issues: a token with event:admin.
+//                          Without it those buttons answer not_configured and reads still work.
+// ACTIONS (ban, impersonate, resolve, test push) are requests with an `action`; they pass the
+// same is_admin() gate, and index.ts refuses the ones aimed at the caller's own account.
 // A service whose secrets are missing answers 503 not_configured, naming them.
 //
 // WHO MAY ASK: verify_jwt is off (config.toml), because the platform's check
@@ -31,11 +37,27 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import {
+  actorTokenBody,
+  callerId,
+  clerkSearchUrl,
   CLERK_API,
   corsHeaders,
+  isAction,
+  posthogRecordingsQuery,
+  refuseAction,
+  sentryIssueUpdateUrl,
+  sentryStatusOf,
+  shapePostHogRecordings,
+  testPushBody,
+  parseOwners,
+  pushWasSent,
+  refuseClerkRequest,
+  type ServiceAction,
   UpstreamError,
   missingSecrets,
   oneSignalNotificationsUrl,
+  oneSignalUserUrl,
+  shapeSubscriber,
   parseRequest,
   posthogActivityQuery,
   posthogChannel,
@@ -73,6 +95,30 @@ async function getJson(service: Service, url: string, authorization: string): Pr
   return await res.json()
 }
 
+async function sendJson(
+  service: Service,
+  method: 'POST' | 'PUT',
+  url: string,
+  authorization: string,
+  body?: unknown,
+): Promise<unknown> {
+  const res = await fetch(url, {
+    method,
+    headers: { authorization, accept: 'application/json', 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal: AbortSignal.timeout(10_000),
+  })
+  if (!res.ok) {
+    const parsed = (await res.json().catch(() => null)) as Record<string, unknown> | null
+    const first = Array.isArray(parsed?.errors) ? (parsed!.errors as Record<string, unknown>[])[0] : null
+    const detail = [parsed?.detail, parsed?.message, first?.long_message, first?.message].find((v) => typeof v === 'string') as
+      | string
+      | undefined
+    throw new UpstreamError(service, res.status, { path: new URL(url).pathname, detail })
+  }
+  return await res.json().catch(() => ({}))
+}
+
 // The numeric project id the issues endpoint filters by, looked up once per
 // instance: it never changes, and the lookup is a second round trip otherwise.
 let sentryProjectId: string | null = null
@@ -101,6 +147,24 @@ async function oneSignal() {
   return (body.notifications ?? []).map(shapeNotification)
 }
 
+// Whether each of these people can be pushed to, one OneSignal lookup apiece.
+// A 404 is an answer, not a fault: the app signs a device in under the Clerk id
+// only when someone turns notifications on, so most people are simply unknown.
+async function subscribers(userIds: string[]) {
+  return await Promise.all(
+    userIds.map(async (userId) => {
+      const url = oneSignalUserUrl(env('ONESIGNAL_APP_ID')!, userId)
+      try {
+        const raw = (await getJson('onesignal', url, `Key ${env('ONESIGNAL_REST_API_KEY')}`)) as Record<string, unknown>
+        return shapeSubscriber(userId, raw)
+      } catch (error) {
+        if (error instanceof UpstreamError && error.status === 404) return shapeSubscriber(userId, null)
+        throw error
+      }
+    }),
+  )
+}
+
 async function posthog() {
   const channel = posthogChannel(env('SUPABASE_URL'))
   const res = await fetch(posthogQueryUrl(), {
@@ -121,9 +185,86 @@ async function posthog() {
   return shapePostHogActivity(await res.json(), channel)
 }
 
+async function posthogRecordings() {
+  const res = await fetch(posthogQueryUrl(), {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${env('POSTHOG_PERSONAL_API_KEY')}`,
+      'content-type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify(posthogRecordingsQuery()),
+    signal: AbortSignal.timeout(20_000),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as Record<string, unknown> | null
+    const detail = typeof body?.detail === 'string' ? body.detail : undefined
+    throw new UpstreamError('posthog', res.status, { path: new URL(posthogQueryUrl()).pathname, detail })
+  }
+  return shapePostHogRecordings(await res.json())
+}
+
+// Every write, one place. `caller` is the signed-in admin's Clerk id.
+async function act(request: ServiceAction, caller: string | null) {
+  if (request.service === 'clerk') {
+    const auth = `Bearer ${env('CLERK_SECRET_KEY')}`
+    const user = `${CLERK_API}/users/${request.userId}`
+    if (request.action === 'ban' || request.action === 'unban') {
+      return shapeClerkUser((await sendJson('clerk', 'POST', `${user}/${request.action}`, auth)) as Record<string, unknown>)
+    }
+    if (request.action === 'revoke_sessions') {
+      const sessions = (await getJson('clerk', `${CLERK_API}/sessions?user_id=${request.userId}&status=active&limit=100`, auth)) as unknown
+      const list = (Array.isArray(sessions) ? sessions : ((sessions as { data?: unknown[] })?.data ?? [])) as { id?: string }[]
+      let revoked = 0
+      for (const session of list) {
+        if (typeof session.id === 'string' && /^sess_\w+$/.test(session.id)) {
+          await sendJson('clerk', 'POST', `${CLERK_API}/sessions/${session.id}/revoke`, auth)
+          revoked++
+        }
+      }
+      return { revoked }
+    }
+    // impersonate: a one-time sign-in link, valid for ten minutes. It is NOT logged to
+    // security_events (that table is written by the database); this line is the record.
+    const token = (await sendJson('clerk', 'POST', `${CLERK_API}/actor_tokens`, auth, actorTokenBody(request.userId, caller!))) as {
+      url?: string
+    }
+    // The record of an impersonation: the function log, since nothing else writes one.
+    // eslint-disable-next-line no-console
+    console.log(`[admin-services] ${caller} created an impersonation link for ${request.userId}`)
+    return { url: token.url ?? null }
+  }
+  if (request.service === 'sentry') {
+    await sendJson(
+      'sentry',
+      'PUT',
+      sentryIssueUpdateUrl(request.issueId),
+      `Bearer ${env('SENTRY_WRITE_TOKEN')}`,
+      { status: sentryStatusOf(request.action) },
+    )
+    return { ok: true }
+  }
+  // onesignal test_push
+  const target = request.userId ?? caller
+  if (!target) throw new Error('Could not tell who to send the test to.')
+  const sent = (await sendJson(
+    'onesignal',
+    'POST',
+    'https://api.onesignal.com/notifications?c=push',
+    `Key ${env('ONESIGNAL_REST_API_KEY')}`,
+    testPushBody(env('ONESIGNAL_APP_ID')!, target, posthogChannel(env('SUPABASE_URL'))),
+  )) as unknown
+  // OneSignal answers 200 either way; pushWasSent says whether a device was found.
+  return { sent: pushWasSent(sent) }
+}
+
 async function clerk(request: Extract<ServiceRequest, { service: 'clerk' }>) {
   const auth = `Bearer ${env('CLERK_SECRET_KEY')}`
-  if (request.view === 'user') {
+  if ('view' in request && request.view === 'search') {
+    const rows = (await getJson('clerk', clerkSearchUrl(request.query), auth)) as Record<string, unknown>[]
+    return rows.map(shapeClerkUser)
+  }
+  if ('view' in request && request.view === 'user') {
     try {
       return shapeClerkUser((await getJson('clerk', `${CLERK_API}/users/${request.userId}`, auth)) as Record<string, unknown>)
     } catch (error) {
@@ -163,7 +304,7 @@ Deno.serve(async (req) => {
   const request = parseRequest(await req.json().catch(() => null))
   if (!request) return reply(400, { code: 'bad_request', error: 'Unknown service or view.' })
 
-  const missing = missingSecrets(request.service, env)
+  const missing = missingSecrets(request.service, env, request)
   if (missing.length) {
     return reply(503, {
       code: 'not_configured',
@@ -172,15 +313,36 @@ Deno.serve(async (req) => {
     })
   }
 
+  // The Clerk key is one instance wide while is_admin() is per project: see CLERK_OWNERS_SECRET.
+  const owner = refuseClerkRequest(request, callerId(authorization), parseOwners(env('CLERK_ACTION_ADMINS')))
+  if (owner) return reply(403, { code: 'refused', error: owner })
+
+  if (isAction(request)) {
+    const caller = callerId(authorization)
+    const refusal = refuseAction(request, caller)
+    if (refusal) return reply(403, { code: 'refused', error: refusal })
+    try {
+      return reply(200, { data: await act(request, caller) })
+    } catch (error) {
+      if (error instanceof UpstreamError) return reply(502, { code: 'upstream', status: error.status, error: error.message })
+      const message = error instanceof Error ? error.message : String(error)
+      return reply(502, { code: 'upstream', status: 0, error: `Could not reach ${request.service}: ${message}` })
+    }
+  }
+
   try {
     const data =
       request.service === 'sentry'
-        ? await sentry(request.view)
+        ? await sentry((request as { view: 'issues' | 'feedback' }).view)
         : request.service === 'onesignal'
-          ? await oneSignal()
+          ? (request as { view: string }).view === 'subscribers'
+            ? await subscribers((request as { userIds: string[] }).userIds)
+            : await oneSignal()
           : request.service === 'posthog'
-            ? await posthog()
-            : await clerk(request)
+            ? (request as { view: string }).view === 'recordings'
+              ? await posthogRecordings()
+              : await posthog()
+            : await clerk(request as Extract<ServiceRequest, { service: 'clerk' }>)
     return reply(200, { data })
   } catch (error) {
     if (error instanceof UpstreamError) {
