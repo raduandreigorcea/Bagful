@@ -132,13 +132,17 @@ async function signInWithOAuth(providerId: string) {
     } catch (e) {
       // Native OAuth failures are unexpected by definition (user
       // cancellation resolves null instead) — worth a Sentry event
-      // (no-op without a DSN). The dialog shows the diagnosis the
-      // error carries: which state the attempt got stuck in. A session that
-      // already exists is expected (a second tap, a sign-in in another tab)
-      // and gets its own dialog, so it is not reported.
+      // (no-op without a DSN), and that event is where the diagnosis lives:
+      // which state the attempt got stuck in. The dialog gets the plain
+      // translated line, because that diagnosis ("attempt: needs_identifier,
+      // nonce: missing") is what a banned account hits and means nothing to
+      // a person. A session that already exists is expected (a second tap, a
+      // sign-in in another tab) and gets its own dialog, so it is not reported.
       const codes = (e as ClerkErrorLike | null)?.errors?.map((err) => err.code)
-      if (!codes?.includes('session_exists')) captureException(e)
-      handleSignInError(e, (e as Error)?.message || t('error.oauthFailed'))
+      // A ban or a lock is somebody's decision, not a failure of ours.
+      const deliberate = codes?.some((code) => code === 'session_exists' || /banned|locked/i.test(code ?? ''))
+      if (!deliberate) captureException(e)
+      handleSignInError(e, t('error.oauthFailed'))
     }
     loadingProvider.value = null
     return

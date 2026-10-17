@@ -222,4 +222,19 @@ describe('startNativeOAuth', () => {
     // wording around it is copy and may change; the stuck state may not.
     await expect(result).rejects.toThrow('attempt: needs_first_factor')
   })
+
+  it('carries the reason when Clerk refused the attempt, so a ban reads as a ban', async () => {
+    const signIn = fakeSignIn()
+    const refusal = { code: 'user_banned', message: 'Banned', longMessage: 'This account has been banned.' }
+    signIn.reload.mockImplementation(async () => {
+      signIn.status = 'needs_identifier'
+      signIn.firstFactorVerification.error = refusal
+    })
+
+    const result = startNativeOAuth(signIn, fakeSignUp(), 'oauth_google')
+    await untilBrowserOpened()
+    mocks.listeners.appUrlOpen({ url: `${NATIVE_SSO_CALLBACK_URL}` })
+
+    await expect(result).rejects.toMatchObject({ errors: [refusal] })
+  })
 })

@@ -26,6 +26,7 @@ export type ServiceRequest =
   | { service: 'posthog'; view: 'recordings' }
   | { service: 'posthog'; view: 'replayers'; userIds: string[] }
   | { service: 'clerk'; view: 'search'; query: string }
+  | { service: 'clerk'; view: 'banned' }
   | ServiceAction
 
 /**
@@ -34,7 +35,9 @@ export type ServiceRequest =
  * the ones that would hurt the caller (banning or impersonating yourself).
  */
 export type ServiceAction =
-  | { service: 'clerk'; action: 'ban' | 'unban' | 'revoke_sessions' | 'impersonate'; userId: string }
+  // A ban or an unban is ONE operation across both doors: Clerk and Bagful's own
+  // profile flag (see admin-services). `reason` is the audit text for the Bagful half.
+  | { service: 'clerk'; action: 'ban' | 'unban' | 'revoke_sessions' | 'impersonate'; userId: string; reason?: string }
   | { service: 'sentry'; action: 'resolve' | 'ignore' | 'unresolve'; issueId: string }
   // No userId means "the caller": a test push to your own phone.
   | { service: 'onesignal'; action: 'test_push'; userId?: string }
@@ -104,7 +107,7 @@ export function parseRequest(body: unknown): ServiceRequest | null {
   const { service, view, userId } = body as Record<string, unknown>
   if (service === 'sentry' && (view === 'issues' || view === 'feedback')) return { service, view }
   if (service === 'onesignal' && view === 'notifications') return { service, view }
-  if (service === 'clerk' && view === 'summary') return { service, view }
+  if (service === 'clerk' && (view === 'summary' || view === 'banned')) return { service, view }
   if (service === 'posthog' && view === 'activity') return { service, view }
   if (service === 'clerk' && view === 'user' && typeof userId === 'string' && CLERK_USER_ID.test(userId)) {
     return { service, view, userId }
@@ -119,14 +122,17 @@ export function parseRequest(body: unknown): ServiceRequest | null {
     }
     return null
   }
-  const { query, action, issueId } = body as Record<string, unknown>
+  const { query, action, issueId, reason } = body as Record<string, unknown>
   if (service === 'clerk' && view === 'search' && typeof query === 'string') {
     const trimmed = query.trim().slice(0, 100)
     return trimmed ? { service, view, query: trimmed } : null
   }
   if (service === 'clerk' && typeof userId === 'string' && CLERK_USER_ID.test(userId)) {
     if (action === 'ban' || action === 'unban' || action === 'revoke_sessions' || action === 'impersonate') {
-      return { service, action, userId }
+      // Only a ban carries a reason, trimmed and capped: it goes into the audit trail.
+      return action === 'ban' && typeof reason === 'string' && reason.trim()
+        ? { service, action, userId, reason: reason.trim().slice(0, 300) }
+        : { service, action, userId }
     }
   }
   if (service === 'sentry' && typeof issueId === 'string' && SENTRY_ISSUE_ID.test(issueId)) {
@@ -141,7 +147,7 @@ export function parseRequest(body: unknown): ServiceRequest | null {
 
 /** The Clerk requests that reach beyond this project's own people: every action, and the search. */
 export function needsOwner(request: ServiceRequest): boolean {
-  return request.service === 'clerk' && (isAction(request) || ('view' in request && request.view === 'search'))
+  return request.service === 'clerk' && (isAction(request) || ('view' in request && (request.view === 'search' || request.view === 'banned')))
 }
 
 /** True for a request that changes something somewhere. */
@@ -600,6 +606,13 @@ export const ACTOR_TOKEN_SECONDS = 600
 
 export function actorTokenBody(userId: string, actor: string): Record<string, unknown> {
   return { user_id: userId, actor: { sub: actor }, expires_in_seconds: ACTOR_TOKEN_SECONDS }
+}
+
+// Clerk cannot filter by ban, so this reads the newest accounts and the caller keeps
+// the banned ones. ponytail: 500 is Clerk's page limit; past that many accounts,
+// page with offset.
+export function clerkAllUsersUrl(): string {
+  return `${CLERK_API}/users?${new URLSearchParams({ limit: '500', order_by: '-created_at' })}`
 }
 
 export function clerkSearchUrl(query: string): string {
