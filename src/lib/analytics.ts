@@ -36,6 +36,7 @@ import type { PostHog, CapturedNetworkRequest } from 'posthog-js'
 import { Capacitor } from '@capacitor/core'
 import { resolveChannel, type AppChannel } from './appChannel'
 import { userScopedKey } from './perUserStorage'
+import { maskReplayText } from './replayText'
 
 const DIRECT_HOST = 'https://eu.i.posthog.com'
 const UI_HOST = 'https://eu.posthog.com'
@@ -223,6 +224,7 @@ export async function startAnalytics(): Promise<void> {
       // ("Add {name}", a row's "{name}. Swipe right..." aria-label) and member
       // names in alt/title. Chosen over maskAttributeFn: the flag masks every
       // attribute not in REPLAY_KEEP, so a new one carrying a name cannot slip past.
+      maskTextFn: maskReplayText,
       maskAttributeFn: maskReplayAttribute,
       maskCapturedNetworkRequestFn: scrubRecordedRequest,
     },

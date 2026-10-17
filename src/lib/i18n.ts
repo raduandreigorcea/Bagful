@@ -326,6 +326,23 @@ export function t(key: TextKey, params?: MessageParams): string {
   return interpolate(rawMessage(key), params)
 }
 
+let textsOf: Catalog | null = null
+let texts = new Set<string>()
+
+/** Every string of the catalog on screen and of English, for the replay's text mask. */
+export function catalogTexts(): Set<string> {
+  if (textsOf !== messages.value) {
+    textsOf = messages.value
+    texts = new Set<string>()
+    for (const catalog of [messages.value, en] as Record<string, string | PluralForms>[]) {
+      for (const entry of Object.values(catalog)) {
+        for (const text of typeof entry === 'string' ? [entry] : Object.values(entry)) texts.add(text)
+      }
+    }
+  }
+  return texts
+}
+
 /** The catalog template for `key`, placeholders still standing. */
 function rawMessage(key: TextKey): string {
   const entry = messages.value[key] as string | PluralForms | undefined
