@@ -157,7 +157,7 @@ describe('track', () => {
       mask_all_element_attributes: true, disable_external_dependency_loading: true,
       api_host: expect.any(String), before_send: scrubEvent, capture_heatmaps: false,
       session_recording: expect.objectContaining({
-        maskAllInputs: true, maskAttributeFn: maskReplayAttribute, maskCapturedNetworkRequestFn: scrubRecordedRequest,
+        maskAllInputs: true, maskTextFn: expect.any(Function), maskAttributeFn: maskReplayAttribute, maskCapturedNetworkRequestFn: scrubRecordedRequest,
       }),
     }))
     expect(ph.capture.mock.calls).toEqual([

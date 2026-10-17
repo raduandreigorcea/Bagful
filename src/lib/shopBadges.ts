@@ -54,6 +54,11 @@ const SHOP_NAMES: Record<string, string> = {
   supervalu: 'SuperValu',
 }
 
+/** The shops' display names, which are brands and not anyone's data. */
+export function shopNames(): Set<string> {
+  return new Set(Object.values(SHOP_NAMES))
+}
+
 /**
  * The chain a shop belongs to: `lidl-de` is Lidl. One chain in several countries
  * is one scraper configured per country, each with a slug of its own, and it is
