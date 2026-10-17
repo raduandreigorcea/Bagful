@@ -25,6 +25,8 @@ import {
   shapeNotification,
   shapeSubscriber,
   oneSignalUserUrl,
+  posthogReplayersQuery,
+  shapeReplayers,
   shapeSentryFeedback,
   shapeSentryIssue,
   signInMethods,
@@ -187,6 +189,18 @@ describe('Sentry', () => {
       email: 'ana@example.com',
       status: 'ignored',
     })
+  })
+})
+
+describe('PostHog replayers', () => {
+  const A = 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'
+  const B = 'user_2abcdefghijKLMNOPqrstuvwxyz'
+
+  it('takes Clerk ids only, and marks exactly those with a recording', () => {
+    expect(parseRequest({ service: 'posthog', view: 'replayers', userIds: [A, B] })).toEqual({ service: 'posthog', view: 'replayers', userIds: [A, B] })
+    expect(parseRequest({ service: 'posthog', view: 'replayers', userIds: ["x' OR 1=1"] })).toBeNull()
+    expect(posthogReplayersQuery([A]).query.query).toContain(`'${A}'`)
+    expect(shapeReplayers([A, B], { results: [[B]] })).toEqual([{ userId: A, replay: false }, { userId: B, replay: true }])
   })
 })
 

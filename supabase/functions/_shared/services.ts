@@ -24,6 +24,7 @@ export type ServiceRequest =
   | { service: 'clerk'; view: 'user'; userId: string }
   | { service: 'posthog'; view: 'activity' }
   | { service: 'posthog'; view: 'recordings' }
+  | { service: 'posthog'; view: 'replayers'; userIds: string[] }
   | { service: 'clerk'; view: 'search'; query: string }
   | ServiceAction
 
@@ -110,11 +111,11 @@ export function parseRequest(body: unknown): ServiceRequest | null {
   }
   if (service === 'posthog' && view === 'recordings') return { service, view }
   const { userIds } = body as Record<string, unknown>
-  if (service === 'onesignal' && view === 'subscribers' && Array.isArray(userIds)) {
+  if ((view === 'subscribers' && service === 'onesignal' || view === 'replayers' && service === 'posthog') && Array.isArray(userIds)) {
     // One lookup per id, so the count is capped: a page of the Users table is 25.
     const ids = [...new Set(userIds)]
     if (ids.length > 0 && ids.length <= SUBSCRIBER_LOOKUP_MAX && ids.every((id) => typeof id === 'string' && CLERK_USER_ID.test(id))) {
-      return { service, view, userIds: ids as string[] }
+      return { service, view, userIds: ids as string[] } as ServiceRequest
     }
     return null
   }
@@ -681,6 +682,36 @@ export function posthogRecordingsQuery(): Record<string, unknown> {
         LIMIT 30`,
     },
   }
+}
+
+// WHO HAS SESSION REPLAY ON. The switch lives only in the phone (Settings), so the
+// one trace of it is a recording: the app identifies PostHog by Clerk id, and a
+// person who switched replay on has recordings under that id. "On" here means
+// "recorded in the last POSTHOG_DAYS days"; an account that switched it on and
+// has not opened the app since reads as off. The ids were checked against
+// CLERK_USER_ID, so they are safe to put in the query as literals.
+export function posthogReplayersQuery(userIds: string[]): Record<string, unknown> {
+  return {
+    query: {
+      kind: 'HogQLQuery',
+      query: `
+        SELECT DISTINCT distinct_id
+        FROM raw_session_replay_events
+        WHERE min_first_timestamp >= now() - INTERVAL ${POSTHOG_DAYS} DAY
+          AND distinct_id IN (${userIds.map((id) => `'${id}'`).join(', ')})`,
+    },
+  }
+}
+
+export interface ReplayState {
+  userId: string
+  replay: boolean
+}
+
+export function shapeReplayers(userIds: string[], raw: unknown): ReplayState[] {
+  const rows = ((raw as Raw | null)?.results ?? []) as unknown[]
+  const recorded = new Set(rows.map((row) => (Array.isArray(row) ? row[0] : null)))
+  return userIds.map((userId) => ({ userId, replay: recorded.has(userId) }))
 }
 
 function pathOf(url: unknown): string | null {

@@ -44,6 +44,8 @@ import {
   corsHeaders,
   isAction,
   posthogRecordingsQuery,
+  posthogReplayersQuery,
+  shapeReplayers,
   refuseAction,
   sentryIssueUpdateUrl,
   sentryStatusOf,
@@ -185,7 +187,7 @@ async function posthog() {
   return shapePostHogActivity(await res.json(), channel)
 }
 
-async function posthogRecordings() {
+async function posthogRecordings(userIds?: string[]) {
   const res = await fetch(posthogQueryUrl(), {
     method: 'POST',
     headers: {
@@ -193,7 +195,7 @@ async function posthogRecordings() {
       'content-type': 'application/json',
       accept: 'application/json',
     },
-    body: JSON.stringify(posthogRecordingsQuery()),
+    body: JSON.stringify(userIds ? posthogReplayersQuery(userIds) : posthogRecordingsQuery()),
     signal: AbortSignal.timeout(20_000),
   })
   if (!res.ok) {
@@ -201,7 +203,8 @@ async function posthogRecordings() {
     const detail = typeof body?.detail === 'string' ? body.detail : undefined
     throw new UpstreamError('posthog', res.status, { path: new URL(posthogQueryUrl()).pathname, detail })
   }
-  return shapePostHogRecordings(await res.json())
+  const raw = await res.json()
+  return userIds ? shapeReplayers(userIds, raw) : shapePostHogRecordings(raw)
 }
 
 // Every write, one place. `caller` is the signed-in admin's Clerk id.
@@ -339,8 +342,8 @@ Deno.serve(async (req) => {
             ? await subscribers((request as { userIds: string[] }).userIds)
             : await oneSignal()
           : request.service === 'posthog'
-            ? (request as { view: string }).view === 'recordings'
-              ? await posthogRecordings()
+            ? (request as { view: string }).view !== 'activity'
+              ? await posthogRecordings((request as { userIds?: string[] }).userIds)
               : await posthog()
             : await clerk(request as Extract<ServiceRequest, { service: 'clerk' }>)
     return reply(200, { data })
