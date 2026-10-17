@@ -110,6 +110,24 @@ export function scrubEvent<T extends {
 // release, and search_catalog is a POST whose body is the search text. Giving
 // PostHog a function here also replaces its own body scrubber, so nulling them
 // is ours to do. The Authorization header is stripped by the SDK either way.
+// Attributes a replay may keep. Everything else is blanked, so a new attribute that
+// carries a name cannot slip past a list of bad ones. maskAllElementAttributes
+// blanked these too: with every class and every <link rel href> turned into
+// asterisks the player had nothing to style the page with.
+const REPLAY_KEEP = new Set([
+  'class', 'style', 'type', 'role', 'width', 'height', 'viewbox', 'xmlns', 'd', 'fill', 'stroke',
+  'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'x2', 'y1', 'y2',
+  'points', 'transform', 'aria-hidden',
+])
+
+export function maskReplayAttribute(name: string, value: string, element?: { tagName: string } | null): string {
+  const key = name.toLowerCase()
+  const keep =
+    (REPLAY_KEEP.has(key) && !(key === 'style' && value.includes('url('))) ||
+    (element?.tagName === 'LINK' && (key === 'rel' || key === 'href' || key === 'as'))
+  return keep ? value : '*'.repeat(value.length)
+}
+
 export function scrubRecordedRequest(request: CapturedNetworkRequest): CapturedNetworkRequest {
   return { ...request, name: scrubUrl(request.name) as string, requestBody: null, responseBody: null }
 }
@@ -198,8 +216,8 @@ export async function startAnalytics(): Promise<void> {
       // Text masking does not reach attributes, and ours carry item names
       // ("Add {name}", a row's "{name}. Swipe right..." aria-label) and member
       // names in alt/title. Chosen over maskAttributeFn: the flag masks every
-      // attribute, so a new one carrying a name cannot slip past a list.
-      maskAllElementAttributes: true,
+      // attribute not in REPLAY_KEEP, so a new one carrying a name cannot slip past.
+      maskAttributeFn: maskReplayAttribute,
       maskCapturedNetworkRequestFn: scrubRecordedRequest,
     },
     before_send: scrubEvent,
