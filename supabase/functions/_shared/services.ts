@@ -19,6 +19,7 @@ export type Service = 'sentry' | 'onesignal' | 'clerk' | 'posthog'
 export type ServiceRequest =
   | { service: 'sentry'; view: 'issues' | 'feedback' }
   | { service: 'onesignal'; view: 'notifications' }
+  | { service: 'onesignal'; view: 'subscribers'; userIds: string[] }
   | { service: 'clerk'; view: 'summary' }
   | { service: 'clerk'; view: 'user'; userId: string }
   | { service: 'posthog'; view: 'activity' }
@@ -108,6 +109,15 @@ export function parseRequest(body: unknown): ServiceRequest | null {
     return { service, view, userId }
   }
   if (service === 'posthog' && view === 'recordings') return { service, view }
+  const { userIds } = body as Record<string, unknown>
+  if (service === 'onesignal' && view === 'subscribers' && Array.isArray(userIds)) {
+    // One lookup per id, so the count is capped: a page of the Users table is 25.
+    const ids = [...new Set(userIds)]
+    if (ids.length > 0 && ids.length <= SUBSCRIBER_LOOKUP_MAX && ids.every((id) => typeof id === 'string' && CLERK_USER_ID.test(id))) {
+      return { service, view, userIds: ids as string[] }
+    }
+    return null
+  }
   const { query, action, issueId } = body as Record<string, unknown>
   if (service === 'clerk' && view === 'search' && typeof query === 'string') {
     const trimmed = query.trim().slice(0, 100)
@@ -325,6 +335,57 @@ export function shapeSentryFeedback(raw: Raw): SentryFeedback {
 /** The newest notifications first; 50 is the most the endpoint returns. */
 export function oneSignalNotificationsUrl(appId: string): string {
   return `https://api.onesignal.com/notifications?${new URLSearchParams({ app_id: appId, limit: '50' })}`
+}
+
+/** The most people one subscribers request may ask about: it is one OneSignal call each. */
+export const SUBSCRIBER_LOOKUP_MAX = 50
+
+/** One person's OneSignal record, by the Clerk id the app signs their devices in with. */
+export function oneSignalUserUrl(appId: string, userId: string): string {
+  return `https://api.onesignal.com/apps/${appId}/users/by/external_id/${encodeURIComponent(userId)}`
+}
+
+export interface PushDevice {
+  /** Android, iOS, Chrome, Firefox, Safari: where the subscription lives. */
+  kind: string
+  /** OneSignal's `enabled`: false means unsubscribed (uninstalled, data cleared, or notifications off). */
+  enabled: boolean
+  model: string | null
+  os: string | null
+  appVersion: string | null
+}
+
+export interface PushSubscriber {
+  userId: string
+  /**
+   * on: at least one device is subscribed. off: devices exist and none is.
+   * none: OneSignal has no push device for this person, which is also what a
+   * person who never opened the app on a phone looks like.
+   */
+  state: 'on' | 'off' | 'none'
+  devices: PushDevice[]
+  lastActive: string | null
+}
+
+// OneSignal's subscription types end in Push for the channels that are push;
+// Email and SMS subscriptions on the same person are not this page's business.
+const deviceKind = (type: string): string => type.replace(/Push$/, '')
+
+/** `raw` is OneSignal's user, or null when it has never heard of this id (a 404). */
+export function shapeSubscriber(userId: string, raw: Raw | null): PushSubscriber {
+  const subscriptions = Array.isArray(raw?.subscriptions) ? (raw!.subscriptions as Raw[]) : []
+  const devices = subscriptions
+    .filter((sub) => typeof sub.type === 'string' && (sub.type as string).endsWith('Push'))
+    .map((sub) => ({
+      kind: deviceKind(sub.type as string),
+      enabled: sub.enabled === true,
+      model: str(sub.device_model),
+      os: str(sub.device_os),
+      appVersion: str(sub.app_version),
+    }))
+  const state = devices.length === 0 ? 'none' : devices.some((d) => d.enabled) ? 'on' : 'off'
+  const properties = (raw?.properties ?? {}) as Record<string, unknown>
+  return { userId, state, devices, lastActive: unixToIso(properties.last_active) }
 }
 
 export interface PushNotification {

@@ -23,6 +23,8 @@ import {
   sentryProjectUrl,
   shapeClerkUser,
   shapeNotification,
+  shapeSubscriber,
+  oneSignalUserUrl,
   shapeSentryFeedback,
   shapeSentryIssue,
   signInMethods,
@@ -185,6 +187,49 @@ describe('Sentry', () => {
       email: 'ana@example.com',
       status: 'ignored',
     })
+  })
+})
+
+describe('OneSignal subscribers', () => {
+  const A = 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'
+  const B = 'user_2abcdefghijKLMNOPqrstuvwxyz'
+
+  it('accepts a handful of Clerk ids, once each, and nothing else', () => {
+    expect(parseRequest({ service: 'onesignal', view: 'subscribers', userIds: [A, B, A] })).toEqual({
+      service: 'onesignal',
+      view: 'subscribers',
+      userIds: [A, B],
+    })
+    expect(parseRequest({ service: 'onesignal', view: 'subscribers', userIds: [] })).toBeNull()
+    expect(parseRequest({ service: 'onesignal', view: 'subscribers', userIds: ['nope'] })).toBeNull()
+    expect(parseRequest({ service: 'onesignal', view: 'subscribers', userIds: [A, 7] })).toBeNull()
+    expect(parseRequest({ service: 'onesignal', view: 'subscribers' })).toBeNull()
+    const many = Array.from({ length: 51 }, (_, i) => `user_${String(i).padStart(12, 'a')}`)
+    expect(parseRequest({ service: 'onesignal', view: 'subscribers', userIds: many })).toBeNull()
+  })
+
+  it('puts the id in the path', () => {
+    expect(oneSignalUserUrl('app-1', A)).toBe(`https://api.onesignal.com/apps/app-1/users/by/external_id/${A}`)
+  })
+
+  it('says on when any push device is subscribed, off when none is', () => {
+    const phone = { type: 'AndroidPush', enabled: true, device_model: 'Pixel 8', device_os: '15', app_version: '0.8.2' }
+    const web = { type: 'ChromePush', enabled: false }
+    expect(shapeSubscriber(A, { subscriptions: [phone, web], properties: { last_active: 1757923200 } })).toEqual({
+      userId: A,
+      state: 'on',
+      devices: [
+        { kind: 'Android', enabled: true, model: 'Pixel 8', os: '15', appVersion: '0.8.2' },
+        { kind: 'Chrome', enabled: false, model: null, os: null, appVersion: null },
+      ],
+      lastActive: new Date(1757923200 * 1000).toISOString(),
+    })
+    expect(shapeSubscriber(A, { subscriptions: [web] }).state).toBe('off')
+  })
+
+  it('says none for a person OneSignal has not heard of, or who only has email', () => {
+    expect(shapeSubscriber(A, null)).toEqual({ userId: A, state: 'none', devices: [], lastActive: null })
+    expect(shapeSubscriber(A, { subscriptions: [{ type: 'Email', enabled: true }] }).state).toBe('none')
   })
 })
 

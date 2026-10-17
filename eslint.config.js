@@ -29,6 +29,9 @@ export default ts.config(
       'android/**',
       'graphify-out/**',
       'node_modules/**',
+      // Local Claude Code skills and their helper scripts: gitignored, Node
+      // scripts that print to the console on purpose.
+      '.claude/**',
       // OneSignal's own service worker, shipped as-is from their CDN build. Not
       // ours to lint and not ours to change.
       'public/onesignal/**',

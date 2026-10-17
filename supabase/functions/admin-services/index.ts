@@ -56,6 +56,8 @@ import {
   UpstreamError,
   missingSecrets,
   oneSignalNotificationsUrl,
+  oneSignalUserUrl,
+  shapeSubscriber,
   parseRequest,
   posthogActivityQuery,
   posthogChannel,
@@ -143,6 +145,24 @@ async function oneSignal() {
     notifications?: Record<string, unknown>[]
   }
   return (body.notifications ?? []).map(shapeNotification)
+}
+
+// Whether each of these people can be pushed to, one OneSignal lookup apiece.
+// A 404 is an answer, not a fault: the app signs a device in under the Clerk id
+// only when someone turns notifications on, so most people are simply unknown.
+async function subscribers(userIds: string[]) {
+  return await Promise.all(
+    userIds.map(async (userId) => {
+      const url = oneSignalUserUrl(env('ONESIGNAL_APP_ID')!, userId)
+      try {
+        const raw = (await getJson('onesignal', url, `Key ${env('ONESIGNAL_REST_API_KEY')}`)) as Record<string, unknown>
+        return shapeSubscriber(userId, raw)
+      } catch (error) {
+        if (error instanceof UpstreamError && error.status === 404) return shapeSubscriber(userId, null)
+        throw error
+      }
+    }),
+  )
 }
 
 async function posthog() {
@@ -315,7 +335,9 @@ Deno.serve(async (req) => {
       request.service === 'sentry'
         ? await sentry((request as { view: 'issues' | 'feedback' }).view)
         : request.service === 'onesignal'
-          ? await oneSignal()
+          ? (request as { view: string }).view === 'subscribers'
+            ? await subscribers((request as { userIds: string[] }).userIds)
+            : await oneSignal()
           : request.service === 'posthog'
             ? (request as { view: string }).view === 'recordings'
               ? await posthogRecordings()
