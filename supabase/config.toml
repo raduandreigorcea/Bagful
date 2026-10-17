@@ -34,3 +34,8 @@ verify_jwt = false
 # Clerk tokens (Third-Party Auth). See the header of its index.ts.
 [functions.admin-services]
 verify_jwt = false
+
+# The app calls this with the signed-in person's Clerk token, which the platform's
+# check cannot verify; the function gates on requesting_user_id() instead.
+[functions.prune-push-subscriptions]
+verify_jwt = false
