@@ -680,6 +680,9 @@ export interface PostHogRecording {
 // NAMES NO ONE, like the activity query: a session id, when, how long, how many
 // clicks and where it began. Who it was is for the PostHog player to say, behind
 // PostHog's own login.
+// first_url is an aggregate STATE on the raw table, so it is read with argMinMerge: any()
+// on it passes while the table is empty and makes PostHog answer 500 as soon as a
+// recording exists.
 export function posthogRecordingsQuery(): Record<string, unknown> {
   return {
     query: {
@@ -687,7 +690,7 @@ export function posthogRecordingsQuery(): Record<string, unknown> {
       query: `
         SELECT session_id, min(min_first_timestamp) AS started,
           dateDiff('second', min(min_first_timestamp), max(max_last_timestamp)) AS seconds,
-          sum(click_count) AS clicks, any(first_url) AS first_url
+          sum(click_count) AS clicks, argMinMerge(first_url) AS first_url
         FROM raw_session_replay_events
         WHERE min_first_timestamp >= now() - INTERVAL 14 DAY
         GROUP BY session_id

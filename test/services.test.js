@@ -26,6 +26,7 @@ import {
   shapeSubscriber,
   oneSignalUserUrl,
   posthogReplayersQuery,
+  posthogRecordingsQuery,
   shapeReplayers,
   shapeSentryFeedback,
   shapeSentryIssue,
@@ -209,6 +210,14 @@ describe('Clerk banned list', () => {
     expect(request).toEqual({ service: 'clerk', view: 'banned' })
     expect(refuseClerkRequest(request, 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE', [])).not.toBeNull()
     expect(refuseClerkRequest(request, 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE', ['user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'])).toBeNull()
+  })
+})
+
+describe('PostHog recordings query', () => {
+  it('reads first_url as an aggregate state, which any() cannot do against real rows', () => {
+    const sql = posthogRecordingsQuery().query.query
+    expect(sql).toContain('argMinMerge(first_url)')
+    expect(sql).not.toContain('any(first_url)')
   })
 })
 
