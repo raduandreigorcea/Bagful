@@ -377,7 +377,7 @@ describe('PostHog', () => {
     const body = posthogActivityQuery('nightly')
     expect(body.query.values).toEqual({ channel: 'nightly' })
     // person_id only ever inside uniq(): a count of people, never a list of them.
-    expect(body.query.query.replaceAll('uniqIf(person_id, person.is_identified)', '')).not.toMatch(/person_id|distinct_id|email/)
+    expect(body.query.query.replaceAll("uniqIf(person_id, startsWith(distinct_id, 'user_'))", '')).not.toMatch(/person_id|distinct_id|email/)
     expect(body.query.query).not.toContain('nightly')
   })
 
