@@ -118,6 +118,12 @@ const REPLAY_KEEP = new Set([
   'class', 'style', 'type', 'role', 'width', 'height', 'viewbox', 'xmlns', 'd', 'fill', 'stroke',
   'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'x2', 'y1', 'y2',
   'points', 'transform', 'aria-hidden',
+  // Not page attributes: the recorder runs its own values through this function too. The
+  // inlined stylesheet text of a <link> (added late for a big sheet, which is ours) and the
+  // sizes and scroll positions the player needs to lay the page out. Blanked, the replay
+  // is unstyled and collapsed.
+  '_csstext', 'rr_width', 'rr_height', 'rr_left', 'rr_top', 'rr_position', 'rr_transform', 'rr_display',
+  'rr_scrollleft', 'rr_scrolltop', 'rr_mediastate', 'rr_open_mode',
 ])
 
 export function maskReplayAttribute(name: string, value: string, element?: { tagName: string } | null): string {

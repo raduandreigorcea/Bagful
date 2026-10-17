@@ -294,6 +294,8 @@ describe('maskReplayAttribute', () => {
   const link = { tagName: 'LINK' }
   it('keeps what styling needs and blanks what can carry a name', () => {
     expect(maskReplayAttribute('class', 'row active', div)).toBe('row active')
+    expect(maskReplayAttribute('_cssText', '.a{color:red}', div)).toBe('.a{color:red}')
+    expect(maskReplayAttribute('rr_scrollTop', '40', div)).toBe('40')
     expect(maskReplayAttribute('aria-label', 'Add Milk', div)).toBe('********')
     expect(maskReplayAttribute('alt', 'Ana', div)).toBe('***')
     expect(maskReplayAttribute('href', '/list/abc', div)).toBe('*********')
