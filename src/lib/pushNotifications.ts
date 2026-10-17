@@ -25,7 +25,7 @@ interface OneSignalWebSdk {
   login(externalId: string): Promise<void>
   logout(): Promise<void>
   User: {
-    PushSubscription: { optIn(): Promise<void>; optOut(): Promise<void> }
+    PushSubscription: { id?: string | null; optIn(): Promise<void>; optOut(): Promise<void> }
     setLanguage(language: string): Promise<void>
   }
   Notifications: {
@@ -255,6 +255,38 @@ export function initPushNotifications(): void {
 // (repairs a subscription made before this existed, or before the user changed
 // languages on another device), and the Settings control itself (so the change
 // takes effect now rather than at the next launch).
+// Retires the subscriptions an older install of this device left behind.
+//
+// OneSignal opens a new subscription on every install and keeps the old ones
+// enabled until a push to them fails, so a phone that was reinstalled twenty
+// times shows as twenty devices. The server (prune-push-subscriptions) deletes
+// the leftovers of THIS device and keeps the one we name; the name has to come
+// from here because only the running app knows which subscription is its own.
+// An uninstall cannot clean up after itself, so the next install does it.
+//
+// Not awaited by callers and never throws: the id is not there for a moment
+// after a fresh install, so it is waited for a little, and giving up just
+// leaves the clutter for the next launch.
+export async function prunePushSubscriptions(): Promise<void> {
+  try {
+    let id: string | null | undefined
+    for (let attempt = 0; attempt < 6 && !id; attempt++) {
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 2000))
+      if (Capacitor.isNativePlatform()) {
+        const { default: OneSignal } = await import('@onesignal/capacitor-plugin')
+        id = await OneSignal.User.pushSubscription.getIdAsync()
+      } else {
+        id = (await webSdk())?.User.PushSubscription.id
+      }
+    }
+    if (!id) return
+    const { getSupabase } = await import('../supabase')
+    await getSupabase().functions.invoke('prune-push-subscriptions', { body: { subscriptionId: id } })
+  } catch {
+    // Best-effort, see above.
+  }
+}
+
 export async function setPushLanguage(): Promise<void> {
   const appId = getOneSignalAppId()
   if (!appId || !isPushSupported()) return
@@ -303,6 +335,7 @@ async function enableNativePush(userId: string): Promise<EnablePushResult> {
     // language against until it succeeds. Not awaited — the toggle's answer is
     // 'subscribed' either way, and boot repairs a language that did not land.
     void setPushLanguage()
+    void prunePushSubscriptions()
     return 'subscribed'
   } catch {
     return 'error'
@@ -328,6 +361,7 @@ async function enableWebPush(userId: string): Promise<EnablePushResult> {
   // Same placement as the native path: only once there is a subscription for
   // the language to belong to.
   void setPushLanguage()
+  void prunePushSubscriptions()
   return 'subscribed'
 }
 
@@ -375,6 +409,7 @@ export async function syncPushUser(
       // before this existed has whatever OneSignal inferred from the handset,
       // and a language changed on another device has not reached this one.
       await OneSignal.User.setLanguage(getLocale())
+      void prunePushSubscriptions()
       return
     }
     // This is the path that fetches the web SDK for a device already opted in,
@@ -389,6 +424,7 @@ export async function syncPushUser(
     await sdk?.login(userId)
     // Same reconciliation as the native branch above.
     await sdk?.User.setLanguage(getLocale())
+    void prunePushSubscriptions()
   } catch {
     // Best-effort. A failed re-bind leaves push exactly as broken as it already
     // was, and the toggle in Account settings is still there to force it.
