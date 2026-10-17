@@ -20,7 +20,7 @@ vi.mock('posthog-js/dist/posthog-recorder', () => ({}))
 // the try/catch is verified by reading, not by a test.
 
 import {
-  posthogKey, apiHost, scrubUrl, scrubEvent, scrubRecordedRequest, track, startAnalytics,
+  posthogKey, apiHost, scrubUrl, scrubEvent, scrubRecordedRequest, maskReplayAttribute, track, startAnalytics,
   identifyAnalytics, replayEnabled, setReplayEnabled, __resetAnalyticsForTests,
 } from '../src/lib/analytics'
 
@@ -157,7 +157,7 @@ describe('track', () => {
       mask_all_element_attributes: true, disable_external_dependency_loading: true,
       api_host: expect.any(String), before_send: scrubEvent, capture_heatmaps: false,
       session_recording: expect.objectContaining({
-        maskAllInputs: true, maskAllElementAttributes: true, maskCapturedNetworkRequestFn: scrubRecordedRequest,
+        maskAllInputs: true, maskAttributeFn: maskReplayAttribute, maskCapturedNetworkRequestFn: scrubRecordedRequest,
       }),
     }))
     expect(ph.capture.mock.calls).toEqual([
@@ -286,5 +286,18 @@ describe('replay preference', () => {
     expect(replayEnabled(storage, 'user_b')).toBe(false)
     setReplayEnabled(storage, 'user_a', false)
     expect(replayEnabled(storage, 'user_a')).toBe(false)
+  })
+})
+
+describe('maskReplayAttribute', () => {
+  const div = { tagName: 'DIV' }
+  const link = { tagName: 'LINK' }
+  it('keeps what styling needs and blanks what can carry a name', () => {
+    expect(maskReplayAttribute('class', 'row active', div)).toBe('row active')
+    expect(maskReplayAttribute('aria-label', 'Add Milk', div)).toBe('********')
+    expect(maskReplayAttribute('alt', 'Ana', div)).toBe('***')
+    expect(maskReplayAttribute('href', '/list/abc', div)).toBe('*********')
+    expect(maskReplayAttribute('href', '/assets/a.css', link)).toBe('/assets/a.css')
+    expect(maskReplayAttribute('style', 'background:url(x)', div)).toBe('*'.repeat('background:url(x)'.length))
   })
 })
