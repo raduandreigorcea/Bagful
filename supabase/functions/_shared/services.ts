@@ -511,7 +511,7 @@ export function posthogQueryUrl(): string {
 // day and never selects a person, a distinct_id or a property beyond the three
 // closed breakdowns below, so nothing that names or follows someone can reach
 // the browser even from an admin session. `$active` is people per day
-// (uniqIf over identified people only: before login every page load is a fresh anonymous id, which would count one visitor many times), the one number that is not an event count.
+// (uniqIf over signed-in people only (Clerk ids start with user_; HogQL has no is_identified): before login every page load is a fresh anonymous id, which would count one visitor many times), the one number that is not an event count.
 const TRACKED_EVENTS = [
   'list_created', 'list_joined', 'item_added', 'item_checked', 'barcode_scanned',
   'invite_sent', 'shop_filter_used', 'onboarding_completed', 'search_performed',
@@ -532,7 +532,7 @@ export function posthogActivityQuery(channel: string): Record<string, unknown> {
         WHERE ${since} AND event IN (${TRACKED_EVENTS.map((e) => `'${e}'`).join(', ')})
         GROUP BY day, event, part
         UNION ALL
-        SELECT toString(toDate(timestamp)) AS day, '$active' AS event, '' AS part, uniqIf(person_id, person.is_identified) AS n
+        SELECT toString(toDate(timestamp)) AS day, '$active' AS event, '' AS part, uniqIf(person_id, startsWith(distinct_id, 'user_')) AS n
         FROM events
         WHERE ${since}
         GROUP BY day`,
