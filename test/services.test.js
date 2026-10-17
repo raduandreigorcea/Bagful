@@ -192,6 +192,26 @@ describe('Sentry', () => {
   })
 })
 
+describe('ban requests', () => {
+  const A = 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'
+
+  it('carries a trimmed reason on a ban and on nothing else', () => {
+    expect(parseRequest({ service: 'clerk', action: 'ban', userId: A, reason: '  spam  ' })).toEqual({ service: 'clerk', action: 'ban', userId: A, reason: 'spam' })
+    expect(parseRequest({ service: 'clerk', action: 'ban', userId: A, reason: '   ' })).toEqual({ service: 'clerk', action: 'ban', userId: A })
+    expect(parseRequest({ service: 'clerk', action: 'unban', userId: A, reason: 'x' })).toEqual({ service: 'clerk', action: 'unban', userId: A })
+    expect(parseRequest({ service: 'clerk', action: 'ban', userId: A, reason: 'x'.repeat(500) }).reason).toHaveLength(300)
+  })
+})
+
+describe('Clerk banned list', () => {
+  it('is a plain view, limited to owners like search', () => {
+    const request = parseRequest({ service: 'clerk', view: 'banned' })
+    expect(request).toEqual({ service: 'clerk', view: 'banned' })
+    expect(refuseClerkRequest(request, 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE', [])).not.toBeNull()
+    expect(refuseClerkRequest(request, 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE', ['user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'])).toBeNull()
+  })
+})
+
 describe('PostHog replayers', () => {
   const A = 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'
   const B = 'user_2abcdefghijKLMNOPqrstuvwxyz'

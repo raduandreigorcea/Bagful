@@ -40,6 +40,7 @@ import {
   actorTokenBody,
   callerId,
   clerkSearchUrl,
+  clerkAllUsersUrl,
   CLERK_API,
   corsHeaders,
   isAction,
@@ -208,12 +209,29 @@ async function posthogRecordings(userIds?: string[]) {
 }
 
 // Every write, one place. `caller` is the signed-in admin's Clerk id.
-async function act(request: ServiceAction, caller: string | null) {
+// The Clerk half of a ban went through but Bagful's own did not. A ban is both doors,
+// so this is a failure, with the way out in the message: it is safe to press again.
+class AppBanError extends Error {}
+
+async function act(request: ServiceAction, caller: string | null, db: ReturnType<typeof createClient>) {
   if (request.service === 'clerk') {
     const auth = `Bearer ${env('CLERK_SECRET_KEY')}`
     const user = `${CLERK_API}/users/${request.userId}`
     if (request.action === 'ban' || request.action === 'unban') {
-      return shapeClerkUser((await sendJson('clerk', 'POST', `${user}/${request.action}`, auth)) as Record<string, unknown>)
+      // ONE ban, both doors. Clerk first: it is the one that refuses a sign-in and ends
+      // every session, so it is the lock that matters most if the second step fails.
+      // Both steps are idempotent (Clerk and admin_ban_user), so a retry is always safe.
+      const clerkUser = shapeClerkUser((await sendJson('clerk', 'POST', `${user}/${request.action}`, auth)) as Record<string, unknown>)
+      const { error } =
+        request.action === 'ban'
+          ? await db.rpc('admin_ban_user', { p_user_id: request.userId, p_reason: request.reason ?? '' })
+          : await db.rpc('admin_unban_user', { p_user_id: request.userId })
+      if (error) {
+        throw new AppBanError(
+          `Clerk is done, but Bagful's own ${request.action} failed: ${error.message}. Press the button again to finish it.`,
+        )
+      }
+      return clerkUser
     }
     if (request.action === 'revoke_sessions') {
       const sessions = (await getJson('clerk', `${CLERK_API}/sessions?user_id=${request.userId}&status=active&limit=100`, auth)) as unknown
@@ -266,6 +284,10 @@ async function clerk(request: Extract<ServiceRequest, { service: 'clerk' }>) {
   if ('view' in request && request.view === 'search') {
     const rows = (await getJson('clerk', clerkSearchUrl(request.query), auth)) as Record<string, unknown>[]
     return rows.map(shapeClerkUser)
+  }
+  if ('view' in request && request.view === 'banned') {
+    const rows = (await getJson('clerk', clerkAllUsersUrl(), auth)) as Record<string, unknown>[]
+    return rows.map(shapeClerkUser).filter((user) => user.banned)
   }
   if ('view' in request && request.view === 'user') {
     try {
@@ -325,8 +347,9 @@ Deno.serve(async (req) => {
     const refusal = refuseAction(request, caller)
     if (refusal) return reply(403, { code: 'refused', error: refusal })
     try {
-      return reply(200, { data: await act(request, caller) })
+      return reply(200, { data: await act(request, caller, db) })
     } catch (error) {
+      if (error instanceof AppBanError) return reply(502, { code: 'upstream', status: 0, error: error.message })
       if (error instanceof UpstreamError) return reply(502, { code: 'upstream', status: error.status, error: error.message })
       const message = error instanceof Error ? error.message : String(error)
       return reply(502, { code: 'upstream', status: 0, error: `Could not reach ${request.service}: ${message}` })

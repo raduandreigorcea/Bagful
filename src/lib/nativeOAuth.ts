@@ -27,6 +27,8 @@ export interface NativeOAuthSignIn {
   firstFactorVerification: {
     status: string | null
     externalVerificationRedirectURL: URL | null
+    /** Why Clerk refused, when it did: a banned or locked account lands here. */
+    error?: { code?: string; message?: string; longMessage?: string } | null
   }
   create(params: { strategy: string; redirectUrl: string }): Promise<unknown>
   reload(params?: { rotatingTokenNonce: string }): Promise<unknown>
@@ -91,13 +93,19 @@ export async function startNativeOAuth(
 
   // The exact stuck state is the difference between "allowlist the redirect
   // URL in Clerk" and a bug here — name it instead of a generic failure.
-  throw new Error(
+  //
+  // When Clerk REFUSED the attempt (a banned or locked account), it says why in
+  // firstFactorVerification.error. That reason travels on the error in Clerk's own
+  // shape, so the login screen shows Clerk's sentence and not our diagnosis, and a
+  // deliberate refusal can be told apart from a bug.
+  const refusal = signIn.firstFactorVerification.error
+  throw Object.assign(new Error(
     'Could not finish signing in with that provider ' +
       `(attempt: ${signIn.status ?? 'unknown'}, ` +
       `verification: ${signIn.firstFactorVerification.status ?? 'unknown'}, ` +
       `signup: ${signUp.status ?? 'none'}, ` +
       `nonce: ${rotatingTokenNonce ? 'present' : 'missing'}).`,
-  )
+  ), refusal ? { errors: [refusal] } : {})
 }
 
 // The slice of Clerk's User that linking a provider touches. Pass the raw
