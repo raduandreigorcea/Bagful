@@ -237,4 +237,20 @@ describe('startNativeOAuth', () => {
 
     await expect(result).rejects.toMatchObject({ errors: [refusal] })
   })
+
+  // What a banned account actually returned in production (JAVASCRIPT-VUE-K):
+  // no reason on the verification, no nonce on the callback.
+  it('marks an unverified, nonceless needs_identifier attempt as refused', async () => {
+    const signIn = fakeSignIn()
+    signIn.reload.mockImplementation(async () => {
+      signIn.status = 'needs_identifier'
+      signIn.firstFactorVerification.status = 'unverified'
+    })
+
+    const result = startNativeOAuth(signIn, fakeSignUp(), 'oauth_google')
+    await untilBrowserOpened()
+    mocks.listeners.appUrlOpen({ url: `${NATIVE_SSO_CALLBACK_URL}` })
+
+    await expect(result).rejects.toMatchObject({ errors: [{ code: 'oauth_refused' }] })
+  })
 })
