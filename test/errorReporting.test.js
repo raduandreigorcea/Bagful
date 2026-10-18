@@ -111,6 +111,14 @@ describe('isExpectedOfflineFailure', () => {
     expect(isExpectedOfflineFailure(clerkUiFailure, true)).toBe(true)
   })
 
+  it('drops the clerk-js bundle failing to load while offline too', () => {
+    const jsFailure = {
+      exception: { values: [{ type: 'e', value: 'Clerk: Failed to load Clerk JS\n\n(code="failed_to_load_clerk_js")' }] },
+    }
+    expect(isExpectedOfflineFailure(jsFailure, true)).toBe(true)
+    expect(isExpectedOfflineFailure(jsFailure, false)).toBe(false)
+  })
+
   it('keeps the same failure when the device is online', () => {
     expect(isExpectedOfflineFailure(clerkUiFailure, false)).toBe(false)
   })
