@@ -216,7 +216,8 @@ export interface ReportableEvent {
   exception?: { values?: Array<{ type?: string; value?: string }> }
 }
 
-// Whether an event is Clerk failing to fetch its UI bundle with no network.
+// Whether an event is Clerk failing to fetch its UI or JS bundle with no network.
+// Clerk loads two bundles and either can be the one that fails.
 //
 // `app.use(clerkPlugin, ...)` in main.ts returns before Clerk's remote script
 // has loaded, so a failure arrives as an unhandled rejection that no call site
@@ -236,7 +237,7 @@ export function isExpectedOfflineFailure(event: ReportableEvent, offline: boolea
   // minified ("e"), and the message carries the URL in one variant and the
   // code in the other, so a substring is the only stable handle.
   return (event.exception?.values ?? []).some((value) =>
-    (value.value ?? '').includes('Failed to load Clerk UI'),
+    /Failed to load Clerk (UI|JS)/.test(value.value ?? ''),
   )
 }
 
