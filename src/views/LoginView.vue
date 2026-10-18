@@ -140,7 +140,7 @@ async function signInWithOAuth(providerId: string) {
       // sign-in in another tab) and gets its own dialog, so it is not reported.
       const codes = (e as ClerkErrorLike | null)?.errors?.map((err) => err.code)
       // A ban or a lock is somebody's decision, not a failure of ours.
-      const deliberate = codes?.some((code) => code === 'session_exists' || /banned|locked/i.test(code ?? ''))
+      const deliberate = codes?.some((code) => code === 'session_exists' || code === 'oauth_refused' || /banned|locked/i.test(code ?? ''))
       if (!deliberate) captureException(e)
       handleSignInError(e, t('error.oauthFailed'))
     }

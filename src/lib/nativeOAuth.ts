@@ -98,7 +98,18 @@ export async function startNativeOAuth(
   // firstFactorVerification.error. That reason travels on the error in Clerk's own
   // shape, so the login screen shows Clerk's sentence and not our diagnosis, and a
   // deliberate refusal can be told apart from a bug.
-  const refusal = signIn.firstFactorVerification.error
+  //
+  // A banned account is refused without that reason: the attempt comes back
+  // still asking for an identifier, unverified, and the callback carried no
+  // nonce. A callback did arrive (a missing redirect allowlist never gets this
+  // far), so that shape is Clerk saying no, and it is marked the same way.
+  const refusal =
+    signIn.firstFactorVerification.error ??
+    (signIn.status === 'needs_identifier' &&
+    signIn.firstFactorVerification.status === 'unverified' &&
+    !rotatingTokenNonce
+      ? { code: 'oauth_refused' }
+      : null)
   throw Object.assign(new Error(
     'Could not finish signing in with that provider ' +
       `(attempt: ${signIn.status ?? 'unknown'}, ` +
