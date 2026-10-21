@@ -288,7 +288,16 @@ export function startErrorReporting(app: App, router: Router): Promise<void> {
             // A fetch/websocket aborted because the user navigated mid-request
             // (e.g. Clerk during a login redirect) is expected teardown, not a
             // fault we can act on. Keep it out of the issue stream.
-            ignoreErrors: ['AbortError: The connection was closed.'],
+            //
+            // "Object Not Found Matching Id:N, MethodName:update" is not ours: it
+            // is raised by a script an extension injects into the page, arrives
+            // with no stack trace, and the string appears nowhere in this repo.
+            ignoreErrors: [
+              'AbortError: The connection was closed.',
+              /Object Not Found Matching Id:\d+, MethodName:\w+/,
+              // A stale route chunk after a deploy; main.ts reloads the page once.
+              /Couldn't resolve component/,
+            ],
             // Same idea as ignoreErrors above, but it cannot be expressed there:
             // whether Clerk failing to load is news depends on the connection at
             // the time, not on the message. See isExpectedOfflineFailure.

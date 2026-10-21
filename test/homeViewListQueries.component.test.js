@@ -156,4 +156,18 @@ describe('the list header and switcher queries', () => {
     await wrapper.vm.loadListHeader()
     expect(mocks.captured).toHaveLength(1)
   })
+
+  // The Sign out button races the watchdog's header read: the read lands once
+  // the session is gone, goes out as anon and is refused. Teardown, not a fault.
+  it('does not report a header read refused after the user signed out', async () => {
+    const wrapper = await bootHome()
+
+    mocks.userId.value = null
+    mocks.db.handlers['lists.select'] = () => ({
+      data: null,
+      error: { code: '42501', message: 'permission denied for table lists' },
+    })
+    await wrapper.vm.loadListHeader()
+    expect(mocks.captured).toHaveLength(0)
+  })
 })
