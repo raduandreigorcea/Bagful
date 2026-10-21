@@ -3,7 +3,6 @@
 // Every other file in this directory is annotated `const xx: Catalog` against a
 // type derived from this one, so a key added here and forgotten there fails
 // `npm run typecheck` rather than shipping a screen that says
-// 'setup.language.title' to somebody. English is also the static import and the
 // runtime fallback — the other five are fetched lazily — so this file must stay
 // complete and must never be the one that lags.
 //
@@ -44,18 +43,15 @@ export default {
   // catalog to find it.
   'language.groupLabel': 'Choose a language',
 
-  'setup.language.eyebrow': 'Welcome 🌍',
-  'setup.language.title': 'Pick your [language]',
-  'setup.language.sub': 'You can change this any time in App Settings.',
 
-  'setup.welcome.eyebrow': 'Welcome to Bagful 🛒',
+  'setup.welcome.eyebrow': 'Welcome to Bagful',
   'setup.welcome.title': 'One list for [everyone] who shops',
   'setup.welcome.sub':
     'Everyone adds, everyone checks off, and it all updates for everyone the moment it happens, so nothing gets forgotten at the store.',
   'setup.welcome.cta': 'Get started',
 
   'setup.picker.eyebrowAdd': 'Add a list',
-  'setup.picker.eyebrowNew': 'Welcome aboard 👋',
+  'setup.picker.eyebrowNew': 'Welcome aboard',
   'setup.picker.titleAdd': 'Add another [list]',
   'setup.picker.titleNew': 'Set up your [list]',
   // Two whole sentences rather than one plus an appended clause. The English
@@ -241,17 +237,8 @@ export default {
   'profile.photoFailed': 'Could not change your photo.',
   'profile.nameLabel': 'Name',
   'profile.nameFailed': 'Could not save your name.',
+  'profile.nameRequired': 'Please enter your name to continue.',
   'profile.emailLabel': 'Email',
-  'profile.google': 'Google',
-  'profile.googleLinked': 'Linked',
-  'profile.googleLinkedAs': 'Linked as {email}',
-  'profile.googleLink': 'Link',
-  'profile.googleUnlink': 'Unlink',
-  'profile.googleLinkLabel': 'Link Google account',
-  'profile.googleUnlinkLabel': 'Unlink Google account',
-  'profile.googleFailed': 'Could not change your Google link.',
-  'profile.confirmUnlinkTitle': 'Unlink Google?',
-  'profile.confirmUnlinkMessage': 'You can still sign in with a code sent to your email.',
   'profile.deleteTitle': 'Delete account',
   'profile.deleteDesc': 'Deletes your profile and the list you own, and takes you off every other list. Items you added to other lists stay. This cannot be undone.',
   'profile.deleteDescTransfer': 'Deletes your profile and takes you off every list. {name} becomes the owner of your list. Items you added to other lists stay. This cannot be undone.',
@@ -395,10 +382,11 @@ export default {
   'login.logoAlt': 'Bagful logo',
   'login.emailLabel': 'Email address',
   'login.emailPlaceholder': 'your@email.com',
+  'login.continueWith': 'Continue with {provider}',
+  'login.haveAccount': 'Already have an account? Sign in with email',
   'login.codeHint': 'Enter the 6-digit code sent to',
   'login.codeGroupLabel': '6-digit verification code',
   'login.digitLabel': 'Digit {i} of {n}',
-  'login.or': 'or',
   'login.alreadyTitle': "You're already signed in",
   'login.alreadyMessage': 'This device already has an active Bagful session.',
   'login.goToList': 'Go to my list',
@@ -409,6 +397,7 @@ export default {
   'error.generic': 'Something went wrong.',
   'error.verificationIncomplete': 'Verification incomplete. Please try again.',
   'error.invalidCode': 'Invalid code.',
+  'error.noAccount': 'No account uses this email. Create one with Google, Apple or Microsoft.',
 
   'offline.title': 'No connection',
   'offline.text':
@@ -481,9 +470,6 @@ export default {
   'sso.text': 'Taking you back to the Bagful app…',
   'sso.open': 'Open Bagful',
 
-  'setup.hero.avocado': 'Avocado',
-  'setup.hero.milk': 'Milk',
-  'setup.hero.bread': 'Bread',
 
   // ── The sweep the lint rule could not do ─────────────────────────────────
   // vue/no-bare-strings-in-template never flagged any of these, and could not

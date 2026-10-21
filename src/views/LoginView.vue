@@ -168,9 +168,19 @@ async function handleEmailSubmit() {
   error.value = ''
   loading.value = true
   try {
-    const { supportedFirstFactors } = await signIn.value!.create({
-      identifier: email.value,
-    })
+    let created
+    try {
+      created = await signIn.value!.create({ identifier: email.value })
+    } catch (e) {
+      // Accounts are made with a provider (it brings the name and photo), so an
+      // address nobody has used says so instead of registering it.
+      if ((e as ClerkErrorLike).errors?.some((err) => err.code === 'form_identifier_not_found')) {
+        error.value = t('error.noAccount')
+        return
+      }
+      throw e
+    }
+    const { supportedFirstFactors } = created
     const otpFactor = supportedFirstFactors?.find(
       (f) => f.strategy === 'email_code',
     )
@@ -200,10 +210,7 @@ async function handleCodeSubmit() {
   error.value = ''
   loading.value = true
   try {
-    const result = await signIn.value!.attemptFirstFactor({
-      strategy: 'email_code',
-      code,
-    })
+    const result = await signIn.value!.attemptFirstFactor({ strategy: 'email_code', code })
     if (result.status === 'complete') {
       window.location.href = '/'
     } else {
@@ -267,10 +274,26 @@ function goBack() {
          }}<span class="brand-tagline--accent">{{ tagline[1] }}</span>{{ tagline[2] }}</p>
       </div>
 
-      <!-- Email form -->
-      <form v-if="step === 'email'" @submit.prevent="handleEmailSubmit" class="email-form">
-        <InputRow v-model="email" type="email" :aria-label="t('login.emailLabel')" :placeholder="t('login.emailPlaceholder')" autocomplete="email" :loading="loading" required />
-      </form>
+      <template v-if="step === 'email'">
+        <!-- An account is made with a provider, which brings the name and photo; the
+             email form below only signs in an account that already exists. -->
+        <div class="oauth-list">
+          <button v-for="provider in oauthProviders" :key="provider.id" class="oauth-btn"
+            :class="{ 'oauth-btn--loading': loadingProvider === provider.id }"
+            :disabled="!!loadingProvider"
+            @click="signInWithOAuth(provider.id)">
+            <span v-if="loadingProvider === provider.id" class="oauth-spinner"></span>
+            <AppIcon v-else class="oauth-icon" :name="provider.icon" />
+            <span class="oauth-label">{{ t('login.continueWith', { provider: provider.label }) }}</span>
+          </button>
+        </div>
+
+        <div class="divider"><span>{{ t('login.haveAccount') }}</span></div>
+
+        <form @submit.prevent="handleEmailSubmit" class="email-form">
+          <InputRow v-model="email" type="email" :aria-label="t('login.emailLabel')" :placeholder="t('login.emailPlaceholder')" autocomplete="email" :loading="loading" required />
+        </form>
+      </template>
 
       <!-- OTP code form -->
       <div v-else class="otp-section">
@@ -303,24 +326,12 @@ function goBack() {
             @focus="($event.target as HTMLInputElement).select()"
           />
         </div>
-        <div class="otp-status">
+        <!-- Back and the spinner share a row: a row of their own held a gap open
+             under the digits even when nothing was loading. -->
+        <div class="otp-footer">
+          <BackButton @click="goBack" />
           <span v-if="loading" class="spinner spinner--dark"></span>
         </div>
-        <BackButton @click="goBack" />
-      </div>
-
-      <!-- Divider -->
-      <div class="divider"><span>{{ t('login.or') }}</span></div>
-
-      <!-- OAuth icon buttons -->
-      <div class="oauth-row">
-        <button v-for="provider in oauthProviders" :key="provider.id" class="oauth-btn"
-          :class="{ 'oauth-btn--loading': loadingProvider === provider.id }"
-          :disabled="!!loadingProvider"
-          :aria-label="provider.label" :title="provider.label" @click="signInWithOAuth(provider.id)">
-          <span v-if="loadingProvider === provider.id" class="oauth-spinner"></span>
-          <AppIcon v-else class="oauth-icon" :name="provider.icon" />
-        </button>
       </div>
     </AppCard>
 
@@ -455,10 +466,10 @@ function goBack() {
   background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-surface));
 }
 
-.otp-status {
-  min-height: 1.5rem;
+.otp-footer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .spinner--dark {
@@ -485,8 +496,8 @@ function goBack() {
 .divider {
   display: flex;
   align-items: center;
-  margin: 1.25rem 0;
-  color: var(--text-disabled);
+  margin: 1rem 0;
+  color: var(--text-secondary);
   font-size: var(--text-xs);
   gap: 0.75rem;
 }
@@ -500,17 +511,24 @@ function goBack() {
 }
 
 /* OAuth row */
-.oauth-row {
+.oauth-list {
   display: flex;
-  gap: 0.875rem;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.oauth-label {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
 }
 
 .oauth-btn {
-  flex: 1;
   height: var(--size-control-lg);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.75rem;
   border: var(--border-width-base) solid var(--border-main);
   border-radius: var(--radius-xl);
   background: var(--bg-surface);

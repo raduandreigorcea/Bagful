@@ -198,6 +198,21 @@ function openAccountSettings() {
   profileOpen.value = true
 }
 
+// An account made with an email has no name or photo (Google supplies both), so the
+// profile opens by itself, and cannot be closed until it has a name. It opens again on
+// every start while the name is missing: a nameless member shows as "Member" to
+// everyone else on the list.
+const nameRequired = ref(false)
+watch(
+  () => user.value,
+  (u) => {
+    if (!u || getUserDisplayName(u)) return
+    nameRequired.value = true
+    openAccountSettings()
+  },
+  { immediate: true },
+)
+
 function openReportIssue() {
   accountMenuOpen.value = false
   reportEverOpened.value = true
@@ -674,6 +689,7 @@ const orderedActiveMembers = computed(() =>
   <AccountProfileModal
     v-if="profileEverOpened"
     :open="profileOpen"
+    :name-required="nameRequired"
     @close="profileOpen = false"
   />
 

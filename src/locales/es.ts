@@ -16,18 +16,15 @@ const es: Catalog = {
 
   'language.groupLabel': 'Elige un idioma',
 
-  'setup.language.eyebrow': 'Bienvenido 🌍',
-  'setup.language.title': 'Elige tu [idioma]',
-  'setup.language.sub': 'Puedes cambiarlo cuando quieras en los Ajustes de la app.',
 
-  'setup.welcome.eyebrow': 'Te damos la bienvenida a Bagful 🛒',
+  'setup.welcome.eyebrow': 'Te damos la bienvenida a Bagful',
   'setup.welcome.title': 'Una sola lista para [todos] los que hacen la compra',
   'setup.welcome.sub':
     'Todos añaden, todos marcan, y todo se actualiza para todos en el momento en que ocurre, así no se olvida nada en la tienda.',
   'setup.welcome.cta': 'Empezar',
 
   'setup.picker.eyebrowAdd': 'Añadir una lista',
-  'setup.picker.eyebrowNew': 'Bienvenido a bordo 👋',
+  'setup.picker.eyebrowNew': 'Bienvenido a bordo',
   'setup.picker.titleAdd': 'Añade otra [lista]',
   'setup.picker.titleNew': 'Configura tu [lista]',
   'setup.picker.subAdd': 'Únete a otra lista con su código de invitación.',
@@ -211,17 +208,8 @@ const es: Catalog = {
   'profile.photoFailed': 'No se pudo cambiar tu foto.',
   'profile.nameLabel': 'Nombre',
   'profile.nameFailed': 'No se pudo guardar tu nombre.',
+  'profile.nameRequired': 'Escribe tu nombre para continuar.',
   'profile.emailLabel': 'Correo',
-  'profile.google': 'Google',
-  'profile.googleLinked': 'Vinculada',
-  'profile.googleLinkedAs': 'Vinculada como {email}',
-  'profile.googleLink': 'Vincular',
-  'profile.googleUnlink': 'Desvincular',
-  'profile.googleLinkLabel': 'Vincular cuenta de Google',
-  'profile.googleUnlinkLabel': 'Desvincular cuenta de Google',
-  'profile.googleFailed': 'No se pudo cambiar el vínculo con Google.',
-  'profile.confirmUnlinkTitle': '¿Desvincular Google?',
-  'profile.confirmUnlinkMessage': 'Podrás seguir entrando con un código enviado a tu correo.',
   'profile.deleteTitle': 'Eliminar cuenta',
   'profile.deleteDesc': 'Elimina tu perfil y la lista que es tuya, y te saca de las demás listas. Lo que añadiste a otras listas se queda. No se puede deshacer.',
   'profile.deleteDescTransfer': 'Elimina tu perfil y te saca de todas las listas. {name} pasa a ser dueño de tu lista. Lo que añadiste a otras listas se queda. No se puede deshacer.',
@@ -366,10 +354,11 @@ const es: Catalog = {
   'login.logoAlt': 'Logotipo de Bagful',
   'login.emailLabel': 'Dirección de correo',
   'login.emailPlaceholder': 'tu@email.com',
+  'login.continueWith': 'Continuar con {provider}',
+  'login.haveAccount': '¿Ya tienes cuenta? Entra con tu correo',
   'login.codeHint': 'Introduce el código de 6 dígitos enviado a',
   'login.codeGroupLabel': 'Código de verificación de 6 dígitos',
   'login.digitLabel': 'Dígito {i} de {n}',
-  'login.or': 'o',
   'login.alreadyTitle': 'Ya has iniciado sesión',
   'login.alreadyMessage': 'Este dispositivo ya tiene una sesión de Bagful activa.',
   'login.goToList': 'Ir a mi lista',
@@ -380,6 +369,7 @@ const es: Catalog = {
   'error.generic': 'Algo ha salido mal.',
   'error.verificationIncomplete': 'Verificación incompleta. Inténtalo de nuevo.',
   'error.invalidCode': 'Código no válido.',
+  'error.noAccount': 'Ninguna cuenta usa este correo. Crea una con Google, Apple o Microsoft.',
 
   'offline.title': 'Sin conexión',
   'offline.text':
@@ -453,9 +443,6 @@ const es: Catalog = {
   'sso.text': 'Volviendo a la app de Bagful…',
   'sso.open': 'Abrir Bagful',
 
-  'setup.hero.avocado': 'Aguacate',
-  'setup.hero.milk': 'Leche',
-  'setup.hero.bread': 'Pan',
 
   'common.memberFallback': 'Miembro',
   'account.fallbackName': 'Cuenta',

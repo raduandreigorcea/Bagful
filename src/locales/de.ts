@@ -16,18 +16,15 @@ const de: Catalog = {
 
   'language.groupLabel': 'Sprache wählen',
 
-  'setup.language.eyebrow': 'Willkommen 🌍',
-  'setup.language.title': 'Wähle deine [Sprache]',
-  'setup.language.sub': 'Du kannst das jederzeit in den App-Einstellungen ändern.',
 
-  'setup.welcome.eyebrow': 'Willkommen bei Bagful 🛒',
+  'setup.welcome.eyebrow': 'Willkommen bei Bagful',
   'setup.welcome.title': 'Eine Liste für [alle], die einkaufen',
   'setup.welcome.sub':
     'Alle tragen ein, alle haken ab, und jede Änderung ist sofort bei allen, damit im Laden nichts vergessen wird.',
   'setup.welcome.cta': 'Los geht’s',
 
   'setup.picker.eyebrowAdd': 'Liste hinzufügen',
-  'setup.picker.eyebrowNew': 'Schön, dass du da bist 👋',
+  'setup.picker.eyebrowNew': 'Schön, dass du da bist',
   'setup.picker.titleAdd': 'Noch eine [Liste] hinzufügen',
   'setup.picker.titleNew': 'Richte deine [Liste] ein',
   'setup.picker.subAdd': 'Tritt mit dem Einladungscode einer weiteren Liste bei.',
@@ -211,17 +208,8 @@ const de: Catalog = {
   'profile.photoFailed': 'Dein Foto konnte nicht geändert werden.',
   'profile.nameLabel': 'Name',
   'profile.nameFailed': 'Dein Name konnte nicht gespeichert werden.',
+  'profile.nameRequired': 'Gib deinen Namen ein, um fortzufahren.',
   'profile.emailLabel': 'E-Mail',
-  'profile.google': 'Google',
-  'profile.googleLinked': 'Verknüpft',
-  'profile.googleLinkedAs': 'Verknüpft als {email}',
-  'profile.googleLink': 'Verknüpfen',
-  'profile.googleUnlink': 'Trennen',
-  'profile.googleLinkLabel': 'Google-Konto verknüpfen',
-  'profile.googleUnlinkLabel': 'Google-Konto trennen',
-  'profile.googleFailed': 'Die Google-Verknüpfung konnte nicht geändert werden.',
-  'profile.confirmUnlinkTitle': 'Google trennen?',
-  'profile.confirmUnlinkMessage': 'Du kannst dich weiter mit einem Code an deine E-Mail anmelden.',
   'profile.deleteTitle': 'Konto löschen',
   'profile.deleteDesc': 'Löscht dein Profil und die Liste, die dir gehört, und entfernt dich aus allen anderen Listen. Was du zu anderen Listen hinzugefügt hast, bleibt. Das lässt sich nicht rückgängig machen.',
   'profile.deleteDescTransfer': 'Löscht dein Profil und entfernt dich aus allen Listen. {name} wird Besitzer deiner Liste. Was du zu anderen Listen hinzugefügt hast, bleibt. Das lässt sich nicht rückgängig machen.',
@@ -369,10 +357,11 @@ const de: Catalog = {
   'login.logoAlt': 'Bagful-Logo',
   'login.emailLabel': 'E-Mail-Adresse',
   'login.emailPlaceholder': 'du@email.de',
+  'login.continueWith': 'Weiter mit {provider}',
+  'login.haveAccount': 'Schon ein Konto? Mit E-Mail anmelden',
   'login.codeHint': 'Gib den 6-stelligen Code ein, der an folgende Adresse ging:',
   'login.codeGroupLabel': '6-stelliger Bestätigungscode',
   'login.digitLabel': 'Ziffer {i} von {n}',
-  'login.or': 'oder',
   'login.alreadyTitle': 'Du bist bereits angemeldet',
   'login.alreadyMessage': 'Auf diesem Gerät läuft bereits eine Bagful-Sitzung.',
   'login.goToList': 'Zu meiner Liste',
@@ -383,6 +372,7 @@ const de: Catalog = {
   'error.generic': 'Etwas ist schiefgelaufen.',
   'error.verificationIncomplete': 'Bestätigung unvollständig. Bitte versuche es erneut.',
   'error.invalidCode': 'Ungültiger Code.',
+  'error.noAccount': 'Mit dieser E-Mail gibt es kein Konto. Erstelle eines mit Google, Apple oder Microsoft.',
 
   'offline.title': 'Keine Verbindung',
   'offline.text':
@@ -458,9 +448,6 @@ const de: Catalog = {
   'sso.text': 'Du wirst zur Bagful-App zurückgebracht…',
   'sso.open': 'Bagful öffnen',
 
-  'setup.hero.avocado': 'Avocado',
-  'setup.hero.milk': 'Milch',
-  'setup.hero.bread': 'Brot',
 
   'common.memberFallback': 'Mitglied',
   'account.fallbackName': 'Konto',

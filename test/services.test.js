@@ -425,11 +425,10 @@ const ME = 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'
 const THEM = 'user_2abcdefghijKLMNOPqrstuvwxyz'
 
 describe('parseRequest, actions', () => {
-  it('accepts the four Clerk actions on a valid id and nothing else', () => {
-    for (const action of ['ban', 'unban', 'revoke_sessions', 'impersonate']) {
+  it('accepts the five Clerk actions on a valid id and nothing else', () => {
+    for (const action of ['ban', 'unban', 'revoke_sessions', 'impersonate', 'delete']) {
       expect(parseRequest({ service: 'clerk', action, userId: THEM })).toEqual({ service: 'clerk', action, userId: THEM })
     }
-    expect(parseRequest({ service: 'clerk', action: 'delete', userId: THEM })).toBeNull()
     expect(parseRequest({ service: 'clerk', action: 'ban', userId: '../users' })).toBeNull()
   })
 
@@ -469,8 +468,8 @@ describe('missingSecrets, writes', () => {
 })
 
 describe('refuseAction', () => {
-  it('will not ban or impersonate the caller themselves', () => {
-    for (const action of ['ban', 'impersonate']) {
+  it('will not ban, impersonate or delete the caller themselves', () => {
+    for (const action of ['ban', 'impersonate', 'delete']) {
       expect(refuseAction({ service: 'clerk', action, userId: ME }, ME)).toBeTruthy()
     }
   })

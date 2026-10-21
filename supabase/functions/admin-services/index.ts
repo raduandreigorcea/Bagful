@@ -100,7 +100,7 @@ async function getJson(service: Service, url: string, authorization: string): Pr
 
 async function sendJson(
   service: Service,
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'DELETE',
   url: string,
   authorization: string,
   body?: unknown,
@@ -232,6 +232,23 @@ async function act(request: ServiceAction, caller: string | null, db: ReturnType
         )
       }
       return clerkUser
+    }
+    if (request.action === 'delete') {
+      // Clerk first, as with a ban: it ends every session, so the app cannot re-create
+      // the profile while the database half runs. A user Clerk no longer has (404) is
+      // a retry after a half-done delete, not a failure; both halves are idempotent.
+      try {
+        await sendJson('clerk', 'DELETE', user, auth)
+      } catch (error) {
+        if (!(error instanceof UpstreamError && error.status === 404)) throw error
+      }
+      const { error } = await db.rpc('admin_delete_user', { p_user_id: request.userId })
+      if (error) {
+        throw new AppBanError(
+          `Clerk is done, but deleting Bagful's own data failed: ${error.message}. Press the button again to finish it.`,
+        )
+      }
+      return { deleted: true }
     }
     if (request.action === 'revoke_sessions') {
       const sessions = (await getJson('clerk', `${CLERK_API}/sessions?user_id=${request.userId}&status=active&limit=100`, auth)) as unknown

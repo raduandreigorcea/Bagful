@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, reactive, ref, toRaw, useId, watch } from 'vue'
 import { useAuth, useClerk, useUser } from '@clerk/vue'
-import { Capacitor } from '@capacitor/core'
 import { useSupabase } from '../supabase'
 import { refreshOwnProfile } from '../lib/profile'
 import { userMessage } from '../lib/errorMessages'
 import { getUserDisplayName, getUserInitial, getUserPrimaryEmail } from '../lib/userIdentity'
 import { useConfirm } from '../lib/useConfirm'
 import { useSignOut } from '../lib/useSignOut'
-import { linkNativeOAuth, type NativeOAuthUser } from '../lib/nativeOAuth'
-import { ReverificationCancelled, withReverification } from '../lib/reverification'
+import { withReverification } from '../lib/reverification'
 import { t } from '../lib/i18n'
 import AppModal from './AppModal.vue'
 import AppButton from './AppButton.vue'
@@ -18,7 +16,7 @@ import ConfirmModal from './ConfirmModal.vue'
 import ModalCloseButton from './ModalCloseButton.vue'
 import AccountTransferStep, { type TransferCandidate } from './AccountTransferStep.vue'
 
-// The person's own profile: name, photo, email, a linked Google account, and the
+// The person's own profile: name, photo, email, linked sign-in accounts, and the
 // way to delete the account. It replaced Clerk's UserProfile, which could delete
 // the Clerk user but told the database nothing, so a deleted account left its
 // lists, memberships and name behind. Deleting goes through delete_my_account()
@@ -28,7 +26,12 @@ import AccountTransferStep, { type TransferCandidate } from './AccountTransferSt
 // Name and photo live in Clerk, and the profiles row every roster reads is a copy
 // of them, so each change here is followed by refreshOwnProfile().
 
-defineProps({ open: { type: Boolean, default: false } })
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  // The first-sign-in prompt: no way out until the person has a name. Closing by
+  // any route (X, Escape, backdrop, Android Back) is refused and says why.
+  nameRequired: { type: Boolean, default: false },
+})
 const emit = defineEmits<{ close: [] }>()
 
 const titleId = useId()
@@ -42,7 +45,7 @@ const clerk = useClerk()
 // in again; see lib/reverification.
 const reverified = <T,>(action: () => Promise<T>) => withReverification(clerk.value, action)
 const { state: confirmState, confirm, resolveWith } = useConfirm()
-const { signOut } = useSignOut({ userId: () => userId.value ?? '' })
+const { signOut, signingOut } = useSignOut({ userId: () => userId.value ?? '' })
 
 // Every Clerk method is called on the raw instance: @clerk/vue hands out a
 // reactive Proxy, and Clerk's classes use private fields that throw when `this`
@@ -51,7 +54,7 @@ const rawUser = () => (user.value ? toRaw(user.value) : null)
 
 // One message per section, shown where the thing that failed is, rather than
 // one line somewhere in the middle that a photo error and a Google error share.
-const errors = reactive({ photo: '', name: '', google: '', delete: '' })
+const errors = reactive({ photo: '', name: '', delete: '' })
 
 async function syncProfile() {
   if (!userId.value || !user.value) return
@@ -123,74 +126,7 @@ function onFilePicked(event: Event) {
   if (file) void setPhoto(file)
 }
 
-// ─── Google ───────────────────────────────────────────────────────────────────
 const email = computed(() => getUserPrimaryEmail(user.value))
-// Only a verified link counts: an attempt abandoned in the browser leaves an
-// unverified account behind, which signs nobody in.
-const google = computed(
-  () =>
-    user.value?.externalAccounts?.find(
-      (a) => a.provider === 'google' && a.verification?.status === 'verified',
-    ) ?? null,
-)
-// "Linked", plus the Google address only when it is not the one already shown
-// in the row above: the same address twice reads like two accounts.
-const googleLabel = computed(() => {
-  const address = google.value?.emailAddress
-  return address && address.toLowerCase() !== email.value.toLowerCase()
-    ? t('profile.googleLinkedAs', { email: address })
-    : t('profile.googleLinked')
-})
-const savingGoogle = ref(false)
-
-async function linkGoogle() {
-  const raw = rawUser()
-  if (!raw) return
-  savingGoogle.value = true
-  errors.google = ''
-  try {
-    if (Capacitor.isNativePlatform()) {
-      await reverified(() => linkNativeOAuth(raw as unknown as NativeOAuthUser, 'oauth_google'))
-      return
-    }
-    // The web leaves the app for Google and comes back to it; Clerk has
-    // finished the link by then, so the profile shows it on return.
-    const account = await reverified(() =>
-      raw.createExternalAccount({ strategy: 'oauth_google', redirectUrl: window.location.href }),
-    )
-    const url = account.verification?.externalVerificationRedirectURL
-    if (!url) throw new Error('Clerk returned no verification URL for linking.')
-    window.location.assign(url.href)
-  } catch (e) {
-    // Closing the verification window is a change of mind, not a failure.
-    if (!(e instanceof ReverificationCancelled)) errors.google = userMessage(e, t('profile.googleFailed'))
-  } finally {
-    savingGoogle.value = false
-  }
-}
-
-async function unlinkGoogle() {
-  const account = google.value
-  if (!account) return
-  const sure = await confirm({
-    title: t('profile.confirmUnlinkTitle'),
-    message: t('profile.confirmUnlinkMessage'),
-    confirmText: t('profile.googleUnlink'),
-    danger: true,
-  })
-  if (!sure) return
-  savingGoogle.value = true
-  errors.google = ''
-  try {
-    // Clerk refuses to remove someone's last way in, and says so.
-    await reverified(() => toRaw(account).destroy())
-    await rawUser()?.reload()
-  } catch (e) {
-    if (!(e instanceof ReverificationCancelled)) errors.google = userMessage(e, t('profile.googleFailed'))
-  } finally {
-    savingGoogle.value = false
-  }
-}
 
 // ─── deleting the account ─────────────────────────────────────────────────────
 // Null until "Delete account" is pressed and the owned list turns out to have
@@ -274,16 +210,23 @@ async function finishDelete() {
   window.location.replace(`${window.location.origin}/login`)
 }
 
+// Locked only while the name is missing; saving one unlocks it at once.
+const locked = computed(() => props.nameRequired && !getUserDisplayName(user.value))
+
 function close() {
   if (deleting.value) return
+  if (locked.value) {
+    errors.name = t('profile.nameRequired')
+    return
+  }
   candidates.value = null
-  Object.assign(errors, { photo: '', name: '', google: '', delete: '' })
+  Object.assign(errors, { photo: '', name: '', provider: '', delete: '' })
   emit('close')
 }
 </script>
 
 <template>
-  <AppModal :open="open" overlay-class="profile-overlay" transition="modal-fade" @close="close">
+  <AppModal :open="open" overlay-class="profile-overlay" transition="modal-fade" :close-on-backdrop="!locked" @close="close">
     <div class="profile-dialog" role="dialog" aria-modal="true" :aria-labelledby="titleId">
       <div class="profile-dialog__header">
         <div class="profile-dialog__title-wrap">
@@ -297,7 +240,7 @@ function close() {
             <p v-if="!candidates" class="profile-dialog__subtitle">{{ t('profile.subtitle') }}</p>
           </div>
         </div>
-        <ModalCloseButton :aria-label="t('profile.close')" @click="close" />
+        <ModalCloseButton v-if="!locked" :aria-label="t('profile.close')" @click="close" />
       </div>
 
       <div class="profile-dialog__body">
@@ -372,28 +315,17 @@ function close() {
               <dt>{{ t('profile.emailLabel') }}</dt>
               <dd class="profile-fact__value">{{ email || t('account.noEmail') }}</dd>
             </div>
-            <div class="profile-fact">
-              <dt>{{ t('profile.google') }}</dt>
-              <dd class="profile-fact__value profile-fact__value--action">
-                <span v-if="google" class="profile-fact__text">{{ googleLabel }}</span>
-                <AppButton
-                  variant="secondary"
-                  size="sm"
-                  :disabled="savingGoogle"
-                  :aria-busy="savingGoogle"
-                  :aria-label="google ? t('profile.googleUnlinkLabel') : t('profile.googleLinkLabel')"
-                  @click="google ? unlinkGoogle() : linkGoogle()"
-                >
-                  {{ google ? t('profile.googleUnlink') : t('profile.googleLink') }}
-                </AppButton>
-              </dd>
-            </div>
           </dl>
-          <p v-if="errors.google" class="profile-error" role="alert">{{ errors.google }}</p>
 
           <!-- One quiet row rather than a danger card: it is the least used thing
                here, and what it deletes is spelled out in the confirm it opens. -->
           <div class="profile-delete-wrap">
+            <!-- Beside delete so a person stuck on this screen (the name is required)
+                 can always leave. -->
+            <button class="profile-signout" type="button" :disabled="signingOut || deleting" :aria-busy="signingOut" @click="signOut">
+              <AppIcon class="profile-icon" name="log-out" aria-hidden="true" />
+              <span>{{ t('account.signOut') }}</span>
+            </button>
             <button
               ref="deleteButton"
               class="profile-delete"
@@ -713,12 +645,17 @@ function close() {
 /* ─── delete ─── */
 .profile-delete-wrap {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
 }
 
-.profile-delete {
+.profile-delete-wrap .profile-error {
+  flex-basis: 100%;
+}
+
+.profile-signout {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
@@ -736,13 +673,45 @@ function close() {
   transition: background var(--transition-base) ease;
 }
 
-.profile-delete:hover:not(:disabled) {
+.profile-signout:hover:not(:disabled) {
   background: var(--danger-bg);
+}
+
+.profile-signout:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--danger-solid);
+}
+
+.profile-signout:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: var(--size-control-sm);
+  padding: var(--space-1) var(--space-2);
+  margin-inline-end: calc(-1 * var(--space-2));
+  border: none;
+  background: none;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-base) ease;
+}
+
+.profile-delete:hover:not(:disabled) {
+  background: var(--bg-main);
 }
 
 .profile-delete:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--danger-solid);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
 .profile-delete:disabled {

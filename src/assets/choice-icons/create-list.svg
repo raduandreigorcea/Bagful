@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#4D8C65"/>
+<g transform="translate(256 256) scale(1.2) translate(-256 -256)">
+<rect x="128" y="104" width="214" height="288" rx="30" fill="#FBF7F0"/>
+<clipPath id="cl-pad"><rect x="128" y="104" width="214" height="288" rx="30"/></clipPath>
+<g clip-path="url(#cl-pad)"><rect x="128" y="104" width="214" height="62" fill="#2F6B47"/></g>
+<circle cx="180" cy="135" r="12" fill="#FBF7F0"/><circle cx="235" cy="135" r="12" fill="#FBF7F0"/><circle cx="290" cy="135" r="12" fill="#FBF7F0"/>
+<path d="M168 214H300M168 262H300M168 310H250" fill="none" stroke="#E3D3B0" stroke-width="14" stroke-linecap="round"/>
+<g transform="rotate(38 330 330)">
+<rect x="306" y="214" width="48" height="150" fill="#E8574F"/>
+<rect x="334" y="214" width="20" height="150" fill="#C63F39"/>
+<path d="M306 364H354L330 410Z" fill="#F0E0BC"/>
+<path d="M319 389H341L330 410Z" fill="#4A3B2E"/>
+<rect x="306" y="214" width="48" height="26" fill="#B9C2CC"/>
+<path d="M306 214V196a24 24 0 0 1 48 0V214Z" fill="#F29BA6"/>
+</g>
+</g>
+</svg>

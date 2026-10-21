@@ -18,18 +18,15 @@ const ro: Catalog = {
 
   'language.groupLabel': 'Alege o limbă',
 
-  'setup.language.eyebrow': 'Bun venit 🌍',
-  'setup.language.title': 'Alege-ți [limba]',
-  'setup.language.sub': 'O poți schimba oricând din Setările aplicației.',
 
-  'setup.welcome.eyebrow': 'Bun venit la Bagful 🛒',
+  'setup.welcome.eyebrow': 'Bun venit la Bagful',
   'setup.welcome.title': 'O singură listă pentru [toți] cei care cumpără',
   'setup.welcome.sub':
     'Toată lumea adaugă, toată lumea bifează, iar totul se actualizează pentru toți în clipa în care se întâmplă, ca să nu se uite nimic la magazin.',
   'setup.welcome.cta': 'Începe',
 
   'setup.picker.eyebrowAdd': 'Adaugă o listă',
-  'setup.picker.eyebrowNew': 'Bine ai venit 👋',
+  'setup.picker.eyebrowNew': 'Bine ai venit',
   'setup.picker.titleAdd': 'Adaugă altă [listă]',
   'setup.picker.titleNew': 'Configurează-ți [lista]',
   'setup.picker.subAdd': 'Alătură-te altei liste cu codul ei de invitație.',
@@ -216,17 +213,8 @@ const ro: Catalog = {
   'profile.photoFailed': 'Nu am putut schimba poza.',
   'profile.nameLabel': 'Nume',
   'profile.nameFailed': 'Nu am putut salva numele.',
+  'profile.nameRequired': 'Scrie-ți numele ca să continui.',
   'profile.emailLabel': 'Email',
-  'profile.google': 'Google',
-  'profile.googleLinked': 'Conectat',
-  'profile.googleLinkedAs': 'Conectat ca {email}',
-  'profile.googleLink': 'Conectează',
-  'profile.googleUnlink': 'Deconectează',
-  'profile.googleLinkLabel': 'Conectează contul Google',
-  'profile.googleUnlinkLabel': 'Deconectează contul Google',
-  'profile.googleFailed': 'Nu am putut schimba legătura cu Google.',
-  'profile.confirmUnlinkTitle': 'Deconectezi Google?',
-  'profile.confirmUnlinkMessage': 'Te poți conecta în continuare cu un cod trimis pe email.',
   'profile.deleteTitle': 'Șterge contul',
   'profile.deleteDesc': 'Îți șterge profilul și lista pe care o deții și te scoate din toate celelalte liste. Ce ai adăugat în alte liste rămâne. Nu se poate anula.',
   'profile.deleteDescTransfer': 'Îți șterge profilul și te scoate din toate listele. {name} devine proprietarul listei tale. Ce ai adăugat în alte liste rămâne. Nu se poate anula.',
@@ -371,10 +359,11 @@ const ro: Catalog = {
   'login.logoAlt': 'Logoul Bagful',
   'login.emailLabel': 'Adresă de e-mail',
   'login.emailPlaceholder': 'tu@email.com',
+  'login.continueWith': 'Continuă cu {provider}',
+  'login.haveAccount': 'Ai deja cont? Conectează-te cu email',
   'login.codeHint': 'Introdu codul de 6 cifre trimis la',
   'login.codeGroupLabel': 'Cod de verificare din 6 cifre',
   'login.digitLabel': 'Cifra {i} din {n}',
-  'login.or': 'sau',
   'login.alreadyTitle': 'Ești deja conectat',
   'login.alreadyMessage': 'Acest dispozitiv are deja o sesiune Bagful activă.',
   'login.goToList': 'Mergi la lista mea',
@@ -385,6 +374,7 @@ const ro: Catalog = {
   'error.generic': 'Ceva nu a mers bine.',
   'error.verificationIncomplete': 'Verificare incompletă. Încearcă din nou.',
   'error.invalidCode': 'Cod invalid.',
+  'error.noAccount': 'Niciun cont nu folosește acest email. Creează unul cu Google, Apple sau Microsoft.',
 
   'offline.title': 'Fără conexiune',
   'offline.text':
@@ -457,9 +447,6 @@ const ro: Catalog = {
   'sso.text': 'Te ducem înapoi în aplicația Bagful…',
   'sso.open': 'Deschide Bagful',
 
-  'setup.hero.avocado': 'Avocado',
-  'setup.hero.milk': 'Lapte',
-  'setup.hero.bread': 'Pâine',
 
   'common.memberFallback': 'Membru',
   'account.fallbackName': 'Cont',

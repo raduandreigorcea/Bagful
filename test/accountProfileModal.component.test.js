@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import AccountProfileModal from '../src/components/AccountProfileModal.vue'
 import ConfirmModal from '../src/components/ConfirmModal.vue'
+import AppModal from '../src/components/AppModal.vue'
 import { createFakeDb } from './support/fakeSupabase.js'
 
 const mocks = vi.hoisted(() => ({ db: null, user: null, order: [], signOut: null }))
@@ -36,7 +37,7 @@ beforeEach(() => {
     firstName: 'Ana',
     imageUrl: null,
     hasImage: false,
-    externalAccounts: [{ provider: 'google' }],
+    externalAccounts: [{ provider: 'google', verification: { status: 'verified' } }],
     primaryEmailAddress: { emailAddress: 'ana@example.com' },
     update: vi.fn(async () => {}),
     delete: vi.fn(async () => mocks.order.push('clerk')),
@@ -123,38 +124,22 @@ describe('AccountProfileModal', () => {
     wrapper.unmount()
   })
 
-  it('links Google on the web by sending the browser to Clerk', async () => {
-    mocks.user.createExternalAccount = vi.fn(async () => ({
-      verification: { externalVerificationRedirectURL: new URL('https://accounts.google.com/x') },
-    }))
-    window.location.assign = vi.fn()
-    const wrapper = mount(AccountProfileModal, { props: { open: true } })
+  it('cannot be closed while a required name is missing', async () => {
+    const named = mount(AccountProfileModal, { props: { open: true, nameRequired: true } })
+    expect(named.find('button[aria-label="Close profile"]').exists()).toBe(true)
+    named.unmount()
 
-    await wrapper.findAll('button').find((b) => b.text() === 'Link').trigger('click')
+    mocks.user.fullName = ''
+    mocks.user.firstName = ''
+    mocks.user.externalAccounts = []
+    const wrapper = mount(AccountProfileModal, { props: { open: true, nameRequired: true } })
     await flushPromises()
+    expect(wrapper.find('button[aria-label="Close profile"]').exists()).toBe(false)
 
-    expect(mocks.user.createExternalAccount).toHaveBeenCalledWith(
-      expect.objectContaining({ strategy: 'oauth_google' }),
-    )
-    expect(window.location.assign).toHaveBeenCalledWith('https://accounts.google.com/x')
-    wrapper.unmount()
-  })
-
-  it('unlinks a verified Google account only after confirming', async () => {
-    const destroy = vi.fn(async () => {})
-    mocks.user.reload = vi.fn(async () => {})
-    mocks.user.externalAccounts = [
-      { provider: 'google', emailAddress: 'ana@gmail.com', verification: { status: 'verified' }, destroy },
-    ]
-    const wrapper = mount(AccountProfileModal, { props: { open: true } })
-    expect(wrapper.text()).toContain('ana@gmail.com')
-
-    await wrapper.findAll('button').find((b) => b.text() === 'Unlink').trigger('click')
+    wrapper.findComponent(AppModal).vm.$emit('close')
     await flushPromises()
-    expect(destroy).not.toHaveBeenCalled()
-    await confirm(wrapper)
-
-    expect(destroy).toHaveBeenCalled()
+    expect(wrapper.emitted('close')).toBeUndefined()
+    expect(wrapper.text()).toContain('Please enter your name')
     wrapper.unmount()
   })
 
