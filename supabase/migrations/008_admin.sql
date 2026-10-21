@@ -117,6 +117,7 @@ drop function if exists public.admin_delete_list(uuid);
 drop function if exists public.admin_restore_list(uuid);
 drop function if exists public.admin_ban_user(text, text);
 drop function if exists public.admin_unban_user(text);
+drop function if exists public.admin_delete_user(text);
 drop function if exists public.admin_deleted_lists();
 drop function if exists public.admin_banned_users();
 drop function if exists public.admin_create_product(text, text, text, integer);
@@ -1979,6 +1980,49 @@ begin
 end;
 $$;
 
+-- The one hard delete on this dashboard, and the exception to the paragraph above:
+-- it is the admin's delete_my_account(). It removes the lists the person OWNS
+-- (items, history and memberships cascade), their membership of every other list,
+-- and their profile, ban flag included, because the Clerk user goes in the same
+-- request (admin-services) and the id never comes back. Lists they merely sit in
+-- are untouched, and so are the items they added there: the others still need the
+-- milk, and their author falls back to "Member". History keeps its own copy of
+-- name and photo, which is cleared. security_events and product_catalog are left
+-- as delete_my_account() leaves them. Idempotent, so a half-done delete can be
+-- pressed again.
+create or replace function public.admin_delete_user(p_user_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.admin_guard();
+
+  if p_user_id = requesting_user_id() then
+    raise exception 'This is your own account.' using errcode = 'P0001';
+  end if;
+
+  delete from public.lists where created_by = p_user_id;
+  delete from public.list_members where user_id = p_user_id;
+
+  update public.purchase_history
+  set added_by = null, added_by_name = null, added_by_image_url = null
+  where added_by = p_user_id;
+
+  update public.purchase_history set purchased_by = 'deleted'
+  where purchased_by = p_user_id;
+
+  delete from public.profiles where user_id = p_user_id;
+
+  perform public.log_security_event(
+    'admin_user_deleted',
+    null,
+    jsonb_build_object('actor', requesting_user_id(), 'target', p_user_id)
+  );
+end;
+$$;
+
 -- Half of what the Bans view lists. The counts are of what is still inside,
 -- which is the number that answers "is this safe to leave deleted?"
 create or replace function public.admin_deleted_lists()
@@ -2091,11 +2135,13 @@ revoke all on function public.admin_delete_list(uuid) from public, anon;
 revoke all on function public.admin_restore_list(uuid) from public, anon;
 revoke all on function public.admin_ban_user(text, text) from public, anon;
 revoke all on function public.admin_unban_user(text) from public, anon;
+revoke all on function public.admin_delete_user(text) from public, anon;
 revoke all on function public.admin_deleted_lists() from public, anon;
 revoke all on function public.admin_banned_users() from public, anon;
 grant execute on function public.admin_delete_list(uuid) to authenticated;
 grant execute on function public.admin_restore_list(uuid) to authenticated;
 grant execute on function public.admin_ban_user(text, text) to authenticated;
 grant execute on function public.admin_unban_user(text) to authenticated;
+grant execute on function public.admin_delete_user(text) to authenticated;
 grant execute on function public.admin_deleted_lists() to authenticated;
 grant execute on function public.admin_banned_users() to authenticated;

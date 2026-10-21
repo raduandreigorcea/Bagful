@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   isNative: false,
   startNativeOAuth: vi.fn(),
   setActive: vi.fn(),
+  signUpCreate: vi.fn(async () => ({})),
   authenticateWithRedirect: vi.fn(),
 }))
 
@@ -33,7 +34,7 @@ vi.mock('@clerk/vue', async () => {
       }),
       isLoaded: ref(true),
     }),
-    useSignUp: () => ({ signUp: ref({}) }),
+    useSignUp: () => ({ signUp: ref({ create: (...args) => mocks.signUpCreate(...args), prepareEmailAddressVerification: async () => {} }) }),
     useClerk: () => ref({ setActive: (...args) => mocks.setActive(...args) }),
     useAuth: () => ({ isSignedIn: mocks.isSignedIn }),
   }
@@ -98,18 +99,29 @@ describe('LoginView error routing', () => {
 
   it('pops the error dialog for other sign-in failures', async () => {
     mocks.create = async () => {
-      throw clerkError('form_identifier_not_found', "Couldn't find your account.")
+      throw clerkError('form_param_format_invalid', "That email looks wrong.")
     }
     const wrapper = mountLogin()
     await submitEmail(wrapper)
 
     expect(wrapper.findComponent(ConfirmModal).props('open')).toBe(false)
-    expect(wrapper.findComponent(ErrorModal).props('message')).toBe("Couldn't find your account.")
+    expect(wrapper.findComponent(ErrorModal).props('message')).toBe('That email looks wrong.')
+  })
+
+  it('does not register an email nobody has used, and says to use a provider', async () => {
+    mocks.create = async () => {
+      throw clerkError('form_identifier_not_found', 'No account.')
+    }
+    const wrapper = mountLogin()
+    await submitEmail(wrapper)
+
+    expect(mocks.signUpCreate).not.toHaveBeenCalled()
+    expect(wrapper.findComponent(ErrorModal).props('message')).toContain('Create one with Google')
   })
 
   it('clears the error when the dialog is dismissed', async () => {
     mocks.create = async () => {
-      throw clerkError('form_identifier_not_found', "Couldn't find your account.")
+      throw clerkError('form_param_format_invalid', "That email looks wrong.")
     }
     const wrapper = mountLogin()
     await submitEmail(wrapper)

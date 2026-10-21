@@ -37,7 +37,7 @@ export type ServiceRequest =
 export type ServiceAction =
   // A ban or an unban is ONE operation across both doors: Clerk and Bagful's own
   // profile flag (see admin-services). `reason` is the audit text for the Bagful half.
-  | { service: 'clerk'; action: 'ban' | 'unban' | 'revoke_sessions' | 'impersonate'; userId: string; reason?: string }
+  | { service: 'clerk'; action: 'ban' | 'unban' | 'revoke_sessions' | 'impersonate' | 'delete'; userId: string; reason?: string }
   | { service: 'sentry'; action: 'resolve' | 'ignore' | 'unresolve'; issueId: string }
   // No userId means "the caller": a test push to your own phone.
   | { service: 'onesignal'; action: 'test_push'; userId?: string }
@@ -128,7 +128,7 @@ export function parseRequest(body: unknown): ServiceRequest | null {
     return trimmed ? { service, view, query: trimmed } : null
   }
   if (service === 'clerk' && typeof userId === 'string' && CLERK_USER_ID.test(userId)) {
-    if (action === 'ban' || action === 'unban' || action === 'revoke_sessions' || action === 'impersonate') {
+    if (action === 'ban' || action === 'unban' || action === 'revoke_sessions' || action === 'impersonate' || action === 'delete') {
       // Only a ban carries a reason, trimmed and capped: it goes into the audit trail.
       return action === 'ban' && typeof reason === 'string' && reason.trim()
         ? { service, action, userId, reason: reason.trim().slice(0, 300) }
@@ -591,12 +591,14 @@ export function callerId(authorization: string | null): string | null {
  */
 export function refuseAction(request: ServiceAction, caller: string | null): string | null {
   if (request.service !== 'clerk') return null
-  if (request.action !== 'ban' && request.action !== 'impersonate') return null
+  if (request.action !== 'ban' && request.action !== 'impersonate' && request.action !== 'delete') return null
   if (!caller) return 'Could not tell which account is asking.'
   if (request.userId === caller) {
     return request.action === 'impersonate'
       ? 'Impersonating yourself does nothing.'
-      : 'This is your own account: doing that would lock you out of the dashboard.'
+      : request.action === 'delete'
+        ? 'This is your own account: delete it from the app, not from here.'
+        : 'This is your own account: doing that would lock you out of the dashboard.'
   }
   return null
 }

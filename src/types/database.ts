@@ -427,6 +427,7 @@ export type Database = {
       }
       admin_delete_list: { Args: { p_id: string }; Returns: undefined }
       admin_delete_product: { Args: { p_id: string }; Returns: undefined }
+      admin_delete_user: { Args: { p_user_id: string }; Returns: undefined }
       admin_deleted_lists: {
         Args: never
         Returns: {

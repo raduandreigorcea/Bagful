@@ -1,16 +1,20 @@
 <script setup lang="ts">
+
 defineProps({
+  // The file name (no extension) of a drawing in src/assets/choice-icons/.
   icon: { type: String, required: true },
   label: { type: String, required: true },
   description: { type: String, default: '' },
 })
+
+const URLS = import.meta.glob('../assets/choice-icons/*.svg', { query: '?url', import: 'default', eager: true }) as Record<string, string>
 
 defineEmits<{ click: [] }>()
 </script>
 
 <template>
   <button class="choice-btn" type="button" @click="$emit('click')">
-    <span class="choice-icon">{{ icon }}</span>
+    <img class="choice-icon" :src="URLS[`../assets/choice-icons/${icon}.svg`]" alt="" draggable="false" />
     <div class="choice-text">
       <span class="choice-label">{{ label }}</span>
       <span v-if="description" class="choice-desc">{{ description }}</span>
@@ -40,9 +44,10 @@ defineEmits<{ click: [] }>()
 }
 
 .choice-icon {
-  font-size: var(--text-2xl);
-  line-height: 1;
+  width: 2.75rem;
+  height: 2.75rem;
   flex-shrink: 0;
+  border-radius: var(--radius-lg);
 }
 
 .choice-text {
