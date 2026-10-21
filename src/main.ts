@@ -46,17 +46,30 @@ initPushNotifications()
 // chunk surfaces as an error instead of a route that silently never loads.
 const CHUNK_RELOAD_KEY = 'bagful-chunk-reloaded-at'
 const CHUNK_RELOAD_WINDOW_MS = 10_000
-window.addEventListener('vite:preloadError', (event) => {
+// True when it started a reload, false when one just happened (or storage is
+// blocked, so a loop cannot be told from a stale deploy).
+function reloadForStaleChunk(): boolean {
   try {
     const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY)) || 0
-    if (Date.now() - last < CHUNK_RELOAD_WINDOW_MS) return
+    if (Date.now() - last < CHUNK_RELOAD_WINDOW_MS) return false
     sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()))
   } catch {
     // Storage blocked: no way to tell a loop from a stale deploy, so do not reload.
-    return
+    return false
   }
-  event.preventDefault()
   window.location.reload()
+  return true
+}
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadForStaleChunk()) event.preventDefault()
+})
+
+// The same stale chunk, seen from the router: when the old page's request for a
+// route's chunk is answered with something that is not that module, Vue Router
+// says it "couldn't resolve component default" instead of Vite failing the load.
+// Seen once, on a phone, right after the sign-in code was accepted.
+router.onError((error) => {
+  if (/Couldn't resolve component/.test(String(error?.message))) reloadForStaleChunk()
 })
 
 // Reading window.localStorage itself throws when the browser blocks site data,

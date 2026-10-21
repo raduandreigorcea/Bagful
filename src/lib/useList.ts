@@ -73,8 +73,13 @@ export function useList(options: {
     // reads next, and the members channel already moves them off it. Reporting
     // it would file a Sentry issue per removal. The roster
     // read beside it has no .single() and still reports as before.
+    //
+    // Nor is a read that lands after sign-out. The session is gone by then, the
+    // request goes out as the anon role and Postgres answers "permission denied
+    // for table lists" (42501): the account menu's Sign out raced the 30-second
+    // watchdog and filed it. With nobody signed in there is no list to read.
     for (const err of [listErr, membersErr]) {
-      if (!err || isOfflineError(err)) continue
+      if (!err || isOfflineError(err) || !userId.value) continue
       if (err === listErr && (err as { code?: string }).code === 'PGRST116') continue
       captureException(err)
     }
