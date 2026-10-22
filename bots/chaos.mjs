@@ -7,7 +7,7 @@
 // way no watcher would see throws a Finding (see swarm.mjs).
 import { BASE_URL, ROW, addButton, listSettingsButton } from './app.mjs'
 
-export class Finding extends Error {
+class Finding extends Error {
   name = 'Finding'
 }
 

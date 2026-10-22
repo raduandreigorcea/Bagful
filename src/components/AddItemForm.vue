@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, useId, watch, type PropType } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch, type PropType } from 'vue'
 import { closeModal, isTopModal, openModal } from '../lib/modalStack'
 import { isSheetWidth, useSearchSheet } from '../lib/useSearchSheet'
 import { useTapPops } from '../lib/useTapPops'
@@ -504,7 +504,6 @@ function onSlash(event: KeyboardEvent) {
   event.preventDefault()
   inputRef.value?.focus()
 }
-if (typeof document !== 'undefined') document.addEventListener('keydown', onSlash)
 
 // Escape closes the search from anywhere in it, not only from the search box:
 // after a tap on a shop chip the box no longer has focus, and a keyboard had
@@ -515,13 +514,14 @@ function onEscape(event: KeyboardEvent) {
   event.stopPropagation()
   close()
 }
-if (typeof document !== 'undefined') document.addEventListener('keydown', onEscape)
+onMounted(() => {
+  document.addEventListener('keydown', onSlash)
+  document.addEventListener('keydown', onEscape)
+})
 
 onBeforeUnmount(() => {
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('keydown', onSlash)
-    document.removeEventListener('keydown', onEscape)
-  }
+  document.removeEventListener('keydown', onSlash)
+  document.removeEventListener('keydown', onEscape)
   // The slide timer, the viewport listeners and the transitionend handler are
   // useSearchSheet's own teardown, and the confirmation timer is
   // useAddedConfirmation's. Only the layer registration is this component's.
