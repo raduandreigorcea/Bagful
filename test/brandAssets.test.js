@@ -76,4 +76,14 @@ describe('the shop marks specifically', () => {
       expect(brands[`brands/${shop}.svg`], shop).not.toContain('currentColor')
     }
   })
+
+  it('carries the six shops whose own app icon is wrapped as an image', () => {
+    // Not published as vectors, so each is a 96 px PNG inside an svg. An empty
+    // or truncated base64 body would draw nothing and look like a missing logo.
+    for (const shop of ['ahorramas', 'gurkerl', 'knuspr', 'morrisons', 'picard', 'supervalu']) {
+      const body = /href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/.exec(brands[`brands/${shop}.svg`])?.[1]
+      expect(body, shop).toBeDefined()
+      expect(Buffer.from(body, 'base64').subarray(0, 4).toString('hex'), shop).toBe('89504e47')
+    }
+  })
 })

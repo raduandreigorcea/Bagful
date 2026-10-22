@@ -65,6 +65,14 @@ const label = shopLabel
 // Aldi's is the Aldi Sued stripes on navy, recoloured from the one-colour
 // icon-set version for the same reason as Lidl; every Aldi the catalog scrapes
 // is Aldi Sued. Delhaize's is their app tile, the white lion on red.
+// Picard, SuperValu and Ahorramas are each shop's own app icon, a tile with its
+// own background (a snowflake on blue, the wordmark on red, the A and M on yellow),
+// so they bleed. Knuspr's croissant, Gurkerl's pickle and Morrisons' leaves have
+// none and keep the inset. All six are the icon the shop's own site declares for
+// a home-screen shortcut, resized to 96 px and wrapped in an svg (an <image> with
+// a data URI, 4-10 KB each) because they are not published as vectors.
+// Condis publishes only a wide wordmark, which would read as a smudge in a disc,
+// so it keeps its initial until somebody finds a square mark.
 // Penny's is their own logo, the white wordmark and yellow dot on red, cropped
 // to the red square: the wordmark sits well inside the disc's width at its height.
 //
@@ -72,13 +80,15 @@ const label = shopLabel
 // MPreis's M have no background of their own and keep the inset, or they would
 // touch the rim. Kaufland's is their Safari pinned-tab icon in their red, minus
 // the square frame around the K: in a disc a frame reads as a stray border.
-const FULL_BLEED = new Set(['aldi', 'delhaize', 'lidl', 'mega-image', 'penny'])
+const FULL_BLEED = new Set(['ahorramas', 'aldi', 'delhaize', 'lidl', 'mega-image', 'penny', 'picard', 'supervalu'])
 const WHITE_TILE = new Set(['mega-image'])
 
 // A retailer is one line in a registry and drawing its logo is a separate job,
 // so a shop with no asset gets its initial rather than an empty circle that
 // looks like a bug.
-const KNOWN_LOGOS = new Set(['aldi', 'auchan', 'carrefour', 'delhaize', 'kaufland', 'lidl', 'mega-image', 'mpreis', 'penny'])
+const KNOWN_LOGOS = new Set([
+  'ahorramas', 'aldi', 'auchan', 'carrefour', 'delhaize', 'gurkerl', 'kaufland', 'knuspr', 'lidl', 'mega-image', 'morrisons', 'mpreis', 'penny', 'picard', 'supervalu',
+])
 
 // Hofer is Aldi Sued's name in Austria and wears the same stripes. Aldi Nord
 // (`aldi-nord-de`) is a different company, and wears them like Aldi France and
