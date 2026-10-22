@@ -251,8 +251,8 @@ function submit() {
   width: 26px;
   height: 26px;
   background-color: currentColor;
-  mask: url('../assets/package-search.svg') no-repeat center / contain;
-  -webkit-mask: url('../assets/package-search.svg') no-repeat center / contain;
+  mask: url('../assets/icons/package-search.svg') no-repeat center / contain;
+  -webkit-mask: url('../assets/icons/package-search.svg') no-repeat center / contain;
 }
 
 .custom-product-dialog__body {

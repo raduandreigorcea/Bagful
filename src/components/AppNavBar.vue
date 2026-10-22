@@ -1454,8 +1454,8 @@ const orderedActiveMembers = computed(() =>
   display: inline-block;
   background-color: currentColor;
   opacity: 0.86;
-  mask: url('../assets/history.svg') no-repeat center / contain;
-  -webkit-mask: url('../assets/history.svg') no-repeat center / contain;
+  mask: url('../assets/icons/history.svg') no-repeat center / contain;
+  -webkit-mask: url('../assets/icons/history.svg') no-repeat center / contain;
 }
 
 :global(:root[data-theme='dark']) .history-icon {

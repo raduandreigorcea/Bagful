@@ -824,8 +824,8 @@ onBeforeUnmount(stopScene)
   width: var(--size-icon-lg);
   height: var(--size-icon-lg);
   background-color: var(--text-inverse);
-  mask: url('../assets/add.svg') no-repeat center / contain;
-  -webkit-mask: url('../assets/add.svg') no-repeat center / contain;
+  mask: url('../assets/icons/add.svg') no-repeat center / contain;
+  -webkit-mask: url('../assets/icons/add.svg') no-repeat center / contain;
 }
 .art-field__scan {
   width: calc(var(--size-icon-lg) + 2px);

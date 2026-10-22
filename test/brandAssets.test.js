@@ -23,7 +23,7 @@ function svgsIn(sub) {
     .map((f) => ({ name: `${sub}${f}`, markup: readFileSync(path + f, 'utf8') }))
 }
 
-const ALL = [...svgsIn(''), ...svgsIn('brands/'), ...svgsIn('flags/')]
+const ALL = [...svgsIn('icons/'), ...svgsIn('brands/'), ...svgsIn('flags/')]
 
 describe('svg assets', () => {
   it('finds the assets at all, so an empty glob cannot pass this file', () => {
