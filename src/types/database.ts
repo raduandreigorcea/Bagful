@@ -704,6 +704,7 @@ export type Database = {
         Args: { p_maker?: string; p_name: string }
         Returns: string
       }
+      push_prune_over_budget: { Args: never; Returns: boolean }
       rate_limit_hit: {
         Args: { p_kind: string; p_limit: number; p_window: string }
         Returns: boolean

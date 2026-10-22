@@ -36,6 +36,12 @@ Deno.serve(async (req) => {
   const { data: userId, error: gateError } = await db.rpc('requesting_user_id')
   if (gateError || typeof userId !== 'string' || !userId) return reply(401, { error: 'Not signed in.' })
 
+  // The budget (002_security_audit.sql) is spent before any OneSignal call, since
+  // those are what cost us. An error from the check itself fails open, like the
+  // limiter: a broken counter must not stop a person's notifications working.
+  const { data: overBudget } = await db.rpc('push_prune_over_budget')
+  if (overBudget === true) return reply(429, { error: 'Too many requests. Try again later.' })
+
   const body = (await req.json().catch(() => null)) as { subscriptionId?: unknown } | null
   const subscriptionId = body?.subscriptionId
   if (typeof subscriptionId !== 'string' || !SUBSCRIPTION_ID.test(subscriptionId)) {

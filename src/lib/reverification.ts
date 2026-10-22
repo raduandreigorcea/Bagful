@@ -27,7 +27,7 @@ export class ReverificationCancelled extends Error {
   }
 }
 
-export function needsReverification(error: unknown): boolean {
+function needsReverification(error: unknown): boolean {
   const errors = (error as { errors?: Array<{ code?: string }> } | null)?.errors
   return Array.isArray(errors) && errors.some((e) => e.code === 'session_reverification_required')
 }

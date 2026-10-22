@@ -49,23 +49,26 @@ import { computed } from 'vue'
 // swap is therefore invisible in the rendered CSS, which is what made migrating
 // 58 sites at once a reasonable thing to do.
 
-// eager: the whole set is a few KB of markup, and almost every one of these
-// files was already statically imported before this component existed.
-// Lazy-loading them would mean a request per icon and a frame of empty boxes on
-// first paint.
+// eager: the set is small and almost every one of these was already statically
+// imported before this component existed. Lazy-loading them would mean a request
+// per icon and a frame of empty boxes on first paint.
 //
-// It does cost 1.6 KB against the 57 imports it replaces, which is worth writing
-// down rather than discovering later. Five assets are used ONLY as CSS masks --
-// add, package-search, moon, sun-medium, sun-moon -- so they were bundled as
-// URLs and are now bundled as raw strings as well. Excluding them would mean a
-// hardcoded list here that silently rots the first time one of them is used as
-// an icon, which is a worse trade than 0.13% of the JavaScript.
+// Only icons/, flags/ and brands/, NOT the whole of assets/. product-icons/,
+// list-icons/ and choice-icons/ have their own loaders (ProductIcon, listEmoji,
+// ChoiceButton) and are never named here; globbing them too put a second copy of
+// about 150 drawings, as raw strings, in a chunk the entry point imports, i.e. on
+// every screen. A new folder whose files are drawn through AppIcon must be added
+// to this list; an unknown name renders nothing.
 //
-// `**` rather than `*`: flags/ and brands/ are subdirectories, and their names
-// carry the prefix (`flags/ro`, `brands/google`). The general-purpose icons live in
-// icons/ and keep BARE names (`check`, `plus`): the prefix is dropped below, so
-// moving them out of the assets root renamed no caller.
-const FILES = import.meta.glob('../assets/**/*.svg', {
+// Five assets are used ONLY as CSS masks -- add, package-search, moon,
+// sun-medium, sun-moon -- so they were bundled as URLs and are now bundled as raw
+// strings as well. Excluding them would mean a hardcoded list here that silently
+// rots the first time one of them is used as an icon.
+//
+// Names carry the folder for flags/ and brands/ (`flags/ro`, `brands/google`); the
+// general-purpose icons in icons/ keep BARE names (`check`, `plus`): the prefix is
+// dropped below, so moving them out of the assets root renamed no caller.
+const FILES = import.meta.glob('../assets/{icons,flags,brands}/*.svg', {
   query: '?raw',
   import: 'default',
   eager: true,

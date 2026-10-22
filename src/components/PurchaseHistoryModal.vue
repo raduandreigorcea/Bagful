@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, type PropType } from 'vue'
 import { useSupabase } from '../supabase'
+import { fetchPurchaseHistory } from '../lib/listAdmin'
 import AppModal from './AppModal.vue'
 import ModalCloseButton from './ModalCloseButton.vue'
 import SkeletonBlock from './SkeletonBlock.vue'
@@ -90,18 +91,7 @@ async function loadHistory() {
   if (!props.listId) return
   loading.value = true
   error.value = ''
-  const { data, error: fetchError } = await db
-    .from('purchase_history')
-    .select('id, name, maker, quantity, checkout_id, purchased_by, purchased_at, added_by_name, added_by_image_url')
-    .eq('list_id', props.listId)
-    // Rows in one checkout share a single purchased_at, and Postgres returns
-    // tied rows in no particular order — without tiebreakers every open could
-    // shuffle them. checkout_id keeps a checkout's rows contiguous (which the
-    // partial-tail trim relies on); id pins the order within it.
-    .order('purchased_at', { ascending: false })
-    .order('checkout_id', { ascending: true })
-    .order('id', { ascending: true })
-    .limit(HISTORY_LIMIT)
+  const { data, error: fetchError } = await fetchPurchaseHistory(db, props.listId, HISTORY_LIMIT)
 
   if (fetchError) {
     error.value = t('error.loadHistoryFailed')
