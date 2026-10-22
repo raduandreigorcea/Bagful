@@ -62,7 +62,9 @@ import { computed } from 'vue'
 // an icon, which is a worse trade than 0.13% of the JavaScript.
 //
 // `**` rather than `*`: flags/ and brands/ are subdirectories, and their names
-// carry the prefix (`flags/ro`, `brands/google`).
+// carry the prefix (`flags/ro`, `brands/google`). The general-purpose icons live in
+// icons/ and keep BARE names (`check`, `plus`): the prefix is dropped below, so
+// moving them out of the assets root renamed no caller.
 const FILES = import.meta.glob('../assets/**/*.svg', {
   query: '?raw',
   import: 'default',
@@ -71,7 +73,7 @@ const FILES = import.meta.glob('../assets/**/*.svg', {
 
 const ICONS: Record<string, string> = Object.fromEntries(
   Object.entries(FILES).map(([path, markup]) => [
-    path.replace('../assets/', '').replace('.svg', ''),
+    path.replace('../assets/', '').replace(/^icons\//, '').replace('.svg', ''),
     markup,
   ]),
 )

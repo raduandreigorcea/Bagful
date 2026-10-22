@@ -1039,8 +1039,8 @@ const labelText = computed(() =>
   height: 0.85rem;
   margin-left: 0.05rem;
   background-color: var(--color-primary);
-  mask: url('../assets/plus.svg') no-repeat center / contain;
-  -webkit-mask: url('../assets/plus.svg') no-repeat center / contain;
+  mask: url('../assets/icons/plus.svg') no-repeat center / contain;
+  -webkit-mask: url('../assets/icons/plus.svg') no-repeat center / contain;
 }
 
 @media (prefers-reduced-motion: reduce) {

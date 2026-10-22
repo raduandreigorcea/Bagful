@@ -23,7 +23,7 @@ function svgsIn(sub) {
     .map((f) => ({ name: `${sub}${f}`, markup: readFileSync(path + f, 'utf8') }))
 }
 
-const ALL = [...svgsIn(''), ...svgsIn('brands/'), ...svgsIn('flags/')]
+const ALL = [...svgsIn('icons/'), ...svgsIn('brands/'), ...svgsIn('flags/')]
 
 describe('svg assets', () => {
   it('finds the assets at all, so an empty glob cannot pass this file', () => {
@@ -77,13 +77,14 @@ describe('the shop marks specifically', () => {
     }
   })
 
-  it('carries the six shops whose own app icon is wrapped as an image', () => {
-    // Not published as vectors, so each is a 96 px PNG inside an svg. An empty
-    // or truncated base64 body would draw nothing and look like a missing logo.
-    for (const shop of ['ahorramas', 'gurkerl', 'knuspr', 'morrisons', 'picard', 'supervalu']) {
-      const body = /href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/.exec(brands[`brands/${shop}.svg`])?.[1]
-      expect(body, shop).toBeDefined()
-      expect(Buffer.from(body, 'base64').subarray(0, 4).toString('hex'), shop).toBe('89504e47')
+  it('draws the seven newest marks as vectors, never as a bitmap in an svg', () => {
+    // A first pass wrapped each shop's 180 px app icon in an <image> and it read as
+    // blurry once scaled down to a 20 px disc. A bitmap here would do it again.
+    for (const shop of ['ahorramas', 'condis', 'gurkerl', 'knuspr', 'morrisons', 'picard', 'supervalu']) {
+      const markup = brands[`brands/${shop}.svg`]
+      expect(markup, shop).toBeDefined()
+      expect(markup, shop).not.toMatch(/<image|data:image/)
+      expect(markup, shop).toMatch(/<path/)
     }
   })
 })

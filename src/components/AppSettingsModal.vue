@@ -607,28 +607,28 @@ watch(
 }
 
 .control-icon--theme-light {
-  mask-image: url('../assets/sun-medium.svg');
-  -webkit-mask-image: url('../assets/sun-medium.svg');
+  mask-image: url('../assets/icons/sun-medium.svg');
+  -webkit-mask-image: url('../assets/icons/sun-medium.svg');
 }
 
 .control-icon--theme-dark {
-  mask-image: url('../assets/moon.svg');
-  -webkit-mask-image: url('../assets/moon.svg');
+  mask-image: url('../assets/icons/moon.svg');
+  -webkit-mask-image: url('../assets/icons/moon.svg');
 }
 
 .control-icon--theme-system {
-  mask-image: url('../assets/sun-moon.svg');
-  -webkit-mask-image: url('../assets/sun-moon.svg');
+  mask-image: url('../assets/icons/sun-moon.svg');
+  -webkit-mask-image: url('../assets/icons/sun-moon.svg');
 }
 
 .control-icon--notify-all {
-  mask-image: url('../assets/bell.svg');
-  -webkit-mask-image: url('../assets/bell.svg');
+  mask-image: url('../assets/icons/bell.svg');
+  -webkit-mask-image: url('../assets/icons/bell.svg');
 }
 
 .control-icon--notify-off {
-  mask-image: url('../assets/bell-off.svg');
-  -webkit-mask-image: url('../assets/bell-off.svg');
+  mask-image: url('../assets/icons/bell-off.svg');
+  -webkit-mask-image: url('../assets/icons/bell-off.svg');
 }
 
 /* ─── About ──────────────────────────────────────────────────────────────── */

@@ -1515,8 +1515,8 @@ onBeforeUnmount(() => {
   width: 1.05rem;
   height: 1.05rem;
   background-color: var(--color-primary);
-  mask: url('../assets/package-search.svg') no-repeat center / contain;
-  -webkit-mask: url('../assets/package-search.svg') no-repeat center / contain;
+  mask: url('../assets/icons/package-search.svg') no-repeat center / contain;
+  -webkit-mask: url('../assets/icons/package-search.svg') no-repeat center / contain;
 }
 
 /* Quieter than the products it sits under: this is the way out, not a thing to
@@ -1650,8 +1650,8 @@ onBeforeUnmount(() => {
   width: var(--size-icon-lg);
   height: var(--size-icon-lg);
   background-color: var(--text-inverse);
-  mask: url('../assets/add.svg') no-repeat center / contain;
-  -webkit-mask: url('../assets/add.svg') no-repeat center / contain;
+  mask: url('../assets/icons/add.svg') no-repeat center / contain;
+  -webkit-mask: url('../assets/icons/add.svg') no-repeat center / contain;
 }
 
 /* Inlined rather than masked, for the reason the scan glyph below is: a tick is
