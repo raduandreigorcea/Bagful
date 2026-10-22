@@ -37,14 +37,17 @@ const SLUG = /^[a-z0-9-]{1,40}$/
 // readable, and is the right failure for a retailer added before anybody wrote
 // its name down.
 const SHOP_NAMES: Record<string, string> = {
+  ahorramas: 'Ahorramas',
   aldi: 'Aldi',
   'aldi-nord': 'Aldi Nord',
   auchan: 'Auchan',
   carrefour: 'Carrefour',
   condis: 'Condis',
   delhaize: 'Delhaize',
+  gurkerl: 'Gurkerl',
   hofer: 'Hofer',
   kaufland: 'Kaufland',
+  knuspr: 'Knuspr',
   lidl: 'Lidl',
   'mega-image': 'Mega Image',
   morrisons: 'Morrisons',
