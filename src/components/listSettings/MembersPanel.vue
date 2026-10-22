@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, type PropType } from 'vue'
 import { useAuth } from '@clerk/vue'
 import { useSupabase } from '../../supabase'
 import { userMessage } from '../../lib/errorMessages'
+import * as listAdmin from '../../lib/listAdmin'
 import type { ListMemberProfile } from '../../lib/listRealtime'
 import type { ConfirmOptions } from '../../lib/useConfirm'
 import {
@@ -117,11 +118,7 @@ async function setMemberRole(memberUserId: string, role: string) {
   // Dismiss on tap; the row's spinner carries the pending state from here.
   closeMemberMenu()
   try {
-    const { error } = await db
-      .from('list_members')
-      .update({ role })
-      .eq('list_id', props.listId)
-      .eq('user_id', memberUserId)
+    const { error } = await listAdmin.setMemberRole(db, props.listId, memberUserId, role)
     if (error) {
       emit('error', userMessage(error, t('error.roleUpdateFailed')))
       return
@@ -144,11 +141,7 @@ async function removeMember(memberUserId: string) {
   if (!confirmed) return
   memberActionPendingId.value = memberUserId
   try {
-    const { error } = await db
-      .from('list_members')
-      .delete()
-      .eq('list_id', props.listId)
-      .eq('user_id', memberUserId)
+    const { error } = await listAdmin.removeMember(db, props.listId, memberUserId)
     if (error) {
       emit('error', userMessage(error, t('error.removeMemberFailed')))
       return

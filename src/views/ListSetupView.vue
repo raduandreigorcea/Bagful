@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useAuth, useUser } from '@clerk/vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useSupabase } from '../supabase'
+import { findOwnedList } from '../lib/listAdmin'
 import { saveActiveListId } from '../lib/listCache'
 import { deriveProfileFields } from '../lib/userIdentity'
 import AppNavBar from '../components/AppNavBar.vue'
@@ -42,12 +43,7 @@ onMounted(async () => {
   if (!isAddingList.value || !userId.value) return
 
   try {
-    const { data } = await db
-      .from('lists')
-      .select('id')
-      .eq('created_by', userId.value)
-      .limit(1)
-      .maybeSingle()
+    const { data } = await findOwnedList(db, userId.value)
     ownsList.value = !!data
   } finally {
     ownershipChecked.value = true

@@ -57,7 +57,7 @@
 -- Tests run inside a transaction that is rolled back, so they leave no data behind.
 
 begin;
-select plan(143);
+select plan(146);
 
 -- ── Seed as the migration/superuser role (bypasses RLS) ──────────────────────
 -- Three lists, because promoting a contributed product to the global catalog
@@ -1793,6 +1793,36 @@ select is(
    where id = '00000000-0000-0000-0000-0000000000c2'),
   1,
   'and the row is untouched by that attempt'
+);
+
+reset role;
+
+-- push_prune_over_budget(): the prune-push-subscriptions function's budget.
+-- Twenty calls an hour pass, the next is refused, and anon cannot spend it.
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"user_prune"}';
+
+select is(
+  (select count(*)::int from generate_series(1, 20) g
+   where not public.push_prune_over_budget()),
+  20,
+  'push_prune_over_budget: the first 20 calls in an hour are within budget'
+);
+
+select is(
+  public.push_prune_over_budget(),
+  true,
+  'push_prune_over_budget: the 21st call is over budget'
+);
+
+reset role;
+set local role anon;
+
+select throws_ok(
+  $$ select public.push_prune_over_budget() $$,
+  '42501',
+  null,
+  'push_prune_over_budget: anon cannot call it'
 );
 
 reset role;

@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useSupabase } from '../../supabase'
 import { userMessage } from '../../lib/errorMessages'
+import * as listAdmin from '../../lib/listAdmin'
 import { LIST_EMOJIS, listIconUrl } from '../../lib/listEmoji'
 import ListIcon from '../ListIcon.vue'
 import {
@@ -103,7 +104,7 @@ async function renameList() {
   }
   savingName.value = true
   try {
-    const { error } = await db.from('lists').update({ name: nextName }).eq('id', props.listId)
+    const { error } = await listAdmin.updateList(db, props.listId, { name: nextName })
     if (error) {
       emit('error', userMessage(error, t('error.renameListFailed')))
       return
@@ -119,10 +120,7 @@ async function saveEmoji() {
   if (!props.isOwner || !props.listId || savingEmoji.value) return
   savingEmoji.value = true
   try {
-    const { error } = await db
-      .from('lists')
-      .update({ emoji: emojiValue.value || null })
-      .eq('id', props.listId)
+    const { error } = await listAdmin.updateList(db, props.listId, { emoji: emojiValue.value || null })
     if (error) {
       emit('error', userMessage(error, t('error.saveEmojiFailed')))
       return
@@ -149,10 +147,7 @@ async function saveItemLimit() {
 
   savingItemLimit.value = true
   try {
-    const { error } = await db
-      .from('lists')
-      .update({ max_items_per_member: normalizedLimit })
-      .eq('id', props.listId)
+    const { error } = await listAdmin.updateList(db, props.listId, { max_items_per_member: normalizedLimit })
     if (error) {
       emit('error', userMessage(error, t('error.saveLimitFailed')))
       return

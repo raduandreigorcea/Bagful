@@ -4,6 +4,7 @@ import { useAuth } from '@clerk/vue'
 import { useSupabase } from '../../supabase'
 import { userMessage } from '../../lib/errorMessages'
 import { randomInviteCode } from '../../lib/inviteCode'
+import * as listAdmin from '../../lib/listAdmin'
 import type { ConfirmOptions } from '../../lib/useConfirm'
 import { t, tAccent } from '../../lib/i18n'
 import AppIcon from '../AppIcon.vue'
@@ -60,10 +61,7 @@ async function regenerateInviteCode() {
   if (!confirmed) return
   regenerating.value = true
   try {
-    const { error } = await db
-      .from('lists')
-      .update({ invite_code: randomInviteCode() })
-      .eq('id', props.listId)
+    const { error } = await listAdmin.updateList(db, props.listId, { invite_code: randomInviteCode() })
     if (error) {
       // Includes the rare unique-index collision on the new code; retrying
       // draws a different one, which is what the message asks for.
@@ -91,11 +89,7 @@ async function leaveList() {
   if (!confirmed || !userId.value) return
   leavingList.value = true
   try {
-    const { error } = await db
-      .from('list_members')
-      .delete()
-      .eq('list_id', props.listId)
-      .eq('user_id', userId.value)
+    const { error } = await listAdmin.removeMember(db, props.listId, userId.value)
     if (error) {
       emit('error', userMessage(error, t('error.leaveListFailed')))
       return
@@ -117,7 +111,7 @@ async function deleteList() {
   if (!confirmed) return
   deletingList.value = true
   try {
-    const { error } = await db.from('lists').delete().eq('id', props.listId)
+    const { error } = await listAdmin.deleteList(db, props.listId)
     if (error) {
       emit('error', userMessage(error, t('error.deleteListFailed')))
       return

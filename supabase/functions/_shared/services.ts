@@ -46,8 +46,8 @@ export type ServiceAction =
 // uploads source maps under, so they are constants rather than two more secrets.
 // The project is shared by every build, so both app databases read the same
 // issues.
-export const SENTRY_ORG = 'bagful'
-export const SENTRY_PROJECT = 'javascript-vue'
+const SENTRY_ORG = 'bagful'
+const SENTRY_PROJECT = 'javascript-vue'
 
 // THE EU REGION, NOT sentry.io. The bagful organisation's data lives in
 // Sentry's EU region (its DSN ingests at ingest.de.sentry.io, and an org token
@@ -56,10 +56,10 @@ export const SENTRY_PROJECT = 'javascript-vue'
 // answers 404 for the organisation's projects and issues -- which is what the
 // admin Health page showed as "Sentry answered 404". The region host answers
 // both kinds, so it is what is asked.
-export const SENTRY_API = 'https://de.sentry.io/api/0'
+const SENTRY_API = 'https://de.sentry.io/api/0'
 
 /** What writing to Sentry needs, apart from SENTRY_READ_TOKEN: a token with event:admin. */
-export const SENTRY_WRITE_SECRET = 'SENTRY_WRITE_TOKEN'
+const SENTRY_WRITE_SECRET = 'SENTRY_WRITE_TOKEN'
 
 /**
  * Who may use the Clerk actions and the Clerk-wide search: a comma-separated list of Clerk ids.
@@ -84,7 +84,7 @@ const SECRETS: Record<Service, string[]> = {
 // The dashboard is a local tool (admin/, `npm run dev` on port 5174), so only
 // its dev server may read these answers from a browser. Not the gate, which is
 // is_admin(): a request from anywhere else still needs an admin's token.
-export const ADMIN_ORIGINS = ['http://localhost:5174', 'http://127.0.0.1:5174']
+const ADMIN_ORIGINS = ['http://localhost:5174', 'http://127.0.0.1:5174']
 
 /** CORS headers for a request from `origin`, allowing it only if it is the dashboard's. */
 export function corsHeaders(origin: string | null): Record<string, string> {
@@ -345,14 +345,14 @@ export function oneSignalNotificationsUrl(appId: string): string {
 }
 
 /** The most people one subscribers request may ask about: it is one OneSignal call each. */
-export const SUBSCRIBER_LOOKUP_MAX = 50
+const SUBSCRIBER_LOOKUP_MAX = 50
 
 /** One person's OneSignal record, by the Clerk id the app signs their devices in with. */
 export function oneSignalUserUrl(appId: string, userId: string): string {
   return `https://api.onesignal.com/apps/${appId}/users/by/external_id/${encodeURIComponent(userId)}`
 }
 
-export interface PushDevice {
+interface PushDevice {
   /** Android, iOS, Chrome, Firefox, Safari: where the subscription lives. */
   kind: string
   /** OneSignal's `enabled`: false means unsubscribed (uninstalled, data cleared, or notifications off). */
@@ -493,9 +493,9 @@ export function readClerkCount(raw: unknown): number {
 
 // The one EU project both channels send to (src/lib/analytics.ts). Constants,
 // like Sentry's org and project: neither is a secret and neither changes.
-export const POSTHOG_API = 'https://eu.posthog.com'
-export const POSTHOG_PROJECT_ID = '287898'
-export const POSTHOG_DAYS = 30
+const POSTHOG_API = 'https://eu.posthog.com'
+const POSTHOG_PROJECT_ID = '287898'
+const POSTHOG_DAYS = 30
 
 /** The channel whose events this project's admin page shows. */
 export function posthogChannel(supabaseUrl: string | undefined): 'production' | 'nightly' {
@@ -604,7 +604,7 @@ export function refuseAction(request: ServiceAction, caller: string | null): str
 }
 
 /** Actor tokens last ten minutes: long enough to open the link, short enough not to linger. */
-export const ACTOR_TOKEN_SECONDS = 600
+const ACTOR_TOKEN_SECONDS = 600
 
 export function actorTokenBody(userId: string, actor: string): Record<string, unknown> {
   return { user_id: userId, actor: { sub: actor }, expires_in_seconds: ACTOR_TOKEN_SECONDS }

@@ -223,6 +223,24 @@ $$;
 
 revoke all on function public.rate_limit_hit(text, integer, interval) from public, anon, authenticated;
 
+-- The budget for the prune-push-subscriptions edge function, which cannot call
+-- rate_limit_hit() itself (revoked above) and reaches the database as the signed-in
+-- person. Each call costs a OneSignal lookup plus a delete per stale device, on
+-- OUR REST key, so an account in a loop would spend the quota. The app calls it
+-- once per sign-in on a device, so 20 an hour is far above real use.
+-- Returns true when the caller is OVER budget. rate_limit_hit() fails open.
+create or replace function public.push_prune_over_budget()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select public.rate_limit_hit('push_prune', 20, interval '1 hour');
+$$;
+
+revoke all on function public.push_prune_over_budget() from public, anon;
+grant execute on function public.push_prune_over_budget() to authenticated;
+
 -- ─── reading the trail back ──────────────────────────────────────────────────
 -- security_events records the right things, but nothing surfaces them, so in
 -- practice it only gets read if someone goes looking. This is as much of that gap
