@@ -68,6 +68,9 @@ export function useSignOut(options: {
       // effectively over either way; what failed is Clerk's own teardown, which
       // is worth knowing about but not worth a dialog on the way out.
       captureException(error)
+      // Clerk never got to navigate, so leave for the login screen ourselves
+      // rather than strand the person on a page whose local data is gone.
+      window.location.assign('/login')
     } finally {
       signingOut.value = false
     }

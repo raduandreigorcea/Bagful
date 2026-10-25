@@ -84,12 +84,15 @@ describe('useSignOut', () => {
     mocks.clerkSignOut = vi.fn(async () => {
       throw new Error('clerk down')
     })
+    const assign = vi.spyOn(window.location, 'assign').mockImplementation(() => {})
     const { signOut, signingOut, onSignedOut } = mountSignOut()
 
     await expect(signOut()).resolves.toBeUndefined()
 
     expect(mocks.order[0]).toEqual(['forget', 'user-1'])
     expect(mocks.order).toContainEqual(['captured', 'clerk down'])
+    expect(assign).toHaveBeenCalledWith('/login')
+    assign.mockRestore()
     expect(onSignedOut).not.toHaveBeenCalled()
     expect(signingOut.value).toBe(false)
   })
