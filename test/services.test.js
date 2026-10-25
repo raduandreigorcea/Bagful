@@ -26,6 +26,9 @@ import {
   shapeSubscriber,
   oneSignalUserUrl,
   posthogReplayersQuery,
+  posthogVersionsQuery,
+  shapeVersions,
+  posthogVersionSpreadQuery,
   posthogRecordingsQuery,
   shapeReplayers,
   shapeSentryFeedback,
@@ -230,6 +233,29 @@ describe('PostHog replayers', () => {
     expect(parseRequest({ service: 'posthog', view: 'replayers', userIds: ["x' OR 1=1"] })).toBeNull()
     expect(posthogReplayersQuery([A]).query.query).toContain(`'${A}'`)
     expect(shapeReplayers([A, B], { results: [[B]] })).toEqual([{ userId: A, replay: false }, { userId: B, replay: true }])
+  })
+})
+
+describe('PostHog versions', () => {
+  const A = 'user_3D7fKKF1I9xyLOo7JxtSKW5N3WE'
+
+  it('takes Clerk ids only, asks for one channel, and returns only the people PostHog heard from', () => {
+    expect(parseRequest({ service: 'posthog', view: 'versions', userIds: [A] })).toEqual({ service: 'posthog', view: 'versions', userIds: [A] })
+    expect(parseRequest({ service: 'posthog', view: 'versions', userIds: ["x' OR 1=1"] })).toBeNull()
+    const query = posthogVersionsQuery([A], 'production').query
+    expect(query.query).toContain(`'${A}'`)
+    expect(query.values).toEqual({ channel: 'production' })
+    expect(shapeVersions({ results: [[A, '0.8.22'], ['user_x', null]] })).toEqual([{ userId: A, version: '0.8.22' }])
+  })
+})
+
+describe('PostHog version spread', () => {
+  it('needs no ids, asks for one row per signed-in person on one channel', () => {
+    expect(parseRequest({ service: 'posthog', view: 'version-spread' })).toEqual({ service: 'posthog', view: 'version-spread' })
+    const query = posthogVersionSpreadQuery('nightly').query
+    expect(query.query).toContain("startsWith(distinct_id, 'user_')")
+    expect(query.query).toContain('GROUP BY distinct_id')
+    expect(query.values).toEqual({ channel: 'nightly' })
   })
 })
 

@@ -41,9 +41,10 @@ function setVisibility(state) {
   document.dispatchEvent(new Event('visibilitychange'))
 }
 
-async function start({ dev }) {
+async function start({ dev, native = false }) {
   vi.stubEnv('DEV', dev)
   vi.resetModules()
+  vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => native } }))
   const { startAppUpdates } = await import('../src/lib/appUpdate')
   startAppUpdates()
   await vi.waitFor(() => {}) // let the registration/unregistration promises settle
@@ -133,6 +134,23 @@ describe('appUpdate', () => {
     })
     document.dispatchEvent(new Event('visibilitychange'))
     expect(registration.update).toHaveBeenCalledTimes(1)
+  })
+
+  // The WebView's storage survives an APK update, so the old build's worker kept
+  // serving the old bundle on the first launch and the updater offered the
+  // version that had just been installed.
+  it('in the APK, removes the worker and its precache instead of registering one', async () => {
+    const stale = makeRegistration('https://localhost/sw.js')
+    const container = installServiceWorkerStub({ registrations: [stale] })
+    const deleted = vi.fn().mockResolvedValue(true)
+    vi.stubGlobal('caches', { keys: vi.fn().mockResolvedValue(['workbox-precache']), delete: deleted })
+
+    await start({ dev: false, native: true })
+
+    expect(stale.unregister).toHaveBeenCalledTimes(1)
+    expect(deleted).toHaveBeenCalledWith('workbox-precache')
+    expect(container.register).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 
   it('in dev, unregisters a worker left behind by a build on the same origin', async () => {
