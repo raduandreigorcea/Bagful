@@ -25,6 +25,8 @@ export type ServiceRequest =
   | { service: 'posthog'; view: 'activity' }
   | { service: 'posthog'; view: 'recordings' }
   | { service: 'posthog'; view: 'replayers'; userIds: string[] }
+  | { service: 'posthog'; view: 'versions'; userIds: string[] }
+  | { service: 'posthog'; view: 'version-spread' }
   | { service: 'clerk'; view: 'search'; query: string }
   | { service: 'clerk'; view: 'banned' }
   | ServiceAction
@@ -112,9 +114,9 @@ export function parseRequest(body: unknown): ServiceRequest | null {
   if (service === 'clerk' && view === 'user' && typeof userId === 'string' && CLERK_USER_ID.test(userId)) {
     return { service, view, userId }
   }
-  if (service === 'posthog' && view === 'recordings') return { service, view }
+  if (service === 'posthog' && (view === 'recordings' || view === 'version-spread')) return { service, view }
   const { userIds } = body as Record<string, unknown>
-  if ((view === 'subscribers' && service === 'onesignal' || view === 'replayers' && service === 'posthog') && Array.isArray(userIds)) {
+  if ((view === 'subscribers' && service === 'onesignal' || (view === 'replayers' || view === 'versions') && service === 'posthog') && Array.isArray(userIds)) {
     // One lookup per id, so the count is capped: a page of the Users table is 25.
     const ids = [...new Set(userIds)]
     if (ids.length > 0 && ids.length <= SUBSCRIBER_LOOKUP_MAX && ids.every((id) => typeof id === 'string' && CLERK_USER_ID.test(id))) {
@@ -730,6 +732,67 @@ export function shapeReplayers(userIds: string[], raw: unknown): ReplayState[] {
   const rows = ((raw as Raw | null)?.results ?? []) as unknown[]
   const recorded = new Set(rows.map((row) => (Array.isArray(row) ? row[0] : null)))
   return userIds.map((userId) => ({ userId, replay: recorded.has(userId) }))
+}
+
+// The app version each person last reported, for the Users page's Version column
+// where OneSignal knows no device (notifications were never turned on). Every
+// event carries app_version (lib/analytics), which for the APK is its versionName.
+// Asked per channel, since a person can exist on both and the numbers differ.
+// The ids were checked against CLERK_USER_ID, so they are safe as literals.
+export function posthogVersionsQuery(userIds: string[], channel: string): Record<string, unknown> {
+  return {
+    query: {
+      kind: 'HogQLQuery',
+      query: `
+        SELECT distinct_id, argMax(toString(properties.app_version), timestamp)
+        FROM events
+        WHERE timestamp >= now() - INTERVAL ${POSTHOG_DAYS} DAY
+          AND properties.channel = {channel}
+          AND isNotNull(properties.app_version)
+          AND distinct_id IN (${userIds.map((id) => `'${id}'`).join(', ')})
+        GROUP BY distinct_id`,
+      values: { channel },
+    },
+  }
+}
+
+export interface VersionState {
+  userId: string
+  version: string
+}
+
+// Every signed-in person PostHog has seen on this channel, with the version they
+// last reported, for the Overview pie. PostHog also holds ids that no longer have
+// an account (deleted people, bots), so it cannot count them itself: the admin
+// keeps only the ids that exist in the app database. Capped at 10000 people.
+export function posthogVersionSpreadQuery(channel: string): Record<string, unknown> {
+  return {
+    query: {
+      kind: 'HogQLQuery',
+      query: `
+        SELECT distinct_id, argMax(toString(properties.app_version), timestamp)
+        FROM events
+        WHERE timestamp >= now() - INTERVAL ${POSTHOG_DAYS} DAY
+          AND properties.channel = {channel}
+          AND isNotNull(properties.app_version)
+          AND startsWith(distinct_id, 'user_')
+        GROUP BY distinct_id
+        LIMIT 10000`,
+      values: { channel },
+    },
+  }
+}
+
+/** Only the people PostHog heard from; the rest are simply absent. */
+export function shapeVersions(raw: unknown): VersionState[] {
+  const rows = ((raw as Raw | null)?.results ?? []) as unknown[]
+  const out: VersionState[] = []
+  for (const row of rows) {
+    if (Array.isArray(row) && typeof row[0] === 'string' && typeof row[1] === 'string' && row[1]) {
+      out.push({ userId: row[0], version: row[1] })
+    }
+  }
+  return out
 }
 
 function pathOf(url: unknown): string | null {

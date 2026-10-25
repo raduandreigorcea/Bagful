@@ -46,6 +46,9 @@ import {
   isAction,
   posthogRecordingsQuery,
   posthogReplayersQuery,
+  posthogVersionsQuery,
+  posthogVersionSpreadQuery,
+  shapeVersions,
   shapeReplayers,
   refuseAction,
   sentryIssueUpdateUrl,
@@ -206,6 +209,30 @@ async function posthogRecordings(userIds?: string[]) {
   }
   const raw = await res.json()
   return userIds ? shapeReplayers(userIds, raw) : shapePostHogRecordings(raw)
+}
+
+async function posthogVersions(userIds?: string[]) {
+  const res = await fetch(posthogQueryUrl(), {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${env('POSTHOG_PERSONAL_API_KEY')}`,
+      'content-type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify(
+      userIds
+        ? posthogVersionsQuery(userIds, posthogChannel(env('SUPABASE_URL')))
+        : posthogVersionSpreadQuery(posthogChannel(env('SUPABASE_URL'))),
+    ),
+    signal: AbortSignal.timeout(20_000),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as Record<string, unknown> | null
+    const detail = typeof body?.detail === 'string' ? body.detail : undefined
+    throw new UpstreamError('posthog', res.status, { path: new URL(posthogQueryUrl()).pathname, detail })
+  }
+  const raw = await res.json()
+  return shapeVersions(raw)
 }
 
 // Every write, one place. `caller` is the signed-in admin's Clerk id.
@@ -382,9 +409,11 @@ Deno.serve(async (req) => {
             ? await subscribers((request as { userIds: string[] }).userIds)
             : await oneSignal()
           : request.service === 'posthog'
-            ? (request as { view: string }).view !== 'activity'
-              ? await posthogRecordings((request as { userIds?: string[] }).userIds)
-              : await posthog()
+            ? (request as { view: string }).view === 'versions' || (request as { view: string }).view === 'version-spread'
+              ? await posthogVersions((request as { userIds?: string[] }).userIds)
+              : (request as { view: string }).view !== 'activity'
+                ? await posthogRecordings((request as { userIds?: string[] }).userIds)
+                : await posthog()
             : await clerk(request as Extract<ServiceRequest, { service: 'clerk' }>)
     return reply(200, { data })
   } catch (error) {
