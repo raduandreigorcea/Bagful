@@ -11,6 +11,8 @@
 // the old build until a cache-bypassing reload. Hence injectRegister: null in
 // vite.config.js and this module doing the registering.
 
+import { Capacitor } from '@capacitor/core'
+
 const SW_URL = '/sw.js'
 
 // OneSignal owns its own worker under /onesignal/ (see lib/pushNotifications).
@@ -73,6 +75,24 @@ export function startAppUpdates(): void {
 
   if (import.meta.env.DEV) {
     clearStaleDevWorkers()
+    return
+  }
+
+  // The APK has no use for a worker, and a worker does harm there. Its assets
+  // are inside the package, so there is nothing to cache for offline and nothing
+  // to auto-update: a new build arrives as a new APK. But the WebView's storage
+  // survives an APK update, so the worker from the previous build is still there,
+  // still answering navigations out of its precache. The first launch after every
+  // update therefore ran the OLD bundle, whose version said "0.x.(n-1)", so the
+  // updater offered the release that had just been installed and the user had to
+  // press Update a second time. Removing the worker (and its precache) makes the
+  // package the only source of the bundle.
+  if (Capacitor.isNativePlatform()) {
+    clearStaleDevWorkers()
+    void caches
+      ?.keys()
+      .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+      .catch(() => {})
     return
   }
 
