@@ -1252,9 +1252,16 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.shop-filter__chip:hover,
 .shop-filter__chip:focus-visible {
   border-color: var(--color-primary);
+}
+
+/* Only where there is a pointer to hover with: a touch screen keeps :hover on
+   the chip it last tapped, which left the border lit after the press. */
+@media (hover: hover) {
+  .shop-filter__chip:hover {
+    border-color: var(--color-primary);
+  }
 }
 
 /* The selected one has to read as selected while the mark inside it keeps its
@@ -1559,7 +1566,7 @@ onBeforeUnmount(() => {
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   color: var(--text-primary);
   outline: none;
   min-width: 0;

@@ -486,7 +486,7 @@ watch(
   border-radius: var(--radius-lg);
   background: var(--bg-surface);
   font-family: inherit;
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   line-height: 1.5;
   color: var(--text-primary);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);

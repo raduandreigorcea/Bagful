@@ -427,7 +427,7 @@ const resolvedDisplayName = computed(() => props.displayName || t('account.fallb
 }
 
 .account-menu-item__label--danger {
-  color: var(--text-inverse);
+  color: var(--danger-text);
 }
 
 .account-menu-item__hint {
@@ -436,29 +436,30 @@ const resolvedDisplayName = computed(() => props.displayName || t('account.fallb
   flex-shrink: 0;
 }
 
+/* Quiet on purpose: signing out is rare, and a solid red slab under the other
+   rows is the first thing a thumb finds. It is still red, so it still reads as
+   the one that leaves. */
 .account-menu-item--danger {
-  border: none;
-  background: var(--danger-solid);
-  color: var(--text-inverse);
-  box-shadow: var(--elevation-danger-subtle);
+  border: var(--border-width-thin) solid var(--danger-border);
+  background: transparent;
+  color: var(--danger-text);
 }
 
 .account-menu-item--danger:hover:not(:disabled) {
-  background: var(--danger-solid-hover);
-  border-color: transparent;
-  box-shadow: var(--elevation-danger-hover);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
 }
 
 .account-menu-item--danger:disabled {
   opacity: 0.5;
 }
 
-/* The mark rides on the solid fill here, so it takes the label's inverse colour
-   instead of the muted grey the pale rows use — and it must not warm to green
-   on hover the way they do, which is why the hover state is restated. */
+/* The mark takes the label's red instead of the muted grey the pale rows use,
+   and must not warm to green on hover the way they do, which is why the hover
+   state is restated. */
 .account-menu-item--danger .account-item-icon,
 .account-menu-item--danger:hover:not(:disabled) .account-item-icon {
-  color: var(--text-inverse);
+  color: var(--danger-text);
 }
 
 
@@ -478,8 +479,8 @@ const resolvedDisplayName = computed(() => props.displayName || t('account.fallb
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  border: var(--border-width-thick) solid color-mix(in srgb, var(--text-inverse) 45%, transparent);
-  border-top-color: var(--text-inverse);
+  border: var(--border-width-thick) solid color-mix(in srgb, var(--danger-text) 30%, transparent);
+  border-top-color: var(--danger-text);
   border-radius: 50%;
   display: inline-block;
   animation: account-spin 0.7s linear infinite;

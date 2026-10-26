@@ -4,14 +4,25 @@ import type { ListMemberProfile } from './listRealtime'
 import { captureException } from './errorReporting'
 import { clampItemLimit, ITEM_LIMIT_DEFAULT } from './limits'
 import { isOfflineError } from './offlineQueue'
+import { sortMembersSelfFirst } from './memberRoles'
 
 // The list the dashboard is showing, and every list the user is in:
 // the state, and the two reads that fill it. Moved out of HomeView, which keeps
 // what ties this to the rest (switching, reconciling after a removal), because
 // those also drive the list, realtime and the suggestions.
 
-// Every list the user belongs to; the account dialog lists them to switch.
-export interface ListRow { id: string; name: string; emoji?: string | null }
+// Every list the user belongs to; the list switcher shows them. The rest of a
+// row is what the switcher draws under the name: who is in it and how far along
+// it is. Optional, so a caller that only needs to name a list can still build one.
+export interface ListRow {
+  id: string
+  name: string
+  emoji?: string | null
+  ownerId?: string
+  members?: ListMemberProfile[]
+  total?: number
+  done?: number
+}
 
 // PostgREST types an embedded to-one relation as an array, but these selects
 // each return a single joined row; the casts at the two call sites say so once.
@@ -22,7 +33,13 @@ interface MemberRow {
 }
 interface MembershipRow {
   list_id: string
-  lists?: { name?: string | null; emoji?: string | null } | null
+  lists?: {
+    name?: string | null
+    emoji?: string | null
+    created_by?: string | null
+    list_members?: MemberRow[] | null
+    shopping_list_items?: { checked: boolean }[] | null
+  } | null
 }
 
 export function useList(options: {
@@ -125,16 +142,37 @@ export function useList(options: {
     if (!userId.value) return { error: new Error('No signed-in user') }
     const { data, error } = await db
       .from('list_members')
-      .select('list_id, lists(name, emoji)')
+      .select(
+        'list_id, lists(name, emoji, created_by, list_members(user_id, role, profiles(display_name, image_url)), shopping_list_items(checked))',
+      )
       .eq('user_id', userId.value)
     if (error) return { error }
-    // A list row renders an emoji tile, a name and a marker, so that is all it
-    // carries, and the embed brings all of it back in this one query.
-    const list = ((data ?? []) as unknown as MembershipRow[]).map((row) => ({
-      id: row.list_id,
-      name: row.lists?.name ?? '',
-      emoji: row.lists?.emoji ?? '',
-    }))
+    // A list row renders an emoji tile, a name, its faces and how much of it is
+    // in the cart, and the embeds bring all of that back in this one query. The
+    // items are bounded (a member holds at most 50 active ones), so counting
+    // them here beats a count query per list.
+    const list = ((data ?? []) as unknown as MembershipRow[]).map((row) => {
+      const owner = row.lists?.created_by ?? ''
+      const items = row.lists?.shopping_list_items ?? []
+      return {
+        id: row.list_id,
+        name: row.lists?.name ?? '',
+        emoji: row.lists?.emoji ?? '',
+        ownerId: owner,
+        members: sortMembersSelfFirst(
+          (row.lists?.list_members ?? []).map((m) => ({
+            user_id: m.user_id,
+            role: m.role,
+            display_name: m.profiles?.display_name || null,
+            image_url: m.profiles?.image_url || null,
+          })),
+          owner,
+          userId.value ?? '',
+        ),
+        total: items.length,
+        done: items.filter((i) => i.checked).length,
+      }
+    })
 
     // Stable, name-ordered so the list never reshuffles between loads.
     // Pinned to 'en' so the list switcher lists in the same order on

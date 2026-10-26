@@ -120,14 +120,16 @@ describe('the list header and switcher queries', () => {
     }
   })
 
-  it('brings the switcher emoji back through the membership embed', async () => {
+  it('brings the switcher emoji, faces and counts back through the membership embed', async () => {
     const db = mocks.db
     await bootHome()
 
     const membership = db.calls.find(
       (c) => c.table === 'list_members' && c.op === 'select' && c.filters.user_id,
     )
-    expect(membership.columns).toBe('list_id, lists(name, emoji)')
+    expect(membership.columns).toContain('lists(name, emoji, created_by')
+    expect(membership.columns).toContain('list_members(')
+    expect(membership.columns).toContain('shopping_list_items(checked)')
   })
 
   it('still surfaces the emoji to the topbar', async () => {

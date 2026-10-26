@@ -140,10 +140,27 @@ const accountMenuOpen = ref(false)
 // The list sheet: members, invite, and which list you are on. It is
 // what the list name opens, on every width.
 const listSheetOpen = ref(false)
+// 'list' is this list (who is in it, invite, manage), 'lists' is which list you
+// are on. The phone splits them: the name opens the first, the bar's Lists slot
+// the second. A desktop has no bar, so its one door shows both.
+const listSheetMode = ref<'all' | 'list' | 'lists'>('all')
 
-function openListSheet() {
+function openListSheet(mode: 'all' | 'list' | 'lists' = 'all') {
   prefetch(loadListSettingsModal)
+  listSheetMode.value = mode
   listSheetOpen.value = true
+  // The counts under each list are a snapshot; ticking rows since then has made
+  // them stale, and this is the moment somebody looks at them.
+  if (mode !== 'list') emit('refresh-list')
+}
+
+function openListFromName() {
+  openListSheet(props.layout === 'bar' && !isDesktop.value ? 'list' : 'all')
+}
+
+// The List slot is where you already are, so it takes you to the top of it.
+function goToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 // Closes the sheet itself; the switch is the parent's to perform, because it
@@ -323,8 +340,6 @@ const onDesktopChange = (event: MediaQueryListEvent) => {
 onMounted(() => desktopMedia?.addEventListener?.('change', onDesktopChange))
 onBeforeUnmount(() => desktopMedia?.removeEventListener?.('change', onDesktopChange))
 
-const nameOpensSheet = computed(() => props.layout !== 'bar' || isDesktop.value)
-
 const progressPercent = computed(() =>
   props.totalUnits > 0 ? Math.round((props.checkedUnits / props.totalUnits) * 100) : 0,
 )
@@ -352,11 +367,11 @@ const orderedActiveMembers = computed(() =>
 </script>
 
 <template>
-  <!-- The phone's action bar: List, History, Add, Switch, You. Hidden
+  <!-- The phone's action bar: List, History, Add, Lists, You. Hidden
        from the desktop column up, where the header carries history and the
-       account and AddItemForm is an inline field. Switch opens the list
-       sheet (members, invite, switching); List goes straight to its
-       settings, as it always did. -->
+       account and AddItemForm is an inline field. Lists opens the sheet of
+       lists (switch, join, create); List is where you are, so it scrolls to
+       the top. Members, invite and settings are behind the list's name. -->
   <nav v-if="layout === 'bar'" class="navbar" :aria-label="t('nav.label')">
     <!-- Every slot here carries an aria-label, for the same reason the centre
          disc does: the visible labels are single words because they sit under a
@@ -367,13 +382,9 @@ const orderedActiveMembers = computed(() =>
     <button
       class="nav-slot"
       type="button"
-      aria-haspopup="dialog"
-      :aria-expanded="settingsOpen"
-      :aria-label="
-        listName ? t('topbar.listSettings', { name: listName }) : t('nav.list')
-      "
-      @pointerdown="prefetch(loadListSettingsModal)"
-      @click="openListSettings"
+      aria-current="page"
+      :aria-label="t('nav.list')"
+      @click="goToTop"
     >
       <span class="nav-slot__mark nav-slot__mark--emoji" aria-hidden="true">
         <ListIcon :value="listEmoji" />
@@ -422,18 +433,18 @@ const orderedActiveMembers = computed(() =>
          is still the way to a second list, and a slot that comes and goes
          is a bar that changes shape under you.
 
-         "Switch", not "Lists": the first slot is already "List" and
-         the two would read as the same word. -->
+         "Lists", the plural of the first slot's "List": that one is the list
+         you are on, this one is all of them. -->
     <button
       class="nav-slot"
       type="button"
       aria-haspopup="dialog"
       :aria-expanded="listSheetOpen"
       :aria-label="t('nav.switchLabel')"
-      @click="openListSheet"
+      @click="openListSheet('lists')"
     >
       <span class="nav-slot__mark">
-        <AppIcon name="menu-bold" />
+        <AppIcon name="layout-grid" />
       </span>
       <span class="nav-slot__label">{{ t('nav.switch') }}</span>
     </button>
@@ -467,39 +478,28 @@ const orderedActiveMembers = computed(() =>
   <header class="topbar" :class="{ 'topbar--list': layout === 'bar' }">
     <div class="topbar-left">
       <template v-if="listName">
-        <!-- Which list this is, who is in it, and how far this
-             trip has got. On a phone it is only that: the bottom bar's
-             List and Switch are the ways in, so the block is a label, not
-             a third door. Where there is no bar (the desktop column, and the
-             setup screen) it opens the list sheet, since nothing else
-             would. One element either way, so the two cannot drift apart. -->
-        <component
-          :is="nameOpensSheet ? 'button' : 'div'"
+        <!-- Which list this is, who is in it, and how far this trip has got,
+             and the one door to everything about this list: members, invite
+             and settings. The same on a phone and on a desktop. -->
+        <button
+          type="button"
           class="list-btn"
-          :class="{ 'list-btn--static': !nameOpensSheet }"
-          v-bind="
-            nameOpensSheet
-              ? {
-                  type: 'button',
-                  'aria-haspopup': 'dialog',
-                  'aria-expanded': listSheetOpen,
-                  'aria-label': t('list.open', { name: listName }),
-                }
-              : {}
-          "
-          @click="nameOpensSheet && openListSheet()"
+          aria-haspopup="dialog"
+          :aria-expanded="listSheetOpen"
+          :aria-label="t('list.open', { name: listName })"
+          @click="openListFromName"
         >
           <span class="list-emoji" aria-hidden="true"><ListIcon :value="listEmoji" /></span>
           <div class="list-info">
             <p class="list-name">
               <span class="list-name__text">{{ listName }}</span>
-              <AppIcon v-if="nameOpensSheet" class="list-name__chevron" name="chevron-right" />
+              <AppIcon class="list-name__chevron" name="chevron-right" />
             </p>
             <div v-if="layout === 'bar'" class="list-subrow">
               <MemberAvatarStack :members="orderedActiveMembers" :loading="membersLoading" />
             </div>
           </div>
-        </component>
+        </button>
       </template>
       <template v-else-if="loading">
         <!-- Stands in for the real block above, tile included: without the
@@ -645,6 +645,7 @@ const orderedActiveMembers = computed(() =>
     :members="orderedActiveMembers"
     :owner-user-id="ownerUserId"
     :current-user-id="currentUserId"
+    :mode="listSheetMode"
     @close="listSheetOpen = false"
     @switch-list="switchList"
     @add-list="addList"
@@ -1327,15 +1328,6 @@ const orderedActiveMembers = computed(() =>
   .list-progress--done .list-progress__track {
     animation: none;
   }
-}
-
-/* The phone's label version: same box, so nothing shifts between the two,
-   but nothing that invites a press. */
-.list-btn--static,
-.list-btn--static:active {
-  background: transparent;
-  cursor: default;
-  transform: none;
 }
 
 /* The list's emoji, in the same square it wears inside the panel. It leads
