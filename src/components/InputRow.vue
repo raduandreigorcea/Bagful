@@ -77,7 +77,7 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   color: var(--text-primary);
   outline: none;
   min-width: 0;

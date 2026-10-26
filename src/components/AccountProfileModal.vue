@@ -563,7 +563,7 @@ function close() {
   min-width: 0;
   min-height: var(--size-control-md);
   font: inherit;
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   color: var(--text-primary);
   background: var(--bg-surface);
   border: var(--border-width-thin) solid var(--border-main);

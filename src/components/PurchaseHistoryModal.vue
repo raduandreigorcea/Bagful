@@ -309,7 +309,7 @@ function dayLabel(label: DayLabel) {
   border: var(--border-width-thin) solid var(--border-main);
   border-radius: var(--radius-pill);
   background: var(--bg-surface-alt);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   color: var(--text-primary);
 }
 

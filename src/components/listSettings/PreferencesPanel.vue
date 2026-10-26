@@ -515,7 +515,7 @@ async function saveItemLimit() {
   border: var(--border-width-thin) solid var(--border-main);
   border-radius: var(--radius-md);
   padding: 0.55rem 0.75rem;
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   background: var(--bg-surface);
   color: var(--text-primary);
   transition: all var(--transition-base) ease;

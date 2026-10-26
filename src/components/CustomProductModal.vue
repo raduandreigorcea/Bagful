@@ -351,7 +351,7 @@ function submit() {
   border: var(--border-width-base) solid var(--border-main);
   border-radius: var(--radius-lg);
   font-family: inherit;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   color: var(--text-primary);
   outline: none;
   transition: border-color var(--transition-fast);
