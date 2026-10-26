@@ -124,6 +124,8 @@ const it: Catalog = {
   'item.quantityChange': 'Quantità {n}. Modifica',
 
   'switcher.heading': 'Le tue liste',
+  'switcher.left': { one: '{n} da comprare', other: '{n} da comprare' },
+  'switcher.empty': 'Ancora niente',
 
   'filter.shopHeading': 'Negozio',
   'filter.shopAny.label': 'Qualsiasi negozio',
@@ -547,8 +549,8 @@ const it: Catalog = {
   'nav.add': 'Aggiungi',
   'nav.addLabel': 'Aggiungi un articolo',
   'nav.you': 'Tu',
-  'nav.switch': 'Cambia',
-  'nav.switchLabel': 'Cambia lista',
+  'nav.switch': 'Liste',
+  'nav.switchLabel': 'Le tue liste',
   'topbar.listSettings': 'Impostazioni di {name}',
   'header.progressLabel': 'Quanto della lista è nel carrello',
 }

@@ -156,6 +156,8 @@ export default {
   'item.quantityChange': 'Quantity {n}. Change',
 
   'switcher.heading': 'Your lists',
+  'switcher.left': { one: '{n} to buy', other: '{n} to buy' },
+  'switcher.empty': 'Nothing here yet',
 
   'filter.shopHeading': 'Shop',
   'filter.shopAny.label': 'Any shop',
@@ -586,8 +588,8 @@ export default {
   'nav.add': 'Add',
   'nav.addLabel': 'Add an item',
   'nav.you': 'You',
-  'nav.switch': 'Switch',
-  'nav.switchLabel': 'Switch list',
+  'nav.switch': 'Lists',
+  'nav.switchLabel': 'Your lists',
   'topbar.listSettings': '{name} settings',
   'header.progressLabel': 'How much of the list is in the cart',
 }

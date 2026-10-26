@@ -131,6 +131,8 @@ const ro: Catalog = {
   'item.quantityChange': 'Cantitate {n}. Modifică',
 
   'switcher.heading': 'Listele tale',
+  'switcher.left': { one: '{n} de cumpărat', few: '{n} de cumpărat', other: '{n} de cumpărat' },
+  'switcher.empty': 'Nimic aici încă',
 
   'filter.shopHeading': 'Magazin',
   'filter.shopAny.label': 'Orice magazin',
@@ -550,8 +552,8 @@ const ro: Catalog = {
   'nav.add': 'Adaugă',
   'nav.addLabel': 'Adaugă un produs',
   'nav.you': 'Tu',
-  'nav.switch': 'Schimbă',
-  'nav.switchLabel': 'Schimbă lista',
+  'nav.switch': 'Liste',
+  'nav.switchLabel': 'Listele tale',
   'topbar.listSettings': 'Setări pentru {name}',
   'header.progressLabel': 'Cât din listă e în coș',
 }

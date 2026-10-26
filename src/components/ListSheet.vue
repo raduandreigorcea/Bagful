@@ -8,6 +8,8 @@ import { LIST_MEMBERSHIP_CAP } from '../lib/limits'
 import { normalizeMemberRole } from '../lib/memberRoles'
 import { initialOf, memberDisplayName } from '../lib/userIdentity'
 import type { ListMemberProfile } from '../lib/listRealtime'
+import type { ListRow } from '../lib/useList'
+import MemberAvatarStack from './MemberAvatarStack.vue'
 import { t, tn } from '../lib/i18n'
 
 // Whose list this is. Opened from the list name at the top of the list,
@@ -19,10 +21,7 @@ import { t, tn } from '../lib/i18n'
 // because they are occasional and administrative and this sheet is neither.
 const props = defineProps({
   open: { type: Boolean, default: false },
-  lists: {
-    type: Array as PropType<{ id: string; name: string; emoji?: string | null }[]>,
-    default: () => [],
-  },
+  lists: { type: Array as PropType<ListRow[]>, default: () => [] },
   listId: { type: String, default: '' },
   listName: { type: String, default: '' },
   listEmoji: { type: String, default: '' },
@@ -30,6 +29,9 @@ const props = defineProps({
   members: { type: Array as PropType<ListMemberProfile[]>, default: () => [] },
   ownerUserId: { type: String, default: '' },
   currentUserId: { type: String, default: '' },
+  // 'list': who is in it and how to manage it. 'lists': which list you are on.
+  // 'all': both, for the desktop, which has one door.
+  mode: { type: String as PropType<'all' | 'list' | 'lists'>, default: 'all' },
 })
 
 const emit = defineEmits<{
@@ -70,6 +72,17 @@ function scrollMembersSideways(event: WheelEvent) {
   row.scrollLeft = next
 }
 
+// What is left to buy, said for the card; a finished list says so instead of
+// counting zero, and an empty one says it has nothing yet.
+const isDone = (list: ListRow): boolean => !!list.total && list.done === list.total
+const percentOf = (list: ListRow): number =>
+  list.total ? Math.round(((list.done ?? 0) / list.total) * 100) : 0
+function progressText(list: ListRow): string {
+  if (!list.total) return t('switcher.empty')
+  if (isDone(list)) return t('list.meta.allPicked')
+  return tn('switcher.left', list.total - (list.done ?? 0))
+}
+
 function addList() {
   emit('close')
   emit('add-list')
@@ -91,11 +104,15 @@ function pick(id: string) {
       <header class="sheet-header">
         <div class="sheet-header__title-wrap">
           <span class="sheet-header__icon-bg" aria-hidden="true">
-            <ListIcon :value="listEmoji" />
+            <AppIcon v-if="mode === 'lists'" name="layout-grid" />
+            <ListIcon v-else :value="listEmoji" />
           </span>
           <div class="sheet-header__text">
-            <h3 :id="titleId">{{ listName || t('account.listFallback') }}</h3>
-            <p>{{ tn('account.memberCount', members.length) }}</p>
+            <h3 v-if="mode === 'lists'" :id="titleId">{{ t('switcher.heading') }}</h3>
+            <template v-else>
+              <h3 :id="titleId">{{ listName || t('account.listFallback') }}</h3>
+              <p>{{ tn('account.memberCount', members.length) }}</p>
+            </template>
           </div>
         </div>
         <ModalCloseButton @click="emit('close')" />
@@ -105,7 +122,7 @@ function pick(id: string) {
         <!-- Who is in it, on the soft card the account dialog uses for who you
              are. Inviting is adding a face to this row, so it is drawn as the
              next face. -->
-        <section class="members-card">
+        <section v-if="mode !== 'lists'" class="members-card">
           <ul class="list-sheet__members" @wheel="scrollMembersSideways">
             <li v-for="member in members" :key="member.user_id" class="member">
               <img v-if="member.image_url" :src="member.image_url" alt="" class="member__avatar" />
@@ -129,7 +146,7 @@ function pick(id: string) {
           <p v-if="alone" class="list-sheet__alone">{{ t('list.aloneHint') }}</p>
         </section>
 
-        <div class="menu-section">
+        <div v-if="mode !== 'lists'" class="menu-section">
           <button type="button" class="menu-row" @click="emit('manage')">
             <span class="menu-row__label">
               <AppIcon class="menu-row__icon" name="settings" />
@@ -141,26 +158,42 @@ function pick(id: string) {
 
         <!-- Which list you are looking at. Shown to everyone, even with one
              list: it is also the way to a second one. -->
-        <section class="menu-section" :aria-label="t('switcher.heading')">
-          <h4 class="menu-section__heading">{{ t('switcher.heading') }}</h4>
+        <section v-if="mode !== 'list'" class="menu-section" :aria-label="t('switcher.heading')">
+          <h4 v-if="mode === 'all'" class="menu-section__heading">{{ t('switcher.heading') }}</h4>
           <div class="menu-section" role="radiogroup" :aria-label="t('switcher.heading')">
             <button
               v-for="list in lists"
               :key="list.id"
               type="button"
-              class="menu-row"
-              :class="{ 'menu-row--current': list.id === listId }"
+              class="list-card"
+              :class="{ 'list-card--current': list.id === listId }"
               role="radio"
               :aria-checked="list.id === listId"
               @click="pick(list.id)"
             >
-              <span class="menu-row__label">
-                <span class="menu-row__emoji" aria-hidden="true">
-                  <ListIcon :value="list.emoji ?? ''" />
-                </span>
-                <span class="menu-row__text">{{ list.name || t('account.listFallback') }}</span>
+              <span class="list-card__tile" aria-hidden="true">
+                <ListIcon :value="list.emoji ?? ''" />
               </span>
-              <AppIcon v-if="list.id === listId" class="menu-row__check" name="check-bold" />
+              <span class="list-card__body">
+                <span class="list-card__name">{{ list.name || t('account.listFallback') }}</span>
+                <span class="list-card__meta" :class="{ 'list-card__meta--done': isDone(list) }">
+                  {{ progressText(list) }}
+                </span>
+                <span v-if="list.total" class="list-card__bar" aria-hidden="true">
+                  <span class="list-card__fill" :style="{ width: `${percentOf(list)}%` }"></span>
+                </span>
+              </span>
+              <span class="list-card__side">
+                <AppIcon v-if="list.id === listId" class="list-card__check" name="check-bold" />
+                <MemberAvatarStack
+                  v-if="list.members?.length"
+                  class="list-card__faces"
+                  :members="list.members"
+                />
+                <span v-if="list.ownerId === currentUserId" class="list-card__owner">
+                  {{ t('list.roleOwner') }}
+                </span>
+              </span>
             </button>
             <button v-if="canAddList" type="button" class="menu-row" @click="addList">
               <span class="menu-row__label">
@@ -482,6 +515,137 @@ function pick(id: string) {
 }
 
 /* Held to the column like the marks on the other rows. */
+/* One list in the switcher: its mark, its name, how much is left and how far
+   along it is, who is in it. Same border and radius as the rows around it, so
+   it reads as a taller row rather than a different kind of thing. */
+.list-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 72px;
+  padding: var(--space-3);
+  border: var(--border-width-thin) solid var(--border-main);
+  border-radius: var(--radius-2xl);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--transition-fast) var(--ease-standard),
+    border-color var(--transition-fast) var(--ease-standard);
+}
+
+.list-card:hover {
+  background: var(--bg-hover);
+}
+
+.list-card:active {
+  background: var(--bg-press);
+}
+
+.list-card--current {
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--bg-surface));
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--bg-surface));
+}
+
+.list-card__tile {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-surface));
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.list-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.list-card__name {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-card__meta {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+.list-card__meta--done {
+  color: var(--color-primary-text);
+}
+
+.list-card__bar {
+  display: block;
+  height: 4px;
+  margin-top: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--border-main);
+  overflow: hidden;
+}
+
+.list-card__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  transition: width var(--transition-slow) var(--ease-rise);
+}
+
+.list-card__side {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.list-card__faces {
+  --member-avatar-size: 24px;
+  --member-avatar-ring: var(--bg-surface);
+}
+
+.list-card--current .list-card__faces {
+  --member-avatar-ring: color-mix(in srgb, var(--color-primary) 6%, var(--bg-surface));
+}
+
+.list-card__check {
+  width: var(--size-icon-lg);
+  height: var(--size-icon-lg);
+  color: var(--color-primary);
+}
+
+.list-card__owner {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list-card,
+  .list-card__fill {
+    transition: none;
+  }
+}
+
 .menu-row__emoji :deep(.list-icon) {
   width: 16px;
   height: 16px;

@@ -59,8 +59,8 @@ afterEach(() => {
 })
 
 describe('the list header', () => {
-  // The phone's bottom bar: five slots, the add disc in the middle. Switch is
-  // the list sheet, List its settings, Add only reports the press.
+  // The phone's bottom bar: five slots, the add disc in the middle. Lists is
+  // the sheet of lists, List is where you are, Add only reports the press.
   // Green is the list's; the setup screen draws the same header plain.
   it('wears the brand green only on the list', () => {
     expect(mountBar().find('.topbar--list').exists()).toBe(true)
@@ -69,7 +69,7 @@ describe('the list header', () => {
 
   it('draws the five-slot bar with Add in the middle', () => {
     const labels = mountBar().findAll('.nav-slot__label').map((l) => l.text())
-    expect(labels).toEqual(['List', 'History', 'Add', 'Switch', 'You'])
+    expect(labels).toEqual(['List', 'History', 'Add', 'Lists', 'You'])
   })
 
   it('reports the add press rather than opening anything itself', async () => {
@@ -78,10 +78,26 @@ describe('the list header', () => {
     expect(wrapper.emitted('add')).toHaveLength(1)
   })
 
-  it('opens the list sheet from Switch', async () => {
+  it('opens the sheet of lists from Lists', async () => {
     const wrapper = mountBar()
     await wrapper.findAll('.nav-slot')[3].trigger('click')
-    expect(wrapper.findComponent(ListSheet).props('open')).toBe(true)
+    const sheet = wrapper.findComponent(ListSheet)
+    expect(sheet.props('open')).toBe(true)
+    expect(sheet.props('mode')).toBe('lists')
+  })
+
+  // The List slot is where you already are: it opens nothing.
+  it('scrolls to the top from List instead of opening settings', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    try {
+      const wrapper = mountBar()
+      await wrapper.findAll('.nav-slot')[0].trigger('click')
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+      expect(wrapper.findComponent(ListSheet).props('open')).toBe(false)
+      expect(wrapper.find('.nav-slot').attributes('aria-current')).toBe('page')
+    } finally {
+      scrollTo.mockRestore()
+    }
   })
 
   // The name, who is in the list, and how far this trip has got. No
@@ -153,9 +169,10 @@ describe('the list header', () => {
     expect(mountBar({ totalCount: 0 }).find('[role="progressbar"]').exists()).toBe(false)
   })
 
-  // On a phone the bottom bar's List and Switch are the ways in, so the
-  // name is a label. Where there is no bar it is still the door.
-  it('makes the name a label on a phone and a button on a desktop', () => {
+  // The name is the one door to this list on every width. A phone gets the
+  // list's own half of the sheet (the bar's Lists slot has the other); a
+  // desktop has no bar, so it gets both.
+  it('opens this list from the name, with both halves on a desktop', async () => {
     const realMatchMedia = window.matchMedia
     const stub = (desktop) => {
       window.matchMedia = () => ({
@@ -167,23 +184,19 @@ describe('the list header', () => {
     try {
       stub(false)
       const phone = mountBar()
-      expect(phone.find('button.list-btn').exists()).toBe(false)
-      expect(phone.find('.list-btn--static').text()).toContain('Gorcea')
+      const button = phone.find('button.list-btn')
+      expect(button.attributes('aria-haspopup')).toBe('dialog')
+      await button.trigger('click')
+      expect(phone.findComponent(ListSheet).props('open')).toBe(true)
+      expect(phone.findComponent(ListSheet).props('mode')).toBe('list')
 
       stub(true)
-      expect(mountBar().find('button.list-btn').exists()).toBe(true)
+      const desktop = mountBar()
+      await desktop.find('button.list-btn').trigger('click')
+      expect(desktop.findComponent(ListSheet).props('mode')).toBe('all')
     } finally {
       window.matchMedia = realMatchMedia
     }
-  })
-
-  it('opens the list sheet from the name', async () => {
-    const wrapper = mountBar()
-    const button = wrapper.find('.list-btn')
-    expect(button.attributes('aria-haspopup')).toBe('dialog')
-
-    await button.trigger('click')
-    expect(wrapper.findComponent(ListSheet).props('open')).toBe(true)
   })
 
   it('switches list from the sheet and closes it', async () => {
