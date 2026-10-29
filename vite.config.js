@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
+import hoverOnlyWithPointer from './scripts/postcss-hover-only.mjs'
 
 // Source maps are built and uploaded to Sentry only when an auth token is
 // available: locally via .env.sentry-build-plugin (auto-read by the plugin),
@@ -72,6 +73,11 @@ export default defineConfig({
   //
   // `npm run dev:host` opts in per session instead, so exposure lasts exactly as
   // long as the phone testing it was for.
+  css: {
+    // Every :hover rule in the app, wrapped in `@media (hover: hover)`: see the
+    // plugin for why a phone must not get them.
+    postcss: { plugins: [hoverOnlyWithPointer()] },
+  },
   build: {
     // 'hidden' emits the maps for upload without adding sourceMappingURL
     // comments to the bundles; the maps are deleted after upload so they are

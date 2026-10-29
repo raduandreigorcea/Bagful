@@ -420,6 +420,8 @@ textarea {
 
 body {
   margin: 0;
+  /* The pull-to-refresh spinner is ours; the web view's own overscroll would fight it. */
+  overscroll-behavior-y: contain;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
   font-size: 1rem;
   font-weight: 400;

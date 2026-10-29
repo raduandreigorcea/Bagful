@@ -14,6 +14,8 @@ import { ref } from 'vue'
 import AppNavBar from '../src/components/AppNavBar.vue'
 import { setLocale } from '../src/lib/i18n'
 import ListSheet from '../src/components/ListSheet.vue'
+import ListMembersCard from '../src/components/ListMembersCard.vue'
+import ListSettingsModal from '../src/components/ListSettingsModal.vue'
 import AccountActionModal from '../src/components/AccountActionModal.vue'
 
 vi.mock('@clerk/vue', () => ({
@@ -172,7 +174,7 @@ describe('the list header', () => {
   // The name is the one door to this list on every width. A phone gets the
   // list's own half of the sheet (the bar's Lists slot has the other); a
   // desktop has no bar, so it gets both.
-  it('opens this list from the name, with both halves on a desktop', async () => {
+  it('opens the list settings from the name on a phone, the sheet on a desktop', async () => {
     const realMatchMedia = window.matchMedia
     const stub = (desktop) => {
       window.matchMedia = () => ({
@@ -187,8 +189,9 @@ describe('the list header', () => {
       const button = phone.find('button.list-btn')
       expect(button.attributes('aria-haspopup')).toBe('dialog')
       await button.trigger('click')
-      expect(phone.findComponent(ListSheet).props('open')).toBe(true)
-      expect(phone.findComponent(ListSheet).props('mode')).toBe('list')
+      await vi.waitFor(() => expect(phone.findComponent(ListSettingsModal).exists()).toBe(true))
+      expect(phone.findComponent(ListSettingsModal).props('open')).toBe(true)
+      expect(phone.findComponent(ListSheet).props('open')).toBe(false)
 
       stub(true)
       const desktop = mountBar()
@@ -236,18 +239,26 @@ describe('the list sheet', () => {
     return w
   }
 
+  function mountCard(props = {}) {
+    const w = mount(ListMembersCard, {
+      props: { members: MEMBERS, ownerUserId: 'u_ana', currentUserId: 'u_self', ...props },
+    })
+    wrappers.push(w)
+    return w
+  }
+
   it('shows who is in it, you first by name', () => {
-    const names = mountSheet().findAll('.member__name:not(.member__name--invite)').map((n) => n.text())
+    const names = mountCard().findAll('.member__name:not(.member__name--invite)').map((n) => n.text())
     expect(names).toEqual(['You', 'Ana'])
   })
 
   it('marks the owner', () => {
-    const roles = mountSheet().findAll('.member__role').map((n) => n.text())
+    const roles = mountCard().findAll('.member__role').map((n) => n.text())
     expect(roles).toEqual(['Owner'])
   })
 
   it('offers the invite as the next face in the row', async () => {
-    const wrapper = mountSheet()
+    const wrapper = mountCard()
     const members = wrapper.findAll('.list-sheet__members > li')
     const invite = members.at(-1).find('.member__invite')
     expect(invite.text()).toBe('Invite')
@@ -256,9 +267,13 @@ describe('the list sheet', () => {
     expect(wrapper.emitted('invite')).toHaveLength(1)
   })
 
+  it('shows the members card in the full sheet', () => {
+    expect(mountSheet().find('.members-card').exists()).toBe(true)
+  })
+
   it('nudges a list of one toward inviting someone', () => {
-    expect(mountSheet({ members: [MEMBERS[0]] }).find('.list-sheet__alone').exists()).toBe(true)
-    expect(mountSheet().find('.list-sheet__alone').exists()).toBe(false)
+    expect(mountCard({ members: [MEMBERS[0]] }).find('.list-sheet__alone').exists()).toBe(true)
+    expect(mountCard().find('.list-sheet__alone').exists()).toBe(false)
   })
 
   it('does not report picking the list you are already on as a switch', async () => {
@@ -274,7 +289,7 @@ describe('the list sheet', () => {
 describe('scrolling a large list', () => {
   it('turns a vertical wheel into sideways travel while the row can move', async () => {
     const many = Array.from({ length: 10 }, (_, i) => ({ user_id: `u${i}`, display_name: `M${i}` }))
-    const w = mount(ListSheet, { props: { open: true, members: many, lists: [] } })
+    const w = mount(ListMembersCard, { props: { members: many } })
     wrappers.push(w)
     const row = w.find('.list-sheet__members').element
     Object.defineProperty(row, 'scrollWidth', { value: 800 })
@@ -287,7 +302,7 @@ describe('scrolling a large list', () => {
   })
 
   it('lets the wheel through when everyone fits', () => {
-    const w = mount(ListSheet, { props: { open: true, members: MEMBERS, lists: [] } })
+    const w = mount(ListMembersCard, { props: { members: MEMBERS } })
     wrappers.push(w)
     const row = w.find('.list-sheet__members').element
     Object.defineProperty(row, 'scrollWidth', { value: 300 })
