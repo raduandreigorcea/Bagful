@@ -12,6 +12,7 @@ import ShoppingList from '../components/ShoppingList.vue'
 import AddItemForm from '../components/AddItemForm.vue'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 import { useListRealtime } from '../lib/listRealtime'
+import { usePullToRefresh, PULL_THRESHOLD } from '../lib/usePullToRefresh'
 import { useProductSuggestions } from '../lib/productSuggestions'
 import { deviceTimeZone, resolveRegion } from '../lib/region'
 import type { ProductSuggestion } from '../lib/productSearch'
@@ -841,6 +842,11 @@ function openAddList() {
   router.push({ name: 'list-setup', query: { add: '1' } })
 }
 
+// Pulled down from the top: everything the screen shows, fetched again.
+const { pull, refreshing } = usePullToRefresh(() =>
+  Promise.all([loadListHeader(), loadLists(), loadItems(), loadListProductStats()]),
+)
+
 // The active list vanished (deleted, left, or we were removed): move to another
 // list we still belong to, or fall back to setup when none remain.
 async function reconcileActiveList() {
@@ -893,6 +899,20 @@ async function reconcileActiveList() {
       @add-product="selectSuggestion"
       @add="searchExpanded = true"
     />
+
+    <!-- The spinner the pull draws: it follows the finger, fills as it nears the
+         threshold, and spins while the fetch runs. -->
+    <div
+      v-if="pull > 0 || refreshing"
+      class="pull-indicator"
+      :class="{ 'pull-indicator--spinning': refreshing }"
+      :style="{ transform: `translate(-50%, ${pull}px)`, opacity: Math.min(pull / PULL_THRESHOLD, 1) }"
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 24 24" :style="{ transform: refreshing ? undefined : `rotate(${pull * 4}deg)` }">
+        <circle cx="12" cy="12" r="9" />
+      </svg>
+    </div>
 
     <main class="dashboard-main">
       <div class="dashboard-content">
@@ -1020,6 +1040,41 @@ async function reconcileActiveList() {
 
 /* Clears the fixed header above and the action bar below, so the first row
    starts under the header and the last can scroll clear of the bar. */
+.pull-indicator {
+  position: fixed;
+  top: calc(var(--header-height) + var(--safe-top) - 40px);
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  box-shadow: var(--elevation-modal);
+  pointer-events: none;
+}
+
+.pull-indicator svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 42 57;
+}
+
+.pull-indicator--spinning svg {
+  animation: pull-spin 0.8s linear infinite;
+}
+
+@keyframes pull-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .dashboard-main {
   flex: 1;
   display: flex;

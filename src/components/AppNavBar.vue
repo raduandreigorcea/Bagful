@@ -140,22 +140,24 @@ const accountMenuOpen = ref(false)
 // The list sheet: members, invite, and which list you are on. It is
 // what the list name opens, on every width.
 const listSheetOpen = ref(false)
-// 'list' is this list (who is in it, invite, manage), 'lists' is which list you
-// are on. The phone splits them: the name opens the first, the bar's Lists slot
-// the second. A desktop has no bar, so its one door shows both.
-const listSheetMode = ref<'all' | 'list' | 'lists'>('all')
+// 'lists' is which list you are on, from the phone's bar; 'all' adds who is in
+// this one and how to manage it, for the desktop, which has no bar.
+const listSheetMode = ref<'all' | 'lists'>('all')
 
-function openListSheet(mode: 'all' | 'list' | 'lists' = 'all') {
+function openListSheet(mode: 'all' | 'lists' = 'all') {
   prefetch(loadListSettingsModal)
   listSheetMode.value = mode
   listSheetOpen.value = true
   // The counts under each list are a snapshot; ticking rows since then has made
   // them stale, and this is the moment somebody looks at them.
-  if (mode !== 'list') emit('refresh-list')
+  emit('refresh-list')
 }
 
+// On a phone the name goes straight to the list's settings. A desktop has no Lists slot, so its name stays the one
+// door to the sheet that also switches lists.
 function openListFromName() {
-  openListSheet(props.layout === 'bar' && !isDesktop.value ? 'list' : 'all')
+  if (props.layout === 'bar' && !isDesktop.value) openListSettings()
+  else openListSheet()
 }
 
 // The List slot is where you already are, so it takes you to the top of it.
@@ -485,7 +487,7 @@ const orderedActiveMembers = computed(() =>
           type="button"
           class="list-btn"
           aria-haspopup="dialog"
-          :aria-expanded="listSheetOpen"
+          :aria-expanded="listSheetOpen || settingsOpen"
           :aria-label="t('list.open', { name: listName })"
           @click="openListFromName"
         >

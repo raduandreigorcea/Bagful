@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, useId, type PropType } from 'vue'
+import { computed, onBeforeUnmount, ref, useId, type PropType } from 'vue'
 import AppModal from './AppModal.vue'
+import ListMembersCard from './ListMembersCard.vue'
 import AppIcon from './AppIcon.vue'
 import ModalCloseButton from './ModalCloseButton.vue'
 import ListIcon from './ListIcon.vue'
 import { LIST_MEMBERSHIP_CAP } from '../lib/limits'
-import { normalizeMemberRole } from '../lib/memberRoles'
-import { initialOf, memberDisplayName } from '../lib/userIdentity'
 import type { ListMemberProfile } from '../lib/listRealtime'
 import type { ListRow } from '../lib/useList'
 import MemberAvatarStack from './MemberAvatarStack.vue'
@@ -29,9 +28,9 @@ const props = defineProps({
   members: { type: Array as PropType<ListMemberProfile[]>, default: () => [] },
   ownerUserId: { type: String, default: '' },
   currentUserId: { type: String, default: '' },
-  // 'list': who is in it and how to manage it. 'lists': which list you are on.
-  // 'all': both, for the desktop, which has one door.
-  mode: { type: String as PropType<'all' | 'list' | 'lists'>, default: 'all' },
+  // 'lists': which list you are on, from the phone's bar. 'all': that and who is in
+  // this one and how to manage it, for the desktop, which has no bar.
+  mode: { type: String as PropType<'all' | 'lists'>, default: 'all' },
 })
 
 const emit = defineEmits<{
@@ -44,33 +43,7 @@ const emit = defineEmits<{
 
 const titleId = useId()
 
-const alone = computed(() => props.members.length <= 1)
 const canAddList = computed(() => props.lists.length < LIST_MEMBERSHIP_CAP)
-
-function roleLabel(member: ListMemberProfile): string {
-  if (member.user_id === props.ownerUserId) return t('list.roleOwner')
-  return normalizeMemberRole(member.role) === 'moderator' ? t('list.roleModerator') : ''
-}
-
-function nameOf(member: ListMemberProfile): string {
-  return member.user_id === props.currentUserId ? t('list.you') : memberDisplayName(member)
-}
-
-// A mouse wheel only scrolls up and down, so on a desktop a row that scrolls
-// sideways would be reachable by trackpad and scrollbar-drag only, and this one
-// has no scrollbar. Turn a vertical wheel into sideways travel -- but only while
-// the row has somewhere to go, so a list that fits lets the wheel through
-// to the sheet as usual.
-function scrollMembersSideways(event: WheelEvent) {
-  const row = event.currentTarget as HTMLElement
-  if (Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return
-  const max = row.scrollWidth - row.clientWidth
-  if (max <= 0) return
-  const next = row.scrollLeft + event.deltaY
-  if ((next <= 0 && row.scrollLeft <= 0) || (next >= max && row.scrollLeft >= max)) return
-  event.preventDefault()
-  row.scrollLeft = next
-}
 
 // What is left to buy, said for the card; a finished list says so instead of
 // counting zero, and an empty one says it has nothing yet.
@@ -88,8 +61,37 @@ function addList() {
   emit('add-list')
 }
 
+// A press held this long is a request for the list's members, not a pick: they
+// open over the switcher, which stays where it is, and nothing is switched. The
+// click that follows the release is swallowed, or it would pick the list as well.
+const peekId = ref<string | null>(null)
+const peeked = computed(() => props.lists.find((l) => l.id === peekId.value))
+// The list you are on has the richer member rows and the invite; the others only
+// have what the switcher already loaded for their cards.
+const peekedMembers = computed(() =>
+  peeked.value?.id === props.listId ? props.members : (peeked.value?.members ?? []),
+)
+const HOLD_MS = 500
+let holdTimer: ReturnType<typeof setTimeout> | undefined
+let held = false
+
+function startHold(id: string) {
+  held = false
+  clearTimeout(holdTimer)
+  holdTimer = setTimeout(() => {
+    held = true
+    peekId.value = id
+  }, HOLD_MS)
+}
+const cancelHold = () => clearTimeout(holdTimer)
+onBeforeUnmount(cancelHold)
+
 // Picking the one you are on is confirming where you are, not a switch.
 function pick(id: string) {
+  if (held) {
+    held = false
+    return
+  }
   emit('close')
   if (id !== props.listId) emit('switch-list', id)
 }
@@ -119,34 +121,15 @@ function pick(id: string) {
       </header>
 
       <div class="sheet-body">
-        <!-- Who is in it, on the soft card the account dialog uses for who you
-             are. Inviting is adding a face to this row, so it is drawn as the
-             next face. -->
-        <section v-if="mode !== 'lists'" class="members-card">
-          <ul class="list-sheet__members" @wheel="scrollMembersSideways">
-            <li v-for="member in members" :key="member.user_id" class="member">
-              <img v-if="member.image_url" :src="member.image_url" alt="" class="member__avatar" />
-              <span v-else class="member__avatar member__avatar--fallback" aria-hidden="true">
-                {{ initialOf(memberDisplayName(member)) }}
-              </span>
-              <span class="member__name">{{ nameOf(member) }}</span>
-              <span v-if="roleLabel(member)" class="member__role">{{ roleLabel(member) }}</span>
-            </li>
-            <li class="member">
-              <button type="button" class="member__invite" @click="emit('invite')">
-                <span class="member__avatar member__avatar--invite" aria-hidden="true">
-                  <AppIcon name="user-round-plus" />
-                </span>
-                <span class="member__name member__name--invite">{{ t('list.invite') }}</span>
-              </button>
-            </li>
-          </ul>
-          <!-- A list of one is a list nobody else can see, which is most of
-               the point missed. So it says why the empty face is there. -->
-          <p v-if="alone" class="list-sheet__alone">{{ t('list.aloneHint') }}</p>
-        </section>
+        <ListMembersCard
+          v-if="mode !== 'lists'"
+          :members="members"
+          :owner-user-id="ownerUserId"
+          :current-user-id="currentUserId"
+          @invite="emit('invite')"
+        />
 
-        <div v-if="mode !== 'lists'" class="menu-section">
+        <div v-if="mode === 'all'" class="menu-section">
           <button type="button" class="menu-row" @click="emit('manage')">
             <span class="menu-row__label">
               <AppIcon class="menu-row__icon" name="settings" />
@@ -158,7 +141,7 @@ function pick(id: string) {
 
         <!-- Which list you are looking at. Shown to everyone, even with one
              list: it is also the way to a second one. -->
-        <section v-if="mode !== 'list'" class="menu-section" :aria-label="t('switcher.heading')">
+        <section class="menu-section" :aria-label="t('switcher.heading')">
           <h4 v-if="mode === 'all'" class="menu-section__heading">{{ t('switcher.heading') }}</h4>
           <div class="menu-section" role="radiogroup" :aria-label="t('switcher.heading')">
             <button
@@ -170,6 +153,11 @@ function pick(id: string) {
               role="radio"
               :aria-checked="list.id === listId"
               @click="pick(list.id)"
+              @pointerdown="startHold(list.id)"
+              @pointerup="cancelHold"
+              @pointerleave="cancelHold"
+              @pointercancel="cancelHold"
+              @contextmenu.prevent
             >
               <span class="list-card__tile" aria-hidden="true">
                 <ListIcon :value="list.emoji ?? ''" />
@@ -190,9 +178,6 @@ function pick(id: string) {
                   class="list-card__faces"
                   :members="list.members"
                 />
-                <span v-if="list.ownerId === currentUserId" class="list-card__owner">
-                  {{ t('list.roleOwner') }}
-                </span>
               </span>
             </button>
             <button v-if="canAddList" type="button" class="menu-row" @click="addList">
@@ -203,6 +188,32 @@ function pick(id: string) {
             </button>
           </div>
         </section>
+      </div>
+    </div>
+  </AppModal>
+
+  <AppModal :open="!!peeked" variant="sheet" @close="peekId = null">
+    <div v-if="peeked" class="app-sheet list-sheet" role="dialog" aria-modal="true" :aria-label="peeked.name">
+      <header class="sheet-header">
+        <div class="sheet-header__title-wrap">
+          <span class="sheet-header__icon-bg" aria-hidden="true">
+            <ListIcon :value="peeked.emoji ?? ''" />
+          </span>
+          <div class="sheet-header__text">
+            <h3>{{ peeked.name || t('account.listFallback') }}</h3>
+            <p>{{ tn('account.memberCount', peekedMembers.length) }}</p>
+          </div>
+        </div>
+        <ModalCloseButton @click="peekId = null" />
+      </header>
+      <div class="sheet-body">
+        <ListMembersCard
+          :members="peekedMembers"
+          :owner-user-id="peeked.ownerId ?? ''"
+          :current-user-id="currentUserId"
+          :can-invite="peeked.id === listId"
+          @invite="emit('invite')"
+        />
       </div>
     </div>
   </AppModal>
@@ -272,135 +283,6 @@ function pick(id: string) {
 }
 
 /* The soft, borderless card the account dialog puts who-you-are on. */
-.members-card {
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface-alt);
-  overflow: hidden;
-}
-
-/* The people, by face and name. A row that scrolls sideways rather than a
-   list, so a family of six does not push the rest off a phone screen. The
-   edges fade, so faces slide out under them rather than being sliced off. */
-.list-sheet__members {
-  display: flex;
-  gap: var(--space-4);
-  margin: 0;
-  padding: 0.8rem 0.9rem;
-  list-style: none;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: 0.9rem;
-  scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 0.9rem, #000 calc(100% - 0.9rem), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 0.9rem, #000 calc(100% - 0.9rem), transparent);
-}
-
-.list-sheet__members::-webkit-scrollbar {
-  display: none;
-}
-
-.member {
-  flex-shrink: 0;
-  scroll-snap-align: start;
-  width: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  text-align: center;
-}
-
-.member__avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-pill);
-  object-fit: cover;
-  border: var(--border-width-base) solid var(--bg-surface);
-  box-shadow: var(--elevation-soft);
-}
-
-.member__avatar--fallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--color-primary) 16%, var(--bg-surface));
-  color: var(--color-primary);
-  font-weight: var(--weight-extrabold);
-}
-
-.member__name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  color: var(--text-primary);
-}
-
-.member__role {
-  font-size: var(--text-2xs);
-  color: var(--text-secondary);
-}
-
-.member__invite {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  width: 100%;
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-/* A face with nobody in it yet: dashed, in the brand colour, so it reads as a
-   place to fill rather than a person. */
-.member__avatar--invite {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 11px;
-  border: var(--border-width-base) dashed color-mix(in srgb, var(--color-primary) 60%, transparent);
-  box-shadow: none;
-  background: var(--bg-surface);
-  color: var(--color-primary);
-  transition: background-color var(--transition-fast) var(--ease-standard);
-}
-
-.member__avatar--invite :deep(svg) {
-  width: 100%;
-  height: 100%;
-  display: block;
-  stroke: currentColor;
-  stroke-width: 2;
-  fill: none;
-}
-
-.member__invite:hover .member__avatar--invite {
-  background: var(--color-primary-bg);
-}
-
-.member__invite:active .member__avatar--invite {
-  background: color-mix(in srgb, var(--color-primary) 18%, var(--bg-surface));
-}
-
-.member__name--invite {
-  color: var(--color-primary-text);
-}
-
-.list-sheet__alone {
-  margin: 0;
-  padding: 0 0.9rem 0.8rem;
-  font-size: var(--text-xs);
-  line-height: var(--leading-snug);
-  color: var(--text-secondary);
-}
-
 /* ── Rows: AccountActionModal's .account-menu-item ───────────────────────── */
 .menu-section {
   display: flex;
@@ -613,6 +495,9 @@ function pick(id: string) {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  /* The faces sit at the bottom edge of the card, the check (when there is one) above. */
+  justify-content: flex-end;
+  align-self: stretch;
   gap: 6px;
 }
 
@@ -629,14 +514,6 @@ function pick(id: string) {
   width: var(--size-icon-lg);
   height: var(--size-icon-lg);
   color: var(--color-primary);
-}
-
-.list-card__owner {
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
 }
 
 @media (prefers-reduced-motion: reduce) {
