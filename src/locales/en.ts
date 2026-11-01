@@ -79,7 +79,7 @@ export default {
   'setup.join.codeLabel': 'Invite code',
   'setup.join.codePlaceholder': 'e.g. AB3K7XYZ',
 
-  'settings.title': 'App Settings',
+  'settings.title': 'App settings',
   'settings.subtitle': 'How Bagful looks and behaves on this device',
   'settings.close': 'Close app settings',
   'settings.appearance': 'Appearance',
@@ -112,9 +112,9 @@ export default {
 
   'error.genericTitle': 'Something went wrong',
   'error.offline': 'You appear to be offline. Check your connection and try again.',
-  'error.nameTooLongTitle': 'Name Too Long',
+  'error.nameTooLongTitle': 'Name too long',
   'error.listNameTooLong': 'List name must be {max} characters or fewer.',
-  'error.nameRequiredTitle': 'Name Required',
+  'error.nameRequiredTitle': 'Name required',
   'error.listNameRequired': 'Give your list a name before saving.',
   'error.ownOneList':
     'You can only own one list. Leave or delete your current one before creating another.',
@@ -214,7 +214,7 @@ export default {
   'topbar.account': 'Your account',
   'topbar.avatarAlt': 'Your avatar',
 
-  'account.title': 'Account Settings',
+  'account.title': 'Account settings',
   'account.subtitle': 'Your profile, settings and sign out',
   'account.close': 'Close account modal',
   'account.editProfile': 'Edit your profile: name, photo, delete account',
@@ -254,33 +254,33 @@ export default {
   'profile.deleteFailed': 'Could not delete your account.',
   'profile.clerkDeleteFailed': 'Your data is deleted, but your sign-in could not be removed. Try again.',
 
-  'list.title': 'List Settings',
+  'list.title': 'List settings',
   'list.close': 'Close settings',
   'list.sections': 'Settings sections',
   'list.tab.overview': 'Overview',
   'list.tab.preferences': 'Preferences',
   'list.tab.members': 'Members',
-  'list.tab.danger': 'Danger Zone',
+  'list.tab.danger': 'Danger zone',
 
-  'overview.summary': 'List Summary',
-  'overview.name': 'List Name',
-  'overview.createdBy': 'Created By',
+  'overview.summary': 'List summary',
+  'overview.name': 'List name',
+  'overview.createdBy': 'Created by',
   'overview.owner': 'Owner',
-  'overview.totalMembers': 'Total Members',
+  'overview.totalMembers': 'Total members',
   'overview.activeCount': '{n} active',
-  'overview.inviteTitle': 'Invite New Members',
+  'overview.inviteTitle': 'Invite new members',
   'overview.inviteDesc': 'Share this code so people can join your list.',
   'overview.inviteCode': 'INVITE CODE',
-  'overview.copyCode': 'Copy Code',
+  'overview.copyCode': 'Copy code',
   'overview.copied': 'Copied!',
 
-  'prefs.title': 'General Preferences',
-  'prefs.nameTitle': 'List Name',
+  'prefs.title': 'General preferences',
+  'prefs.nameTitle': 'List name',
   'prefs.nameDesc': 'The name everyone on the list sees.',
   'prefs.namePlaceholder': 'Weekly shop',
-  'prefs.emojiTitle': 'List Icon',
+  'prefs.emojiTitle': 'List icon',
   'prefs.emojiDesc': 'Pick an icon for your list. It shows in the top bar.',
-  'prefs.limitTitle': 'Item Limit Per User',
+  'prefs.limitTitle': 'Item limit per user',
   'prefs.limitDesc': 'Control how many active (unchecked) items each member can add.',
   'prefs.limitSlider': 'Item limit slider',
 
@@ -295,28 +295,28 @@ export default {
   'members.removeHint': 'Loses access to this list',
   'members.roleModerator': 'Moderator',
   'members.roleMember': 'Member',
-  'members.confirmRemoveTitle': 'Remove Member?',
+  'members.confirmRemoveTitle': 'Remove member?',
   'members.confirmRemoveMessage':
     'This person will immediately lose access to this list. They can join again with the invite code.',
 
-  'danger.inviteTitle': 'Invite Code Administration',
+  'danger.inviteTitle': 'Invite code administration',
   'danger.inviteDesc':
     'Immediately invalidates the current invite code. Existing members are unaffected, but future members must use the new code.',
   'danger.regenerate': 'Regenerate',
   'danger.regenerated': 'Regenerated',
-  'danger.leaveTitle': 'Leave List',
+  'danger.leaveTitle': 'Leave list',
   'danger.leaveDesc':
     'This will remove you from the list, and you will no longer have access to it.',
-  'danger.deleteTitle': 'Delete List',
+  'danger.deleteTitle': 'Delete list',
   'danger.deleteDesc':
     'Permanently deletes [{name}], removes everyone on it, and erases its items and history. This cannot be undone.',
-  'danger.confirmRegenerateTitle': 'Regenerate Invite Code?',
+  'danger.confirmRegenerateTitle': 'Regenerate invite code?',
   'danger.confirmRegenerateMessage':
     'This will immediately invalidate the current invite code. Existing members are unaffected, but anyone with the old code will no longer be able to join.',
-  'danger.confirmLeaveTitle': 'Leave List?',
+  'danger.confirmLeaveTitle': 'Leave list?',
   'danger.confirmLeaveMessage':
     'You will lose access to this list and will need a new invite code to rejoin.',
-  'danger.confirmDeleteTitle': 'Delete List?',
+  'danger.confirmDeleteTitle': 'Delete list?',
   'danger.confirmDeleteMessage':
     'Deleting "{name}" will permanently remove everyone on it, its items, and its history. This action cannot be undone.',
 

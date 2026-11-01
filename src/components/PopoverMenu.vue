@@ -51,6 +51,11 @@ const props = defineProps({
   align: { type: String as PropType<'left' | 'right'>, default: 'left' },
   // Panel width on a wide screen. The sheet is always full width.
   width: { type: String, default: '264px' },
+  // How far to the right of the trigger the panel starts, on a wide screen. For a
+  // second panel hung off the same trigger as another, so it sits beside that one
+  // instead of exactly over it. It flips to the left of the trigger when there is
+  // no room on the right. The sheet ignores it.
+  offset: { type: Number, default: 0 },
 })
 
 const emit = defineEmits<{ close: [] }>()
@@ -68,6 +73,14 @@ const isWide = () =>
 
 // How far the panel sits off the button it belongs to.
 const GAP = 8
+
+// Where a left-aligned panel starts, pushed aside by `offset` while it still fits.
+function leftEdge(rect: DOMRect): number {
+  if (!props.offset) return rect.left
+  const beside = rect.left + props.offset
+  if (beside + parseInt(props.width, 10) <= window.innerWidth - GAP) return beside
+  return Math.max(GAP, rect.left - props.offset)
+}
 
 function measure() {
   if (!open.value || !props.trigger || !isWide()) {
@@ -99,7 +112,7 @@ function measure() {
     width: props.width,
     ...(props.align === 'right'
       ? { right: `${Math.round(window.innerWidth - rect.right)}px`, left: 'auto' }
-      : { left: `${Math.round(rect.left)}px`, right: 'auto' }),
+      : { left: `${Math.round(leftEdge(rect))}px`, right: 'auto' }),
   }
 }
 

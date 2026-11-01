@@ -46,6 +46,9 @@ const emit = defineEmits<{
   manage: []
 }>()
 
+// A panel's width on a wide screen; the members of a held list open beside it, not over it.
+const PANEL_WIDTH = 340
+
 const canAddList = computed(() => props.lists.length < LIST_MEMBERSHIP_CAP)
 
 // What is left to buy, said for the card; a finished list says so instead of
@@ -107,7 +110,7 @@ function pick(id: string) {
     :model-value="open"
     :trigger="trigger"
     closable
-    width="340px"
+    :width="`${PANEL_WIDTH}px`"
     :label="mode === 'lists' ? t('switcher.heading') : listName || t('account.listFallback')"
     :heading="mode === 'lists' ? t('switcher.heading') : listName || t('account.listFallback')"
     :hint="mode === 'lists' ? t('switcher.hint') : tn('account.memberCount', members.length)"
@@ -185,10 +188,11 @@ function pick(id: string) {
     :model-value="!!peeked"
     :trigger="trigger"
     closable
-    width="340px"
+    :width="`${PANEL_WIDTH}px`"
     :label="peeked?.name || t('account.listFallback')"
     :heading="peeked?.name || t('account.listFallback')"
     :hint="tn('account.memberCount', peekedMembers.length)"
+    :offset="PANEL_WIDTH + 8"
     @update:model-value="(v: boolean) => !v && (peekId = null)"
   >
     <template #icon>

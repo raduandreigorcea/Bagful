@@ -65,7 +65,7 @@ function mountAppSettings() {
 async function openAbout() {
   const wrapper = mountAppSettings()
   const button = wrapper.findAll('button').find((b) => b.text().includes('About'))
-  if (!button) throw new Error('no About button in App Settings')
+  if (!button) throw new Error('no About button in App settings')
   await button.trigger('click')
   await flushPromises()
   return wrapper

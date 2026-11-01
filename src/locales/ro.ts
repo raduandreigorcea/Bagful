@@ -131,7 +131,7 @@ const ro: Catalog = {
   'item.quantityChange': 'Cantitate {n}. Modifică',
 
   'switcher.heading': 'Listele tale',
-  'switcher.hint': 'Atinge ca să schimbi, ține apăsat ca să vezi membrii',
+  'switcher.hint': 'Atinge pentru a schimba lista, ține apăsat pentru membri',
   'switcher.left': { one: '{n} de cumpărat', few: '{n} de cumpărat', other: '{n} de cumpărat' },
   'switcher.empty': 'Nimic aici încă',
 
