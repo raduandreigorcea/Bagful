@@ -74,7 +74,7 @@ describe('the settings sidebar is a real tablist', () => {
 
   it('points each tab at the panel it controls, and the panel back at it', async () => {
     const wrapper = mountSettings()
-    await tabs(wrapper).find((t) => t.text().includes('Danger Zone')).trigger('click')
+    await tabs(wrapper).find((t) => t.text().includes('Danger zone')).trigger('click')
 
     const tab = current(wrapper)
     const panelId = tab.attributes('aria-controls')
@@ -100,15 +100,15 @@ describe('which tabs a viewer gets', () => {
   // AppSettingsModal (see test/dataAttribution.component.test.js).
   it('gives an owner every list tab, and nothing about the app', () => {
     const labels = tabLabels(mountSettings())
-    expect(labels).toEqual(['Overview', 'Preferences', 'Members', 'Danger Zone'])
+    expect(labels).toEqual(['Overview', 'Preferences', 'Members', 'Danger zone'])
   })
 
   it('withholds Preferences from a plain member', () => {
     currentUserId.value = 'u_plain'
     const labels = tabLabels(mountSettings())
     expect(labels).not.toContain('Preferences')
-    // But never the ones that are theirs: leaving lives in Danger Zone.
-    expect(labels).toContain('Danger Zone')
+    // But never the ones that are theirs: leaving lives in Danger zone.
+    expect(labels).toContain('Danger zone')
   })
 
   it('falls back to Overview when the current tab stops existing', async () => {
@@ -136,7 +136,7 @@ describe('panel routing', () => {
   it('keeps Overview mounted under the other tabs, but inert', async () => {
     // It is the tallest panel, so it is what holds the modal's height open.
     const wrapper = mountSettings()
-    await tabs(wrapper).find((t) => t.text().includes('Danger Zone')).trigger('click')
+    await tabs(wrapper).find((t) => t.text().includes('Danger zone')).trigger('click')
 
     const overview = wrapper.find('#settings-panel-overview')
     expect(overview.exists()).toBe(true)
@@ -146,7 +146,7 @@ describe('panel routing', () => {
 
   it('renders exactly one non-ghost panel at a time', async () => {
     const wrapper = mountSettings()
-    for (const label of ['Members', 'Danger Zone', 'Preferences']) {
+    for (const label of ['Members', 'Danger zone', 'Preferences']) {
       await tabs(wrapper).find((t) => t.text().includes(label)).trigger('click')
       const live = wrapper
         .findAll('[role="tabpanel"]')

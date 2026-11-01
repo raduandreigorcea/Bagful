@@ -143,15 +143,15 @@ describe('settings writes that fail say so', () => {
     failing.error = { message: 'network error', code: 'PGRST301' }
 
     const wrapper = mountSettings({ ownerUserId: 'u_owner' })
-    // Danger Zone is the fourth tab for a non-owner.
+    // Danger zone is the fourth tab for a non-owner.
     const dangerTab = wrapper
       .findAll('.sidebar-tab-btn')
-      .find((b) => b.text().includes('Danger Zone'))
+      .find((b) => b.text().includes('Danger zone'))
     await dangerTab.trigger('click')
     await wrapper.find('.danger-action-btn').trigger('click')
     await flush()
 
-    // Confirm the "Leave List?" dialog, which is what runs the write.
+    // Confirm the "Leave list?" dialog, which is what runs the write.
     wrapper.findComponent(ConfirmModal).vm.$emit('confirm')
     await flush()
 
@@ -168,7 +168,7 @@ describe('settings writes that fail say so', () => {
     const wrapper = mountSettings()
     const dangerTab = wrapper
       .findAll('.sidebar-tab-btn')
-      .find((b) => b.text().includes('Danger Zone'))
+      .find((b) => b.text().includes('Danger zone'))
     await dangerTab.trigger('click')
     await wrapper.find('.danger-action-btn--delete').trigger('click')
     await flush()
