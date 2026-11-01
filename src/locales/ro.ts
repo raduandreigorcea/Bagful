@@ -22,11 +22,11 @@ const ro: Catalog = {
   'setup.welcome.eyebrow': 'Bun venit la Bagful',
   'setup.welcome.title': 'O singură listă pentru [toți] cei care cumpără',
   'setup.welcome.sub':
-    'Toată lumea adaugă, toată lumea bifează, iar totul se actualizează pentru toți în clipa în care se întâmplă, ca să nu se uite nimic la magazin.',
+    'Toată lumea adaugă și bifează, iar totul se actualizează pe loc, ca să nu se uite nimic la magazin.',
   'setup.welcome.cta': 'Începe',
 
   'setup.picker.eyebrowAdd': 'Adaugă o listă',
-  'setup.picker.eyebrowNew': 'Bine ai venit',
+  'setup.picker.eyebrowNew': 'Primii pași',
   'setup.picker.titleAdd': 'Adaugă altă [listă]',
   'setup.picker.titleNew': 'Configurează-ți [lista]',
   'setup.picker.subAdd': 'Alătură-te altei liste cu codul ei de invitație.',
@@ -131,6 +131,7 @@ const ro: Catalog = {
   'item.quantityChange': 'Cantitate {n}. Modifică',
 
   'switcher.heading': 'Listele tale',
+  'switcher.hint': 'Atinge ca să schimbi, ține apăsat ca să vezi membrii',
   'switcher.left': { one: '{n} de cumpărat', few: '{n} de cumpărat', other: '{n} de cumpărat' },
   'switcher.empty': 'Nimic aici încă',
 
@@ -190,7 +191,7 @@ const ro: Catalog = {
 
 
   'account.title': 'Setările contului',
-  'account.subtitle': 'Gestionează-ți profilul și preferințele',
+  'account.subtitle': 'Profilul tău, setările și deconectarea',
   'account.close': 'Închide fereastra contului',
   'account.editProfile': 'Editează-ți profilul: nume, poză, ștergerea contului',
   'account.noEmail': 'Niciun e-mail disponibil',
@@ -251,7 +252,7 @@ const ro: Catalog = {
 
   'prefs.title': 'Preferințe generale',
   'prefs.nameTitle': 'Numele listei',
-  'prefs.nameDesc': 'Alege un nume pe care toți cei de pe listă îl recunosc repede.',
+  'prefs.nameDesc': 'Numele pe care îl văd toți cei de pe listă.',
   'prefs.namePlaceholder': 'Cumpărături săptămânale',
   'prefs.emojiTitle': 'Iconița listei',
   'prefs.emojiDesc': 'Alege o iconiță pentru listă. Apare în bara de sus.',
@@ -260,7 +261,6 @@ const ro: Catalog = {
   'prefs.limitSlider': 'Cursor pentru limita de produse',
 
   'members.title': 'Persoanele de pe listă ({n})',
-  'members.desc': 'Mai jos sunt persoanele care au acces la această listă de cumpărături.',
   'members.you': '(Tu)',
   'members.openActions': 'Deschide acțiunile pentru membru',
   'members.promote': 'Promovează la moderator',
@@ -325,7 +325,7 @@ const ro: Catalog = {
 
   'notify.title': 'Activezi notificările?',
   'notify.message':
-    'Află pe loc când cineva de pe listă adaugă ceva sau bifează produse, ca să nu se uite nimic la magazin.',
+    'Află pe loc când cineva de pe listă adaugă ceva sau bifează produse.',
   'notify.notNow': 'Nu acum',
   'notify.turnOn': 'Activează',
 
@@ -357,7 +357,7 @@ const ro: Catalog = {
   'common.close': 'Închide',
   'common.tryAgain': 'Încearcă din nou',
 
-  'login.tagline': 'Cumpărături în comun, [proaspete împreună zilnic]',
+  'login.tagline': 'O singură listă de cumpărături, [la zi pentru toți]',
   'login.logoAlt': 'Logoul Bagful',
   'login.emailLabel': 'Adresă de e-mail',
   'login.emailPlaceholder': 'tu@email.com',

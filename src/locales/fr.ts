@@ -20,11 +20,11 @@ const fr: Catalog = {
   'setup.welcome.eyebrow': 'Bienvenue sur Bagful',
   'setup.welcome.title': 'Une seule liste pour [tous] ceux qui font les courses',
   'setup.welcome.sub':
-    'Chacun ajoute, chacun coche, et tout se met à jour pour tout le monde à l’instant même, pour ne rien oublier en magasin.',
+    'Chacun ajoute et coche, et tout se met à jour à l’instant même, pour ne rien oublier en magasin.',
   'setup.welcome.cta': 'Commencer',
 
   'setup.picker.eyebrowAdd': 'Ajouter une liste',
-  'setup.picker.eyebrowNew': 'Bienvenue à bord',
+  'setup.picker.eyebrowNew': 'Pour commencer',
   'setup.picker.titleAdd': 'Ajouter une autre [liste]',
   'setup.picker.titleNew': 'Configurez votre [liste]',
   'setup.picker.subAdd': 'Rejoignez une autre liste avec son code d’invitation.',
@@ -124,6 +124,7 @@ const fr: Catalog = {
   'item.quantityChange': 'Quantité {n}. Modifier',
 
   'switcher.heading': 'Vos listes',
+  'switcher.hint': 'Touchez pour changer, maintenez pour voir les membres',
   'switcher.left': { one: '{n} à acheter', other: '{n} à acheter' },
   'switcher.empty': 'Rien pour le moment',
 
@@ -183,7 +184,7 @@ const fr: Catalog = {
 
 
   'account.title': 'Réglages du compte',
-  'account.subtitle': 'Gérez votre profil et vos préférences',
+  'account.subtitle': 'Votre profil, les réglages et la déconnexion',
   'account.close': 'Fermer la fenêtre du compte',
   'account.editProfile': 'Modifier votre profil : nom, photo, suppression du compte',
   'account.noEmail': 'Aucun e-mail disponible',
@@ -244,7 +245,7 @@ const fr: Catalog = {
 
   'prefs.title': 'Préférences générales',
   'prefs.nameTitle': 'Nom de la liste',
-  'prefs.nameDesc': 'Choisissez un nom que tous ceux de la liste reconnaissent d’un coup d’œil.',
+  'prefs.nameDesc': 'Le nom que voient tous ceux de la liste.',
   'prefs.namePlaceholder': 'Courses de la semaine',
   'prefs.emojiTitle': 'Icône de la liste',
   'prefs.emojiDesc': 'Choisissez une icône pour votre liste. Elle apparaît dans la barre du haut.',
@@ -254,7 +255,6 @@ const fr: Catalog = {
   'prefs.limitSlider': 'Curseur de la limite d’articles',
 
   'members.title': 'Personnes sur cette liste ({n})',
-  'members.desc': 'Voici les personnes qui ont accès à cette liste de courses.',
   'members.you': '(Vous)',
   'members.openActions': 'Ouvrir les actions du membre',
   'members.promote': 'Promouvoir modérateur',
@@ -318,7 +318,7 @@ const fr: Catalog = {
 
   'notify.title': 'Activer les notifications ?',
   'notify.message':
-    'Sachez à l’instant où quelqu’un de votre liste ajoute quelque chose ou coche des articles, pour ne rien oublier en magasin.',
+    'Sachez à l’instant où quelqu’un de votre liste ajoute quelque chose ou coche des articles.',
   'notify.notNow': 'Pas maintenant',
   'notify.turnOn': 'Activer',
 
@@ -350,7 +350,7 @@ const fr: Catalog = {
   'common.close': 'Fermer',
   'common.tryAgain': 'Réessayer',
 
-  'login.tagline': 'Les courses en commun, [fraîches et partagées chaque jour]',
+  'login.tagline': 'Une seule liste de courses, [à jour pour tous]',
   'login.logoAlt': 'Logo Bagful',
   'login.emailLabel': 'Adresse e-mail',
   'login.emailPlaceholder': 'vous@email.com',

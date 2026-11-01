@@ -7,6 +7,7 @@ import ConfirmModal from './ConfirmModal.vue'
 import AppIcon from './AppIcon.vue'
 import BackButton from './BackButton.vue'
 import ListSheet from './ListSheet.vue'
+import type { ListRow } from '../lib/useList'
 import MemberAvatarStack from './MemberAvatarStack.vue'
 import SkeletonBlock from './SkeletonBlock.vue'
 import { sortMembersSelfFirst } from '../lib/memberRoles'
@@ -75,7 +76,7 @@ const props = defineProps({
   // Every list the user belongs to ({ id, name }); the account dialog lists
   // them so you can move between them.
   lists: {
-    type: Array as PropType<{ id: string; name: string; emoji?: string | null }[]>,
+    type: Array as PropType<ListRow[]>,
     default: () => [],
   },
   loading: { type: Boolean, default: false },
@@ -143,6 +144,9 @@ const listSheetOpen = ref(false)
 // 'lists' is which list you are on, from the phone's bar; 'all' adds who is in
 // this one and how to manage it, for the desktop, which has no bar.
 const listSheetMode = ref<'all' | 'lists'>('all')
+// What the sheet hangs off on a wide screen: the bar's Lists slot, or the list name.
+const listsBtn = ref<HTMLElement | null>(null)
+const listNameBtn = ref<HTMLElement | null>(null)
 
 function openListSheet(mode: 'all' | 'lists' = 'all') {
   prefetch(loadListSettingsModal)
@@ -251,7 +255,18 @@ function openListSettings() {
 //
 // Not awaited before the call — the web share sheet only opens inside the user
 // activation from the tap, and an await here would spend it.
-function inviteMembers() {
+function inviteMembers(id: string = props.listId) {
+  // A list you are not on carries its own code in the switcher's rows; it has no
+  // settings panel to fall back to from here, so with none there is nothing to send.
+  if (id !== props.listId) {
+    const other = props.lists.find((l) => l.id === id)
+    if (other?.inviteCode) {
+      void shareInvite(other.name, other.inviteCode).then((outcome) => {
+        if (outcome !== 'cancelled' && outcome !== 'unavailable') track('invite_sent')
+      })
+    }
+    return
+  }
   if (!props.inviteCode) {
     // No code to send yet. The overview panel is where one is minted, so that is
     // where this has to end up.
@@ -440,13 +455,14 @@ const orderedActiveMembers = computed(() =>
     <button
       class="nav-slot"
       type="button"
+      ref="listsBtn"
       aria-haspopup="dialog"
       :aria-expanded="listSheetOpen"
       :aria-label="t('nav.switchLabel')"
       @click="openListSheet('lists')"
     >
       <span class="nav-slot__mark">
-        <AppIcon name="layout-grid" />
+        <AppIcon name="menu-bold" />
       </span>
       <span class="nav-slot__label">{{ t('nav.switch') }}</span>
     </button>
@@ -485,6 +501,7 @@ const orderedActiveMembers = computed(() =>
              and settings. The same on a phone and on a desktop. -->
         <button
           type="button"
+          ref="listNameBtn"
           class="list-btn"
           aria-haspopup="dialog"
           :aria-expanded="listSheetOpen || settingsOpen"
@@ -640,6 +657,7 @@ const orderedActiveMembers = computed(() =>
 
   <ListSheet
     :open="listSheetOpen"
+    :trigger="listSheetMode === 'lists' ? listsBtn : listNameBtn"
     :lists="lists"
     :list-id="listId"
     :list-name="listName"

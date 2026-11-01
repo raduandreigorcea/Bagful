@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useId, type PropType } from 'vue'
-import AppModal from './AppModal.vue'
+import { computed, onBeforeUnmount, ref, type PropType } from 'vue'
+import PopoverMenu from './PopoverMenu.vue'
 import ListMembersCard from './ListMembersCard.vue'
 import AppIcon from './AppIcon.vue'
-import ModalCloseButton from './ModalCloseButton.vue'
 import ListIcon from './ListIcon.vue'
 import { LIST_MEMBERSHIP_CAP } from '../lib/limits'
 import type { ListMemberProfile } from '../lib/listRealtime'
@@ -18,8 +17,14 @@ import { t, tn } from '../lib/i18n'
 // somebody else in, and which list you are looking at. The deep settings
 // (name, emoji, roles, leaving) are one row away, in ListSettingsModal,
 // because they are occasional and administrative and this sheet is neither.
+//
+// The shell is PopoverMenu, the same one the sort menu wears, so the header, the
+// close button and the panel are decided once. What is left here is the content:
+// the members card and the list cards.
 const props = defineProps({
   open: { type: Boolean, default: false },
+  // The button that opened it, so the panel hangs off it on a wide screen.
+  trigger: { type: Object as PropType<HTMLElement | null>, default: null },
   lists: { type: Array as PropType<ListRow[]>, default: () => [] },
   listId: { type: String, default: '' },
   listName: { type: String, default: '' },
@@ -37,11 +42,9 @@ const emit = defineEmits<{
   close: []
   'switch-list': [id: string]
   'add-list': []
-  invite: []
+  invite: [listId: string]
   manage: []
 }>()
-
-const titleId = useId()
 
 const canAddList = computed(() => props.lists.length < LIST_MEMBERSHIP_CAP)
 
@@ -98,200 +101,120 @@ function pick(id: string) {
 </script>
 
 <template>
-  <AppModal :open="open" variant="sheet" @close="emit('close')">
-    <div class="app-sheet list-sheet" role="dialog" aria-modal="true" :aria-labelledby="titleId">
-      <!-- The same header every menu here wears: a tinted square, a title with a
-           line under it, and the close button. The square holds the list's
-           own emoji where the others hold an icon. -->
-      <header class="sheet-header">
-        <div class="sheet-header__title-wrap">
-          <span class="sheet-header__icon-bg" aria-hidden="true">
-            <AppIcon v-if="mode === 'lists'" name="layout-grid" />
-            <ListIcon v-else :value="listEmoji" />
-          </span>
-          <div class="sheet-header__text">
-            <h3 v-if="mode === 'lists'" :id="titleId">{{ t('switcher.heading') }}</h3>
-            <template v-else>
-              <h3 :id="titleId">{{ listName || t('account.listFallback') }}</h3>
-              <p>{{ tn('account.memberCount', members.length) }}</p>
-            </template>
-          </div>
-        </div>
-        <ModalCloseButton @click="emit('close')" />
-      </header>
+  <!-- Closable: the sheet comes up over a bottom bar, where the surface you would
+       tap to dismiss is the list you are trying to look at. -->
+  <PopoverMenu
+    :model-value="open"
+    :trigger="trigger"
+    closable
+    width="340px"
+    :label="mode === 'lists' ? t('switcher.heading') : listName || t('account.listFallback')"
+    :heading="mode === 'lists' ? t('switcher.heading') : listName || t('account.listFallback')"
+    :hint="mode === 'lists' ? t('switcher.hint') : tn('account.memberCount', members.length)"
+    icon-name="menu-bold"
+    @update:model-value="(v: boolean) => !v && emit('close')"
+  >
+    <!-- The square holds the list's own emoji where the switcher holds an icon. -->
+    <template v-if="mode !== 'lists'" #icon>
+      <ListIcon :value="listEmoji" />
+    </template>
 
-      <div class="sheet-body">
-        <ListMembersCard
-          v-if="mode !== 'lists'"
-          :members="members"
-          :owner-user-id="ownerUserId"
-          :current-user-id="currentUserId"
-          @invite="emit('invite')"
+    <ListMembersCard
+      v-if="mode !== 'lists'"
+      class="sheet-gap"
+      :members="members"
+      :owner-user-id="ownerUserId"
+      :current-user-id="currentUserId"
+      @invite="emit('invite', listId)"
+    />
+
+    <button v-if="mode === 'all'" type="button" class="menu-item" @click="emit('manage')">
+      <AppIcon class="row-icon" name="settings" />
+      <span class="row-label">{{ t('account.manageList') }}</span>
+      <AppIcon class="row-icon row-icon--quiet" name="chevron-right" />
+    </button>
+
+    <!-- Which list you are looking at. Shown to everyone, even with one
+           list: it is also the way to a second one. -->
+    <h4 v-if="mode === 'all'" class="sheet-body__heading">
+      {{ t('switcher.heading') }}
+    </h4>
+    <button
+      v-for="list in lists"
+      :key="list.id"
+      type="button"
+      class="list-card"
+      :class="{ 'list-card--current': list.id === listId }"
+      role="menuitemradio"
+      :aria-checked="list.id === listId"
+      @click="pick(list.id)"
+      @pointerdown="startHold(list.id)"
+      @pointerup="cancelHold"
+      @pointerleave="cancelHold"
+      @pointercancel="cancelHold"
+      @contextmenu.prevent
+    >
+      <span class="list-card__tile" aria-hidden="true">
+        <ListIcon :value="list.emoji ?? ''" />
+      </span>
+      <span class="list-card__body">
+        <span class="list-card__name">{{ list.name || t('account.listFallback') }}</span>
+        <span class="list-card__meta" :class="{ 'list-card__meta--done': isDone(list) }">
+          {{ progressText(list) }}
+        </span>
+        <span v-if="list.total" class="list-card__bar" aria-hidden="true">
+          <span class="list-card__fill" :style="{ width: `${percentOf(list)}%` }"></span>
+        </span>
+      </span>
+      <span class="list-card__side">
+        <AppIcon v-if="list.id === listId" class="list-card__check" name="check-bold" />
+        <MemberAvatarStack
+          v-if="list.members?.length"
+          class="list-card__faces"
+          :members="list.members"
         />
+      </span>
+    </button>
+    <button v-if="canAddList" type="button" class="menu-item" role="menuitem" @click="addList">
+      <AppIcon class="row-icon" name="plus" />
+      <span class="row-label">{{ t('account.joinOrCreate') }}</span>
+    </button>
+  </PopoverMenu>
 
-        <div v-if="mode === 'all'" class="menu-section">
-          <button type="button" class="menu-row" @click="emit('manage')">
-            <span class="menu-row__label">
-              <AppIcon class="menu-row__icon" name="settings" />
-              <span>{{ t('account.manageList') }}</span>
-            </span>
-            <AppIcon class="menu-row__chevron" name="chevron-right" />
-          </button>
-        </div>
-
-        <!-- Which list you are looking at. Shown to everyone, even with one
-             list: it is also the way to a second one. -->
-        <section class="menu-section" :aria-label="t('switcher.heading')">
-          <h4 v-if="mode === 'all'" class="menu-section__heading">{{ t('switcher.heading') }}</h4>
-          <div class="menu-section" role="radiogroup" :aria-label="t('switcher.heading')">
-            <button
-              v-for="list in lists"
-              :key="list.id"
-              type="button"
-              class="list-card"
-              :class="{ 'list-card--current': list.id === listId }"
-              role="radio"
-              :aria-checked="list.id === listId"
-              @click="pick(list.id)"
-              @pointerdown="startHold(list.id)"
-              @pointerup="cancelHold"
-              @pointerleave="cancelHold"
-              @pointercancel="cancelHold"
-              @contextmenu.prevent
-            >
-              <span class="list-card__tile" aria-hidden="true">
-                <ListIcon :value="list.emoji ?? ''" />
-              </span>
-              <span class="list-card__body">
-                <span class="list-card__name">{{ list.name || t('account.listFallback') }}</span>
-                <span class="list-card__meta" :class="{ 'list-card__meta--done': isDone(list) }">
-                  {{ progressText(list) }}
-                </span>
-                <span v-if="list.total" class="list-card__bar" aria-hidden="true">
-                  <span class="list-card__fill" :style="{ width: `${percentOf(list)}%` }"></span>
-                </span>
-              </span>
-              <span class="list-card__side">
-                <AppIcon v-if="list.id === listId" class="list-card__check" name="check-bold" />
-                <MemberAvatarStack
-                  v-if="list.members?.length"
-                  class="list-card__faces"
-                  :members="list.members"
-                />
-              </span>
-            </button>
-            <button v-if="canAddList" type="button" class="menu-row" @click="addList">
-              <span class="menu-row__label">
-                <AppIcon class="menu-row__icon" name="plus" />
-                <span>{{ t('account.joinOrCreate') }}</span>
-              </span>
-            </button>
-          </div>
-        </section>
-      </div>
-    </div>
-  </AppModal>
-
-  <AppModal :open="!!peeked" variant="sheet" @close="peekId = null">
-    <div v-if="peeked" class="app-sheet list-sheet" role="dialog" aria-modal="true" :aria-label="peeked.name">
-      <header class="sheet-header">
-        <div class="sheet-header__title-wrap">
-          <span class="sheet-header__icon-bg" aria-hidden="true">
-            <ListIcon :value="peeked.emoji ?? ''" />
-          </span>
-          <div class="sheet-header__text">
-            <h3>{{ peeked.name || t('account.listFallback') }}</h3>
-            <p>{{ tn('account.memberCount', peekedMembers.length) }}</p>
-          </div>
-        </div>
-        <ModalCloseButton @click="peekId = null" />
-      </header>
-      <div class="sheet-body">
-        <ListMembersCard
-          :members="peekedMembers"
-          :owner-user-id="peeked.ownerId ?? ''"
-          :current-user-id="currentUserId"
-          :can-invite="peeked.id === listId"
-          @invite="emit('invite')"
-        />
-      </div>
-    </div>
-  </AppModal>
+  <PopoverMenu
+    :model-value="!!peeked"
+    :trigger="trigger"
+    closable
+    width="340px"
+    :label="peeked?.name || t('account.listFallback')"
+    :heading="peeked?.name || t('account.listFallback')"
+    :hint="tn('account.memberCount', peekedMembers.length)"
+    @update:model-value="(v: boolean) => !v && (peekId = null)"
+  >
+    <template #icon>
+      <ListIcon :value="peeked?.emoji ?? ''" />
+    </template>
+    <ListMembersCard
+      v-if="peeked"
+      :members="peekedMembers"
+      :owner-user-id="peeked.ownerId ?? ''"
+      :current-user-id="currentUserId"
+      @invite="emit('invite', peeked.id)"
+    />
+  </PopoverMenu>
 </template>
 
 <style scoped>
-/* The vocabulary below is AccountActionModal's, restated rather than shared
-   because every dialog here keeps its styles scoped: the same header, the same
-   1rem body rhythm, the same bordered rows with a 16px mark and a bold label.
-   Matching them by the numbers is what makes this read as one of the menus
-   rather than a screen from somewhere else. */
-.sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-4);
+/* The panel, its header and its close button are PopoverMenu's; the rows that
+   are plain actions take its .menu-item. What is below is what only this menu has. */
+/* PopoverMenu's .menu-item rules only reach its direct slot children, so these
+   rows are not wrapped; the spacing a wrapper's gap would give is margins. */
+.sheet-gap {
+  margin-bottom: 0.35rem;
 }
 
-.sheet-header__title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-}
-
-.sheet-header__icon-bg {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--bg-surface));
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.sheet-header__text {
-  min-width: 0;
-}
-
-.sheet-header h3 {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--weight-extrabold);
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sheet-header p {
-  margin: 0.1rem 0 0;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-}
-
-.sheet-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0 1rem 1rem;
-}
-
-/* The soft, borderless card the account dialog puts who-you-are on. */
-/* ── Rows: AccountActionModal's .account-menu-item ───────────────────────── */
-.menu-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.menu-section__heading {
-  margin: 0 0 -0.1rem;
+.sheet-body__heading {
+  margin: 0.5rem 0 0.1rem;
   padding-left: 0.1rem;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
@@ -300,81 +223,25 @@ function pick(id: string) {
   color: var(--text-secondary);
 }
 
-.menu-row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  padding: 0.65rem 0.75rem;
-  border: var(--border-width-thin) solid var(--border-main);
-  border-radius: var(--radius-md);
-  background: var(--bg-surface);
+.row-label {
+  flex: 1;
+  min-width: 0;
   text-align: left;
-  cursor: pointer;
-  transition: background var(--transition-base) ease, border-color var(--transition-base) ease;
 }
 
-.menu-row:hover {
-  background: var(--bg-hover);
-  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--bg-surface));
-}
-
-.menu-row:active {
-  background: var(--bg-press);
-}
-
-/* The list you are on: marked the way a chosen option is everywhere
-   else, a green edge and a tick, not a different kind of row. */
-.menu-row--current {
-  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--bg-surface));
-  background: color-mix(in srgb, var(--color-primary) 6%, var(--bg-surface));
-}
-
-.menu-row__label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text-primary);
-}
-
-.menu-row__text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.menu-row__icon,
-.menu-row__chevron,
-.menu-row__check {
+.row-icon {
   flex-shrink: 0;
   width: 16px;
   height: 16px;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   color: var(--text-secondary);
 }
 
-.menu-row:hover .menu-row__icon {
-  color: var(--color-primary);
-}
-
-.menu-row__chevron {
+.row-icon--quiet {
   color: var(--text-disabled);
 }
 
-.menu-row__check {
-  color: var(--color-primary);
-}
-
-.menu-row__icon :deep(svg),
-.menu-row__chevron :deep(svg),
-.menu-row__check :deep(svg) {
+.row-icon :deep(svg) {
   width: 100%;
   height: 100%;
   stroke: currentColor;
@@ -382,25 +249,10 @@ function pick(id: string) {
   fill: none;
 }
 
-.menu-row__check :deep(svg) {
-  stroke-width: 3;
-}
-
-/* An emoji where the other rows have a mark, held to the same 16px column so
-   the labels share a left edge. */
-.menu-row__emoji {
-  width: 16px;
-  flex-shrink: 0;
-  text-align: center;
-  font-size: 0.95rem;
-  line-height: 1;
-}
-
-/* Held to the column like the marks on the other rows. */
 /* One list in the switcher: its mark, its name, how much is left and how far
-   along it is, who is in it. Same border and radius as the rows around it, so
-   it reads as a taller row rather than a different kind of thing. */
+   along it is, who is in it. Taller than a plain row, since it carries more. */
 .list-card {
+  margin-top: 0.35rem;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -408,7 +260,7 @@ function pick(id: string) {
   min-height: 72px;
   padding: var(--space-3);
   border: var(--border-width-thin) solid var(--border-main);
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-lg);
   background: var(--bg-surface);
   color: var(--text-primary);
   font: inherit;
@@ -417,7 +269,8 @@ function pick(id: string) {
   -webkit-tap-highlight-color: transparent;
   transition:
     background var(--transition-fast) var(--ease-standard),
-    border-color var(--transition-fast) var(--ease-standard);
+    border-color var(--transition-fast) var(--ease-standard),
+    scale var(--transition-base) var(--ease-rise);
 }
 
 .list-card:hover {
@@ -426,6 +279,7 @@ function pick(id: string) {
 
 .list-card:active {
   background: var(--bg-press);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--bg-surface));
 }
 
 .list-card--current {
@@ -521,10 +375,5 @@ function pick(id: string) {
   .list-card__fill {
     transition: none;
   }
-}
-
-.menu-row__emoji :deep(.list-icon) {
-  width: 16px;
-  height: 16px;
 }
 </style>

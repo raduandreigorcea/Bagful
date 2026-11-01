@@ -575,3 +575,93 @@ select {
 .app-sheet-leave-active .app-sheet {
   animation: modal-rise-out var(--transition-base) var(--ease-fall);
 }
+
+/* ─── Press feedback ─────────────────────────────────────────────────────────
+   Hover is a mouse thing (see postcss-hover-only), so on a phone a row that only
+   had a :hover answered a finger with nothing at all. This is the answer that
+   works for both: a press-in that is instant on contact, so it tracks the finger,
+   and a short settle on release, so it springs back rather than snapping.
+
+   The shrink uses the `scale` property rather than `transform`, so it composes
+   with a transform a component already has (the swipe row's translateX, a
+   centred popover) instead of replacing it. The controls that already press in
+   their own way are left out of the list rather than shrunk twice. A component
+   that wants a different depth sets --press-scale. With reduced motion the shrink
+   is not there at all, and what is left is the colour. */
+:where(
+    button,
+    a[href],
+    summary,
+    [role='button'],
+    [role='menuitem'],
+    [role='menuitemradio'],
+    [role='tab']
+  ):not(.app-btn, .nav-slot, .list-btn, .topbar-icon-btn, .user-avatar-btn, .chip) {
+  transition: scale var(--transition-base) var(--ease-rise);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(
+      button,
+      a[href],
+      summary,
+      [role='button'],
+      [role='menuitem'],
+      [role='menuitemradio'],
+      [role='tab']
+    ):not(.app-btn, .nav-slot, .list-btn, .topbar-icon-btn, .user-avatar-btn, .chip):active:not(
+      :disabled,
+      [aria-disabled='true']
+    ) {
+    scale: var(--press-scale, 0.97);
+    transition-duration: 0s;
+  }
+}
+
+/* How far it gives, by how big the thing is. A block the width of the screen
+   that shrank by 3% would lurch; a 32px button barely moves at 3%. */
+:is(
+    .menu-item,
+    .account-menu-item,
+    .app-settings__row,
+    .sidebar-tab-btn,
+    .member-action-item,
+    .transfer__choice,
+    .suggestion,
+    .report-place,
+    .lang-tile,
+    .list-card,
+    .item-toggle
+  ) {
+  --press-scale: 0.985;
+}
+
+:is(
+    .filter-btn,
+    .add-clear,
+    .item-qty__step,
+    .modal-close,
+    .back-btn,
+    .member-actions-trigger,
+    .invite-copy-btn
+  ) {
+  --press-scale: 0.92;
+}
+
+/* The rows that had a hover tint and nothing for a press. The step past hover is
+   --bg-press, a real step in both themes. The danger rows keep their own colour:
+   a grey wash over red would say the wrong thing. */
+:is(
+    .menu-item,
+    .account-menu-item:not(.account-menu-item--danger),
+    .app-settings__row,
+    .sidebar-tab-btn:not(.sidebar-tab-btn--danger),
+    .member-action-item:not(.member-action-item--danger),
+    .transfer__choice,
+    .suggestion,
+    .report-place,
+    .lang-tile
+  ):active:not(:disabled) {
+  background: var(--bg-press);
+}
+

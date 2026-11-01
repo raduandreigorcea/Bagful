@@ -127,7 +127,7 @@ describe('the list header and switcher queries', () => {
     const membership = db.calls.find(
       (c) => c.table === 'list_members' && c.op === 'select' && c.filters.user_id,
     )
-    expect(membership.columns).toContain('lists(name, emoji, created_by')
+    expect(membership.columns).toContain('lists(name, emoji, invite_code, created_by')
     expect(membership.columns).toContain('list_members(')
     expect(membership.columns).toContain('shopping_list_items(checked)')
   })

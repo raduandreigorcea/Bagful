@@ -20,11 +20,11 @@ const de: Catalog = {
   'setup.welcome.eyebrow': 'Willkommen bei Bagful',
   'setup.welcome.title': 'Eine Liste für [alle], die einkaufen',
   'setup.welcome.sub':
-    'Alle tragen ein, alle haken ab, und jede Änderung ist sofort bei allen, damit im Laden nichts vergessen wird.',
+    'Alle tragen ein und haken ab, und jede Änderung erscheint sofort, damit im Laden nichts vergessen wird.',
   'setup.welcome.cta': 'Los geht’s',
 
   'setup.picker.eyebrowAdd': 'Liste hinzufügen',
-  'setup.picker.eyebrowNew': 'Schön, dass du da bist',
+  'setup.picker.eyebrowNew': 'Los geht’s',
   'setup.picker.titleAdd': 'Noch eine [Liste] hinzufügen',
   'setup.picker.titleNew': 'Richte deine [Liste] ein',
   'setup.picker.subAdd': 'Tritt mit dem Einladungscode einer weiteren Liste bei.',
@@ -125,6 +125,7 @@ const de: Catalog = {
   'item.quantityChange': 'Menge {n}. Ändern',
 
   'switcher.heading': 'Deine Listen',
+  'switcher.hint': 'Tippen zum Wechseln, halten für Mitglieder',
   'switcher.left': { one: '{n} zu kaufen', other: '{n} zu kaufen' },
   'switcher.empty': 'Noch nichts drin',
 
@@ -185,7 +186,7 @@ const de: Catalog = {
 
 
   'account.title': 'Kontoeinstellungen',
-  'account.subtitle': 'Verwalte dein Profil und deine Einstellungen',
+  'account.subtitle': 'Dein Profil, Einstellungen und Abmelden',
   'account.close': 'Kontofenster schließen',
   'account.editProfile': 'Profil bearbeiten: Name, Foto, Konto löschen',
   'account.noEmail': 'Keine E-Mail vorhanden',
@@ -247,7 +248,7 @@ const de: Catalog = {
 
   'prefs.title': 'Allgemeine Einstellungen',
   'prefs.nameTitle': 'Name der Liste',
-  'prefs.nameDesc': 'Wähle einen Namen, den alle auf der Liste sofort erkennen.',
+  'prefs.nameDesc': 'Der Name, den alle auf der Liste sehen.',
   'prefs.namePlaceholder': 'Wocheneinkauf',
   'prefs.emojiTitle': 'Listen-Symbol',
   'prefs.emojiDesc': 'Wähle ein Symbol für deine Liste. Es erscheint in der oberen Leiste.',
@@ -257,7 +258,6 @@ const de: Catalog = {
   'prefs.limitSlider': 'Regler für das Artikellimit',
 
   'members.title': 'Personen auf dieser Liste ({n})',
-  'members.desc': 'Unten stehen die Personen, die Zugriff auf diese Einkaufsliste haben.',
   'members.you': '(Du)',
   'members.openActions': 'Mitgliedsaktionen öffnen',
   'members.promote': 'Zum Moderator machen',
@@ -323,7 +323,7 @@ const de: Catalog = {
 
   'notify.title': 'Mitteilungen einschalten?',
   'notify.message':
-    'Erfahre sofort, wenn jemand auf der Liste etwas einträgt oder abhakt, damit im Laden nichts vergessen wird.',
+    'Erfahre sofort, wenn jemand auf der Liste etwas einträgt oder abhakt.',
   'notify.notNow': 'Jetzt nicht',
   'notify.turnOn': 'Einschalten',
 
@@ -355,7 +355,7 @@ const de: Catalog = {
   'common.close': 'Schließen',
   'common.tryAgain': 'Erneut versuchen',
 
-  'login.tagline': 'Einkäufe für alle, [täglich frisch, gemeinsam]',
+  'login.tagline': 'Eine Einkaufsliste, [live für alle]',
   'login.logoAlt': 'Bagful-Logo',
   'login.emailLabel': 'E-Mail-Adresse',
   'login.emailPlaceholder': 'du@email.de',

@@ -14,8 +14,6 @@ const props = defineProps({
   members: { type: Array as PropType<ListMemberProfile[]>, default: () => [] },
   ownerUserId: { type: String, default: '' },
   currentUserId: { type: String, default: '' },
-  // The invite belongs to the list you are on; another list's has no code here.
-  canInvite: { type: Boolean, default: true },
 })
 
 const emit = defineEmits<{ invite: [] }>()
@@ -59,7 +57,7 @@ function scrollMembersSideways(event: WheelEvent) {
         <span class="member__name">{{ nameOf(member) }}</span>
         <span v-if="roleLabel(member)" class="member__role">{{ roleLabel(member) }}</span>
       </li>
-      <li v-if="canInvite" class="member">
+      <li class="member">
         <button type="button" class="member__invite" @click="emit('invite')">
           <span class="member__avatar member__avatar--invite" aria-hidden="true">
             <AppIcon name="user-round-plus" />
@@ -70,7 +68,7 @@ function scrollMembersSideways(event: WheelEvent) {
     </ul>
     <!-- A list of one is a list nobody else can see, which is most of
          the point missed. So it says why the empty face is there. -->
-    <p v-if="alone && canInvite" class="list-sheet__alone">{{ t('list.aloneHint') }}</p>
+    <p v-if="alone" class="list-sheet__alone">{{ t('list.aloneHint') }}</p>
   </section>
 </template>
 

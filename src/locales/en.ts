@@ -3,7 +3,7 @@
 // Every other file in this directory is annotated `const xx: Catalog` against a
 // type derived from this one, so a key added here and forgotten there fails
 // `npm run typecheck` rather than shipping a screen that says
-// runtime fallback — the other five are fetched lazily — so this file must stay
+// runtime fallback (the other five are fetched lazily), so this file must stay
 // complete and must never be the one that lags.
 //
 // Keys are flat and dotted, not nested. Three reasons, all small and all real:
@@ -17,8 +17,8 @@
 // under the first one to need it makes the second look like a duplicate.
 //
 // A value is either a string or a plural entry `{ one?, few?, many?, other }`.
-// See tn() in lib/i18n for which categories a language actually asks for —
-// they are not the same set per language, and Romanian in particular needs
+// See tn() in lib/i18n for which categories a language actually asks for.
+// They are not the same set per language, and Romanian in particular needs
 // three where English needs two.
 //
 // Square brackets in a heading mark the word that takes the accent colour. See
@@ -39,7 +39,7 @@ export default {
 
   // The language picker itself. The six language names are NOT here: a language
   // is listed under its own name (see LOCALE_ENDONYMS in lib/locale), which is
-  // the whole point — someone hunting for "Română" is not reading the English
+  // the whole point: someone hunting for "Română" is not reading the English
   // catalog to find it.
   'language.groupLabel': 'Choose a language',
 
@@ -47,11 +47,11 @@ export default {
   'setup.welcome.eyebrow': 'Welcome to Bagful',
   'setup.welcome.title': 'One list for [everyone] who shops',
   'setup.welcome.sub':
-    'Everyone adds, everyone checks off, and it all updates for everyone the moment it happens, so nothing gets forgotten at the store.',
+    'Everyone adds and checks off, and it all updates live, so nothing gets forgotten at the store.',
   'setup.welcome.cta': 'Get started',
 
   'setup.picker.eyebrowAdd': 'Add a list',
-  'setup.picker.eyebrowNew': 'Welcome aboard',
+  'setup.picker.eyebrowNew': 'Getting started',
   'setup.picker.titleAdd': 'Add another [list]',
   'setup.picker.titleNew': 'Set up your [list]',
   // Two whole sentences rather than one plus an appended clause. The English
@@ -156,6 +156,7 @@ export default {
   'item.quantityChange': 'Quantity {n}. Change',
 
   'switcher.heading': 'Your lists',
+  'switcher.hint': 'Tap to switch, hold to see who is in it',
   'switcher.left': { one: '{n} to buy', other: '{n} to buy' },
   'switcher.empty': 'Nothing here yet',
 
@@ -214,7 +215,7 @@ export default {
   'topbar.avatarAlt': 'Your avatar',
 
   'account.title': 'Account Settings',
-  'account.subtitle': 'Manage your profile and preferences',
+  'account.subtitle': 'Your profile, settings and sign out',
   'account.close': 'Close account modal',
   'account.editProfile': 'Edit your profile: name, photo, delete account',
   'account.noEmail': 'No email available',
@@ -275,7 +276,7 @@ export default {
 
   'prefs.title': 'General Preferences',
   'prefs.nameTitle': 'List Name',
-  'prefs.nameDesc': 'Choose a name everyone on the list can recognize quickly.',
+  'prefs.nameDesc': 'The name everyone on the list sees.',
   'prefs.namePlaceholder': 'Weekly shop',
   'prefs.emojiTitle': 'List Icon',
   'prefs.emojiDesc': 'Pick an icon for your list. It shows in the top bar.',
@@ -284,7 +285,6 @@ export default {
   'prefs.limitSlider': 'Item limit slider',
 
   'members.title': 'People on this list ({n})',
-  'members.desc': 'Below are the people who have access to this shopping list.',
   'members.you': '(You)',
   'members.openActions': 'Open member actions',
   'members.promote': 'Promote to moderator',
@@ -348,7 +348,7 @@ export default {
 
   'notify.title': 'Turn on notifications?',
   'notify.message':
-    'Know the moment someone on your list adds something or checks items off, so nothing gets forgotten at the store.',
+    'Know the moment someone on your list adds something or checks items off.',
   'notify.notNow': 'Not now',
   'notify.turnOn': 'Turn on',
 
@@ -380,7 +380,7 @@ export default {
   'common.close': 'Close',
   'common.tryAgain': 'Try again',
 
-  'login.tagline': 'Shared Groceries, [fresh together daily]',
+  'login.tagline': 'One shopping list, [live for everyone]',
   'login.logoAlt': 'Bagful logo',
   'login.emailLabel': 'Email address',
   'login.emailPlaceholder': 'your@email.com',
