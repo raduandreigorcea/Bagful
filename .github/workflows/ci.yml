@@ -26,20 +26,20 @@ jobs:
       # The catalog is needed here as well: test/catalog/markets.test.js is a
       # cross-repo drift guard and reads the catalog's own market list and
       # migration, which is the whole reason it can catch a drift at all.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Bagful-catalog is private, which the workflow token cannot read, so it is
       # fetched on its own with a read-only deploy key on that repo (its private
       # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master
       # (catalog/ is not tracked here; .gitignore says why). admin/ is private
       # too and nothing here needs it.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: raduandreigorcea/Bagful-catalog
           ref: master
           path: catalog
           ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
@@ -63,8 +63,8 @@ jobs:
     name: Database RLS tests (pgTAP)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
         with:
           version: 2.109.1
       - run: supabase db start
@@ -93,20 +93,20 @@ jobs:
       # The catalog checkout is REQUIRED, not a convenience. The catalog's schema
       # lives in raduandreigorcea/Bagful-catalog, checked out at catalog/, and
       # without it there is no config.toml for --workdir to point at.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Bagful-catalog is private, which the workflow token cannot read, so it is
       # fetched on its own with a read-only deploy key on that repo (its private
       # half is the secret CATALOG_DEPLOY_KEY), at the tip of its master
       # (catalog/ is not tracked here; .gitignore says why). admin/ is private
       # too and nothing here needs it.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: raduandreigorcea/Bagful-catalog
           ref: master
           path: catalog
           ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
           persist-credentials: false
-      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
         with:
           version: 2.109.1
       # WHY THIS JOB IS IN THE APP'S CI EVEN THOUGH THE SCHEMA IS NOT
@@ -163,7 +163,7 @@ jobs:
       VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
       BEFORE: ${{ github.event.before }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # The whole history, to diff against whatever master was before this push.
           fetch-depth: 0
@@ -178,7 +178,7 @@ jobs:
             exit 1
           fi
           git cat-file -e "$BEFORE^{commit}" || { echo "::error::Cannot see the previous master ($BEFORE), so cannot tell what changed"; exit 1; }
-      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
         with:
           version: 2.109.1
       # 001-009 are restatements production already records as applied, so an
