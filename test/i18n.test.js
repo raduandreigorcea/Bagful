@@ -200,8 +200,8 @@ describe('tAccent', () => {
 
   it('handles a marker that runs to the end of the string', () => {
     expect(tAccent('login.tagline')).toEqual([
-      'Shared Groceries, ',
-      'fresh together daily',
+      'One shopping list, ',
+      'live for everyone',
       '',
     ])
   })

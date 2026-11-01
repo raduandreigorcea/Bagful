@@ -9,8 +9,8 @@ import { t } from '../lib/i18n'
 // as a bottom sheet on a phone. Owns the teleport, the overlay, the transition,
 // dismissal, and where the panel lands. Knows nothing about what is in it.
 //
-// Its one caller today is ListSortMenu; what lives here is the sheet/popover
-// behaviour, not anything about sorting. The panel chrome and the row styling
+// Its callers are ListSortMenu and ListSheet; what lives here is the sheet/popover
+// behaviour, not anything about either. The panel chrome and the row styling
 // live here too (see the :slotted rules below), so a menu added later looks
 // like the one that exists instead of approximating it.
 //
@@ -156,8 +156,10 @@ onBeforeUnmount(() => {
       <div v-if="open" class="popover-overlay" @click.self="close">
         <div class="popover-panel" :style="anchor">
           <header v-if="heading" class="popover-header">
-            <span v-if="iconName" class="popover-header__icon-bg" aria-hidden="true">
-              <AppIcon class="popover-header__icon" :name="iconName" />
+            <span v-if="iconName || $slots.icon" class="popover-header__icon-bg" aria-hidden="true">
+              <!-- A slot for the one header whose mark is a list's own emoji,
+                   which no icon name can say. -->
+              <slot name="icon"><AppIcon class="popover-header__icon" :name="iconName" /></slot>
             </span>
             <span class="popover-header__text">
               <span class="popover-header__title">{{ heading }}</span>

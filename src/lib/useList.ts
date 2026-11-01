@@ -19,6 +19,8 @@ export interface ListRow {
   name: string
   emoji?: string | null
   ownerId?: string
+  // Each list's own code, so the invite on a list you are not on sends that list's.
+  inviteCode?: string
   members?: ListMemberProfile[]
   total?: number
   done?: number
@@ -36,6 +38,7 @@ interface MembershipRow {
   lists?: {
     name?: string | null
     emoji?: string | null
+    invite_code?: string | null
     created_by?: string | null
     list_members?: MemberRow[] | null
     shopping_list_items?: { checked: boolean }[] | null
@@ -143,7 +146,7 @@ export function useList(options: {
     const { data, error } = await db
       .from('list_members')
       .select(
-        'list_id, lists(name, emoji, created_by, list_members(user_id, role, profiles(display_name, image_url)), shopping_list_items(checked))',
+        'list_id, lists(name, emoji, invite_code, created_by, list_members(user_id, role, profiles(display_name, image_url)), shopping_list_items(checked))',
       )
       .eq('user_id', userId.value)
     if (error) return { error }
@@ -159,6 +162,7 @@ export function useList(options: {
         name: row.lists?.name ?? '',
         emoji: row.lists?.emoji ?? '',
         ownerId: owner,
+        inviteCode: row.lists?.invite_code ?? '',
         members: sortMembersSelfFirst(
           (row.lists?.list_members ?? []).map((m) => ({
             user_id: m.user_id,

@@ -224,6 +224,7 @@ describe('the list header', () => {
 describe('the list sheet', () => {
   function mountSheet(props = {}) {
     const w = mount(ListSheet, {
+      global: { stubs: { teleport: true } },
       props: {
         open: true,
         listId: 'hh-1',
@@ -278,7 +279,7 @@ describe('the list sheet', () => {
 
   it('does not report picking the list you are already on as a switch', async () => {
     const wrapper = mountSheet()
-    await wrapper.find('[role="radio"]').trigger('click')
+    await wrapper.find('[role="menuitemradio"]').trigger('click')
     expect(wrapper.emitted('switch-list')).toBeUndefined()
     expect(wrapper.emitted('close')).toHaveLength(1)
   })

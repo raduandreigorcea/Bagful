@@ -24,7 +24,7 @@ const lists = [
 
 function mountSheet(props = {}) {
   return mount(ListSheet, {
-    global: { stubs: { AppModal: false } },
+    global: { stubs: { teleport: true } },
     props: { open: true, lists, listId: 'a', currentUserId: 'me', mode: 'lists', ...props },
   })
 }
@@ -75,7 +75,9 @@ describe('the list switcher cards', () => {
       await card.trigger('pointerup')
       await card.trigger('click')
       expect(wrapper.find('.members-card').exists()).toBe(true)
-      expect(wrapper.find('.member__invite').exists()).toBe(false)
+      // The invite is there too, and sends this list's code, not the one you are on.
+      await wrapper.find('.member__invite').trigger('click')
+      expect(wrapper.emitted('invite')).toEqual([['b']])
       expect(wrapper.emitted('switch-list')).toBeUndefined()
       expect(wrapper.emitted('close')).toBeUndefined()
     })

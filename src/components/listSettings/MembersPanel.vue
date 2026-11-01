@@ -157,7 +157,6 @@ async function removeMember(memberUserId: string) {
   <div class="tab-panel tab-panel--overlay">
     <div class="panel-section">
       <h4 class="panel-section-title">{{ t('members.title', { n: memberProfiles.length }) }}</h4>
-      <p class="panel-section-desc">{{ t('members.desc') }}</p>
 
       <div class="members-list-wrapper">
         <ul class="members-custom-list">
