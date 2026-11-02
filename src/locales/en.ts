@@ -57,7 +57,6 @@ export default {
   // Two whole sentences rather than one plus an appended clause. The English
   // original built this by concatenating ', or create a new one.' onto a stem,
   // which only works because English puts the clause last.
-  'setup.picker.subAdd': 'Join another list with its invite code.',
   'setup.picker.subAddOrCreate':
     'Join another list with its invite code, or create a new one.',
   'setup.picker.subNew':

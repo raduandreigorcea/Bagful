@@ -88,18 +88,13 @@ describe('the list header', () => {
     expect(sheet.props('mode')).toBe('lists')
   })
 
-  // The List slot is where you already are: it opens nothing.
-  it('scrolls to the top from List instead of opening settings', async () => {
-    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
-    try {
-      const wrapper = mountBar()
-      await wrapper.findAll('.nav-slot')[0].trigger('click')
-      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
-      expect(wrapper.findComponent(ListSheet).props('open')).toBe(false)
-      expect(wrapper.find('.nav-slot').attributes('aria-current')).toBe('page')
-    } finally {
-      scrollTo.mockRestore()
-    }
+  // There is no list screen to go to: the app is one screen of modals, so List opens this list's own.
+  it('opens the list settings from List', async () => {
+    const wrapper = mountBar()
+    await wrapper.findAll('.nav-slot')[0].trigger('click')
+    await vi.waitFor(() => expect(wrapper.findComponent(ListSettingsModal).exists()).toBe(true))
+    expect(wrapper.findComponent(ListSettingsModal).props('open')).toBe(true)
+    expect(wrapper.findComponent(ListSheet).props('open')).toBe(false)
   })
 
   // The name, who is in the list, and how far this trip has got. No
@@ -174,7 +169,7 @@ describe('the list header', () => {
   // The name is the one door to this list on every width. A phone gets the
   // list's own half of the sheet (the bar's Lists slot has the other); a
   // desktop has no bar, so it gets both.
-  it('opens the list settings from the name on a phone, the sheet on a desktop', async () => {
+  it('leaves the name a plain label on a phone, a door to the sheet on a desktop', async () => {
     const realMatchMedia = window.matchMedia
     const stub = (desktop) => {
       window.matchMedia = () => ({
@@ -186,11 +181,9 @@ describe('the list header', () => {
     try {
       stub(false)
       const phone = mountBar()
-      const button = phone.find('button.list-btn')
-      expect(button.attributes('aria-haspopup')).toBe('dialog')
-      await button.trigger('click')
-      await vi.waitFor(() => expect(phone.findComponent(ListSettingsModal).exists()).toBe(true))
-      expect(phone.findComponent(ListSettingsModal).props('open')).toBe(true)
+      expect(phone.find('button.list-btn').exists()).toBe(false)
+      await phone.find('.list-btn').trigger('click')
+      expect(phone.findComponent(ListSettingsModal).exists()).toBe(false)
       expect(phone.findComponent(ListSheet).props('open')).toBe(false)
 
       stub(true)

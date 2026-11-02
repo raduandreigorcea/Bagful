@@ -27,7 +27,6 @@ const de: Catalog = {
   'setup.picker.eyebrowNew': 'Los geht’s',
   'setup.picker.titleAdd': 'Noch eine [Liste] hinzufügen',
   'setup.picker.titleNew': 'Richte deine [Liste] ein',
-  'setup.picker.subAdd': 'Tritt mit dem Einladungscode einer weiteren Liste bei.',
   'setup.picker.subAddOrCreate':
     'Tritt mit dem Einladungscode einer weiteren Liste bei oder erstelle eine neue.',
   'setup.picker.subNew':

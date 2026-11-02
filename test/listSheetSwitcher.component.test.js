@@ -58,6 +58,12 @@ describe('the list switcher cards', () => {
     expect(wrapper.emitted('switch-list')).toHaveLength(1)
     expect(wrapper.emitted('close')).toHaveLength(2)
   })
+  it('offers only a join to somebody who already owns a list', () => {
+    const label = (props) => mountSheet({ lists: [lists[0]], ...props }).find('.sheet-action').text()
+    expect(label({ currentUserId: 'me' })).toBe('Join a list')
+    expect(label({ currentUserId: 'someone-else' })).toBe('Join or create a list')
+  })
+
   it('shows the members in the full sheet and not in the switcher', () => {
     expect(mountSheet({ mode: 'all' }).find('.members-card').exists()).toBe(true)
     expect(mountSheet({ mode: 'lists' }).find('.members-card').exists()).toBe(false)

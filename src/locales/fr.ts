@@ -27,7 +27,6 @@ const fr: Catalog = {
   'setup.picker.eyebrowNew': 'Pour commencer',
   'setup.picker.titleAdd': 'Ajouter une autre [liste]',
   'setup.picker.titleNew': 'Configurez votre [liste]',
-  'setup.picker.subAdd': 'Rejoignez une autre liste avec son code d’invitation.',
   'setup.picker.subAddOrCreate':
     'Rejoignez une autre liste avec son code d’invitation, ou créez-en une nouvelle.',
   'setup.picker.subNew':

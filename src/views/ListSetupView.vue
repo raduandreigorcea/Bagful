@@ -30,24 +30,15 @@ const db = useSupabase()
 // (vs. a brand-new user with none): offer a way back to their list.
 const isAddingList = computed(() => route.query.add === '1')
 
-// Owning is capped at one list (003_lists_and_members.sql). Someone adding a list while
-// they already own one can only join, so the create option is hidden. A brand-new
-// user (not adding) always sees it.
+// Owning is capped at one list (003_lists_and_members.sql). Both options always show, so the
+// picker does not change shape once the check below lands; an owner who taps Create is told
+// why they cannot, instead of being offered a form the server would reject.
 const ownsList = ref(false)
-// Only known after the async check below. Until then, in add mode we don't yet
-// know whether create is allowed, so we withhold the create option rather than
-// flash it and yank it away for an owner.
-const ownershipChecked = ref(false)
-const showCreate = computed(() => !isAddingList.value || (ownershipChecked.value && !ownsList.value))
 onMounted(async () => {
   if (!isAddingList.value || !userId.value) return
 
-  try {
-    const { data } = await findOwnedList(db, userId.value)
-    ownsList.value = !!data
-  } finally {
-    ownershipChecked.value = true
-  }
+  const { data } = await findOwnedList(db, userId.value)
+  ownsList.value = !!data
 })
 
 // Brand-new users open on a warm welcome before the create/join picker; someone
@@ -263,17 +254,16 @@ async function joinList() {
                  clause there. -->
             <p class="sub">
               {{ isAddingList
-                ? (showCreate ? t('setup.picker.subAddOrCreate') : t('setup.picker.subAdd'))
+                ? t('setup.picker.subAddOrCreate')
                 : t('setup.picker.subNew') }}
             </p>
           </div>
           <div class="choice-row">
             <ChoiceButton
-              v-if="showCreate"
               icon="create-list"
               :label="t('setup.picker.createLabel')"
               :description="t('setup.picker.createDescription')"
-              @click="mode = 'create'"
+              @click="ownsList ? (error = t('error.ownOneList')) : (mode = 'create')"
             />
             <ChoiceButton
               icon="join-list"

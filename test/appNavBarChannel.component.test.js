@@ -71,10 +71,7 @@ describe('AppNavBar channel badge', () => {
     expect(badge.text()).toBe('NIGHTLY')
   })
 
-  // One header on every width now, so the stamp lives in it everywhere; a
-  // media query hides it on a phone, where the header's width belongs to the
-  // list name (CLAUDE.md: the phone carries none). What must not come back
-  // is the ribbon floating over the list.
+  // The stamp is pinned to the top edge by CSS; what must not come back is the old ribbon over the list.
   it('no longer floats a ribbon over the list', () => {
     channel.nightly = true
     expect(mountBar().find('.channel-ribbon').exists()).toBe(false)

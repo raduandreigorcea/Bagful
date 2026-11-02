@@ -29,7 +29,6 @@ const ro: Catalog = {
   'setup.picker.eyebrowNew': 'Primii pași',
   'setup.picker.titleAdd': 'Adaugă altă [listă]',
   'setup.picker.titleNew': 'Configurează-ți [lista]',
-  'setup.picker.subAdd': 'Alătură-te altei liste cu codul ei de invitație.',
   'setup.picker.subAddOrCreate':
     'Alătură-te altei liste cu codul ei de invitație sau creează una nouă.',
   'setup.picker.subNew':
