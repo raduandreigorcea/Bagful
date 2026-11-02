@@ -157,16 +157,11 @@ function openListSheet(mode: 'all' | 'lists' = 'all') {
   emit('refresh-list')
 }
 
-// On a phone the name goes straight to the list's settings. A desktop has no Lists slot, so its name stays the one
-// door to the sheet that also switches lists.
+// On a phone the name is only a label: the bar's List and Lists slots are the doors. A desktop
+// has no bar, so its name stays the one door to the sheet that also switches lists.
+const nameIsDoor = computed(() => !(props.layout === 'bar' && !isDesktop.value))
 function openListFromName() {
-  if (props.layout === 'bar' && !isDesktop.value) openListSettings()
-  else openListSheet()
-}
-
-// The List slot is where you already are, so it takes you to the top of it.
-function goToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  if (nameIsDoor.value) openListSheet()
 }
 
 // Closes the sheet itself; the switch is the parent's to perform, because it
@@ -399,9 +394,11 @@ const orderedActiveMembers = computed(() =>
     <button
       class="nav-slot"
       type="button"
-      aria-current="page"
+      aria-haspopup="dialog"
+      :aria-expanded="settingsOpen"
       :aria-label="t('nav.list')"
-      @click="goToTop"
+      @pointerdown="prefetch(loadListSettingsModal)"
+      @click="openListSettings"
     >
       <span class="nav-slot__mark nav-slot__mark--emoji" aria-hidden="true">
         <ListIcon :value="listEmoji" />
@@ -499,26 +496,28 @@ const orderedActiveMembers = computed(() =>
         <!-- Which list this is, who is in it, and how far this trip has got,
              and the one door to everything about this list: members, invite
              and settings. The same on a phone and on a desktop. -->
-        <button
-          type="button"
+        <component
+          :is="nameIsDoor ? 'button' : 'div'"
+          :type="nameIsDoor ? 'button' : undefined"
           ref="listNameBtn"
           class="list-btn"
-          aria-haspopup="dialog"
-          :aria-expanded="listSheetOpen || settingsOpen"
-          :aria-label="t('list.open', { name: listName })"
+          :class="{ 'list-btn--label': !nameIsDoor }"
+          :aria-haspopup="nameIsDoor ? 'dialog' : undefined"
+          :aria-expanded="nameIsDoor ? listSheetOpen || settingsOpen : undefined"
+          :aria-label="nameIsDoor ? t('list.open', { name: listName }) : undefined"
           @click="openListFromName"
         >
           <span class="list-emoji" aria-hidden="true"><ListIcon :value="listEmoji" /></span>
           <div class="list-info">
             <p class="list-name">
               <span class="list-name__text">{{ listName }}</span>
-              <AppIcon class="list-name__chevron" name="chevron-right" />
+              <AppIcon v-if="layout !== 'bar' || isDesktop" class="list-name__chevron" name="chevron-right" />
             </p>
             <div v-if="layout === 'bar'" class="list-subrow">
               <MemberAvatarStack :members="orderedActiveMembers" :loading="membersLoading" />
             </div>
           </div>
-        </button>
+        </component>
       </template>
       <template v-else-if="loading">
         <!-- Stands in for the real block above, tile included: without the
@@ -576,9 +575,8 @@ const orderedActiveMembers = computed(() =>
         </span>
       </div>
       <!-- The nightly build says so, in the one place that is on screen whatever
-           you are doing. Sits at the head of the actions rather than beside the
-           list name, which ellipsizes and would have had to give up width
-           for it. Untranslated on purpose, like the manifest: it names a build
+           you are doing: pinned to the top edge (see the CSS), not in the header's
+           flow, where it had to take width from the list name. Untranslated on purpose, like the manifest: it names a build
            channel, not anything the app does. -->
       <!-- eslint-disable-next-line vue/no-bare-strings-in-template -- build channel, the same word in every language -->
       <span v-if="IS_NIGHTLY" class="channel-badge">NIGHTLY</span>
@@ -1036,15 +1034,6 @@ const orderedActiveMembers = computed(() =>
   }
 }
 
-/* The build stamp belongs to the desktop header only: on a phone the header's
-   width goes to the list name, and the About screen already says which
-   build this is. */
-@media (max-width: 899.98px) {
-  .channel-badge {
-    display: none;
-  }
-}
-
 /* ─── How the bar answers a press ─────────────────────────────────────────────
    Every control up here summons something — a panel, a sheet, a dialog — so they
    all give way the same way: recede under the finger while the thing they called
@@ -1118,11 +1107,20 @@ const orderedActiveMembers = computed(() =>
 
 /* A stamp, not a control: no press state and no tap target, because there is
    nothing to do with it. Drawn from the brand tokens, like the rest of the bar. */
+/* Pinned to the top edge, centred, over everything and out of every layout: it takes no
+   width from the list name, and it stays put while the page scrolls. It lets touches
+   through, so it never covers a control. */
 .channel-badge {
-  flex-shrink: 0;
-  padding: 0.15rem 0.4rem;
+  position: fixed;
+  top: var(--safe-top, 0px);
+  left: 50%;
+  translate: -50% 0;
+  z-index: var(--z-toast);
+  pointer-events: none;
+  padding: 0 0.4rem;
   border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
-  border-radius: var(--radius-xs);
+  border-top: none;
+  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
   background: var(--color-primary-bg);
   color: var(--color-primary-text);
   font-size: var(--text-2xs);
@@ -1229,6 +1227,16 @@ const orderedActiveMembers = computed(() =>
   transition: background var(--transition-fast),
     transform var(--transition-fast) var(--ease-rise);
   -webkit-tap-highlight-color: transparent;
+}
+
+/* The name on a phone: nothing to press, so it neither looks nor answers like a button. */
+.list-btn--label {
+  cursor: default;
+}
+
+.list-btn--label:active {
+  background: transparent;
+  transform: none;
 }
 
 /* Faces and the trip's progress, side by side under the name. */

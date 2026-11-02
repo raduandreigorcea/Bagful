@@ -50,6 +50,9 @@ const emit = defineEmits<{
 const PANEL_WIDTH = 340
 
 const canAddList = computed(() => props.lists.length < LIST_MEMBERSHIP_CAP)
+// Somebody can own one list at most, so once they do the only thing left to add is a join.
+// The setup screen hides its Create option on the same test.
+const ownsAList = computed(() => props.lists.some((l) => l.ownerId === props.currentUserId))
 
 // What is left to buy, said for the card; a finished list says so instead of
 // counting zero, and an empty one says it has nothing yet.
@@ -131,10 +134,9 @@ function pick(id: string) {
       @invite="emit('invite', listId)"
     />
 
-    <button v-if="mode === 'all'" type="button" class="menu-item" @click="emit('manage')">
+    <button v-if="mode === 'all'" type="button" class="sheet-row" @click="emit('manage')">
       <AppIcon class="row-icon" name="settings" />
-      <span class="row-label">{{ t('account.manageList') }}</span>
-      <AppIcon class="row-icon row-icon--quiet" name="chevron-right" />
+      {{ t('account.manageList') }}
     </button>
 
     <!-- Which list you are looking at. Shown to everyone, even with one
@@ -178,9 +180,15 @@ function pick(id: string) {
         />
       </span>
     </button>
-    <button v-if="canAddList" type="button" class="menu-item" role="menuitem" @click="addList">
+    <button
+      v-if="canAddList"
+      type="button"
+      class="sheet-row sheet-action"
+      role="menuitem"
+      @click="addList"
+    >
       <AppIcon class="row-icon" name="plus" />
-      <span class="row-label">{{ t('account.joinOrCreate') }}</span>
+      {{ ownsAList ? t('setup.picker.joinLabel') : t('account.joinOrCreate') }}
     </button>
   </PopoverMenu>
 
@@ -209,10 +217,10 @@ function pick(id: string) {
 </template>
 
 <style scoped>
-/* The panel, its header and its close button are PopoverMenu's; the rows that
-   are plain actions take its .menu-item. What is below is what only this menu has. */
-/* PopoverMenu's .menu-item rules only reach its direct slot children, so these
-   rows are not wrapped; the spacing a wrapper's gap would give is margins. */
+/* The panel, its header and its close button are PopoverMenu's, and the two actions
+   are rows dressed like the profile menu's. What is below is what only this
+   menu has. The children sit directly in the slot rather than in a wrapper, so the
+   spacing a wrapper's gap would give is margins. */
 .sheet-gap {
   margin-bottom: 0.35rem;
 }
@@ -227,10 +235,34 @@ function pick(id: string) {
   color: var(--text-secondary);
 }
 
-.row-label {
-  flex: 1;
-  min-width: 0;
+/* The profile menu's row: bordered, left-aligned, the mark going green with the border. */
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: var(--border-width-thin) solid var(--border-main);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
   text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--transition-base) ease,
+    border-color var(--transition-base) ease;
+}
+
+.sheet-row:hover {
+  background: var(--bg-hover);
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--bg-surface));
+}
+
+.sheet-row:hover .row-icon {
+  color: var(--color-primary);
 }
 
 .row-icon {
@@ -239,10 +271,6 @@ function pick(id: string) {
   height: 16px;
   display: inline-flex;
   color: var(--text-secondary);
-}
-
-.row-icon--quiet {
-  color: var(--text-disabled);
 }
 
 .row-icon :deep(svg) {
@@ -255,6 +283,10 @@ function pick(id: string) {
 
 /* One list in the switcher: its mark, its name, how much is left and how far
    along it is, who is in it. Taller than a plain row, since it carries more. */
+.sheet-action {
+  margin-top: 0.35rem;
+}
+
 .list-card {
   margin-top: 0.35rem;
   display: flex;
